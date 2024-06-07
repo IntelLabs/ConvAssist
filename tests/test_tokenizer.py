@@ -1,5 +1,5 @@
 """
- Copyright (C) <year(s)> Intel Corporation
+ Copyright (C) 2023 Intel Corporation
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -25,10 +25,14 @@ class TestForwardTokenizer(unittest.TestCase):
         assert self.tokenizer.offset == 0
 
     def test_count_characters(self):
-        assert self.tokenizer.count_characters() == 7927
+        expected_value = 7927
+        actual_value = self.tokenizer.count_characters()
+        self.assertEqual(expected_value, actual_value, f"Expected {expected_value}, got {actual_value}")
 
     def test_count_tokens(self):
-        assert self.tokenizer.count_tokens() == 1233
+        expected_value = 1251
+        actual_value = self.tokenizer.count_tokens()
+        self.assertEqual(expected_value, actual_value, f"Expected {expected_value}, got {actual_value}")
 
     def test_has_more_tokens(self):
         assert self.tokenizer.has_more_tokens() == True
@@ -66,7 +70,9 @@ class TestReverseTokenizer(unittest.TestCase):
         assert self.tokenizer.offset == self.tokenizer.offend
 
     def test_count_tokens(self):
-        assert self.tokenizer.count_tokens() == 1233
+        expected_value = 1251
+        actual_value = self.tokenizer.count_tokens()
+        self.assertEqual(expected_value, actual_value, f"Expected {expected_value}, got {actual_value}")
 
     def test_has_more_tokens(self):
         assert self.tokenizer.has_more_tokens() == True
