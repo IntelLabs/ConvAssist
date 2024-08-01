@@ -14,8 +14,8 @@ filelock==3.13.4
 fsspec==2024.3.1
 hnswlib==0.8.0
 huggingface-hub==0.22.2
-idna==3.6
 Jinja2==3.1.4
+idna==3.7
 joblib==1.4.0
 langcodes==3.3.0
 MarkupSafe==2.1.5
@@ -57,7 +57,7 @@ thinc==8.2.3
 threadpoolctl==3.4.0
 tokenizers==0.15.2
 torch==2.2.2
-tqdm==4.66.2
+tqdm==4.66.3
 transformers==4.39.3
 typer==0.9.4
 typing_extensions==4.11.0
