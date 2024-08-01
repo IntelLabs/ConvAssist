@@ -1,5 +1,5 @@
 altgraph==0.17.4
-annotated-types==0.6.0
+annotated-types==0.7.0
 blis==0.7.11
 catalogue==2.0.10
 certifi==2024.7.4
