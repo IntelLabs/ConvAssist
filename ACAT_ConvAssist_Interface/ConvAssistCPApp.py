@@ -150,7 +150,7 @@ def addTextToWindow(text):
             text_box.insert(END," " + text)
             text_box.configure(state='disabled')
     except Exception as e:
-        convAssistLog.Log(f"Exception: {e} Value: {text}")
+        convAssistLog.exception(f"Exception: {e} Value: {text}")
 
 
 def threaded_function(Pipehandle, retries):
@@ -189,7 +189,7 @@ def threaded_function(Pipehandle, retries):
     breakLoop = False
     counter = 0
     string_resultSentence = ""
-    convAssistLog.Log("Connection with ACAT established")
+    convAssistLog.info("Connection with ACAT established")
     global clientConnected
     clientConnected = True
     addTextToWindow("*** Successful connection ***\n")
@@ -210,7 +210,7 @@ def threaded_function(Pipehandle, retries):
                     jsonstring = json.loads(msg)
                     messageReceived = ConvAssistMessage.jsonDeserialize(jsonstring)
                 except Exception as e:
-                    convAssistLog.Log(f"Exception jsonDeserialize incomming message {msg}  {e}")
+                    convAssistLog.exception(f" jsonDeserialize incomming message {msg}  {e}")
                     addTextToWindow(f"Exception jsonDeserialize incomming message {msg}  {e} \n")
                     PredictionResponse = WordAndCharacterPredictionResponse(
                         ConvAssistMessageTypes.NONE,
@@ -222,7 +222,7 @@ def threaded_function(Pipehandle, retries):
                     json_string_result = json.dumps(PredictionResponse.__dict__)
                     string_result = str(json_string_result).encode()
                     win32file.WriteFile(Pipehandle, string_result)
-                    convAssistLog.Log("Exception message send")
+                    convAssistLog.info("Exception message send")
                 match messageReceived.MessageType:
                     case ConvAssistMessageTypes.NONE:
                         PredictionResponse = WordAndCharacterPredictionResponse(
@@ -242,115 +242,115 @@ def threaded_function(Pipehandle, retries):
                             params = ConvAssistSetParam.jsonDeserialize(jsonstringparams)
                             match params.Parameter:
                                 case ParameterType.PATH:
-                                    convAssistLog.Log(f"Parameter type: {params.Parameter} Value received {params.Value}")
+                                    convAssistLog.debug(f"Parameter type: {params.Parameter} Value received {params.Value}")
                                     addTextToWindow(f"Parameter type: {params.Parameter} Value received {params.Value} \n")
                                     setModelsParameters(params.Value,test_gen_sentence_pred,retrieve_from_AAC,path_static,path_personalized)
                                     if word_config_set:
                                         try:
                                             conv_normal = convAssist.ConvAssist(convAssist_callback, word_config)
-                                            convAssistLog.Log("conv_normal set")
+                                            convAssistLog.info("conv_normal set")
                                             addTextToWindow("conv_normal set \n")
                                             if enable_logs:
                                                 conv_normal.setLogLocation(getDate() + "_NORMAL", path_logs, logging.INFO)
                                             else:
                                                 conv_normal.setLogLocation(getDate() + "_NORMAL", path_logs, logging.ERROR)
                                         except Exception as exception_Normal:
-                                            convAssistLog.Log(f"Exception setting predictor object Normal: received message {exception_Normal}")
+                                            convAssistLog.exception(f" setting predictor object Normal: received message {exception_Normal}")
                                             addTextToWindow(f"Exception setting predictor object Normal: received message {exception_Normal} \n")
                                             word_config_set = False
                                     if sh_config_set:
                                         try:
                                             conv_shorthand = convAssist.ConvAssist(convAssist_callback, sh_config)
-                                            convAssistLog.Log("conv_shorthand set")
+                                            convAssistLog.info("conv_shorthand set")
                                             addTextToWindow("conv_shorthand set \n")
                                             if enable_logs:
                                                 conv_shorthand.setLogLocation(getDate() + "_SHORTHAND", path_logs, logging.INFO)
                                             else:
                                                 conv_shorthand.setLogLocation(getDate() + "_SHORTHAND", path_logs, logging.ERROR)
                                         except Exception as exception_shorthand:
-                                            convAssistLog.Log(f"Exception setting predictor object shorthand: received message {exception_shorthand}")
+                                            convAssistLog.exception(f" setting predictor object shorthand: received message {exception_shorthand}")
                                             addTextToWindow(f"Exception setting predictor object shorthand: received message {exception_shorthand} \n")
                                             sh_config_set = False
                                     if sent_config_set:
                                         try:
                                             conv_sentence = convAssist.ConvAssist(convAssist_callback, sent_config)
-                                            convAssistLog.Log("conv_sentence set")
+                                            convAssistLog.info("conv_sentence set")
                                             conv_sentence.read_updated_toxicWords()
-                                            convAssistLog.Log("reading updated toxic words from personalized text file")
+                                            convAssistLog.info("reading updated toxic words from personalized text file")
                                             addTextToWindow("conv_sentence set \n")
                                             if sent_config_change:
-                                                convAssistLog.Log("Sentence INI NEW config detected")
+                                                convAssistLog.info("Sentence INI NEW config detected")
                                                 addTextToWindow("Sentence INI NEW config detected \n")
                                                 conv_sentence.update_params(str(test_gen_sentence_pred), str(retrieve_from_AAC))
                                                 sent_config_change = False
                                             else:
-                                                convAssistLog.Log("Sentence INI no new modifications")
+                                                convAssistLog.info("Sentence INI no new modifications")
                                                 addTextToWindow("Sentence INI NO new modifications \n")
                                             if enable_logs:
                                                 conv_sentence.setLogLocation(getDate() + "_SENTENCE", path_logs, logging.INFO)
                                             else:
                                                 conv_sentence.setLogLocation(getDate() + "_SENTENCE", path_logs, logging.ERROR)
                                         except Exception as exception_Sentence:
-                                            convAssistLog.Log(f"Exception setting predictor object Sentence: received message {exception_Sentence}")
+                                            convAssistLog.exception(f" setting predictor object Sentence: received message {exception_Sentence}")
                                             addTextToWindow(f"Exception setting predictor object Sentence: received message {exception_Sentence} \n")
                                             sent_config_set = False
                                     if canned_config_set:
                                         try:
                                             conv_canned_phrases = convAssist.ConvAssist(convAssist_callback, canned_config)
                                             conv_canned_phrases.cannedPhrase_recreateDB()
-                                            convAssistLog.Log("conv_canned_phrases set")
+                                            convAssistLog.info("conv_canned_phrases set")
                                             addTextToWindow("conv_canned_phrases set \n")
                                             if enable_logs:
                                                 conv_canned_phrases.setLogLocation(getDate() + "_CANNED", path_logs, logging.INFO)
                                             else:
                                                 conv_canned_phrases.setLogLocation(getDate() + "_CANNED", path_logs, logging.ERROR)
                                         except Exception as exception_canned_phrases:
-                                            convAssistLog.Log(f"Exception setting predictor object canned phrases: received message {exception_canned_phrases}")
+                                            convAssistLog.exception(f" setting predictor object canned phrases: received message {exception_canned_phrases}")
                                             addTextToWindow(f"Exception setting predictor object canned phrases: received message {exception_canned_phrases} \n")
                                             canned_config_set = False
                                 case ParameterType.SUGGESTIONS:
-                                    convAssistLog.Log(f"Parameter type: {params.Parameter} Value received {params.Value}")
+                                    convAssistLog.debug(f"Parameter type: {params.Parameter} Value received {params.Value}")
                                     addTextToWindow(f"Parameter type: {params.Parameter} Value received {params.Value} \n")
                                     try:
                                         word_suggestions = int(params.Value)
                                     except Exception as e:
-                                        convAssistLog.Log(f"Exception Parameter suggestions value {params.Value} message {e}")
+                                        convAssistLog.exception(f" Parameter suggestions value {params.Value} message {e}")
                                         addTextToWindow(f"Exception Parameter suggestions value {params.Value} message {e} \n")
                                         word_suggestions = 15
                                 case ParameterType.TESTGENSENTENCEPRED:
-                                    convAssistLog.Log(f"Parameter type: {params.Parameter} Value received {params.Value}")
+                                    convAssistLog.debug(f"Parameter type: {params.Parameter} Value received {params.Value}")
                                     addTextToWindow(f"Parameter type: {params.Parameter} Value received {params.Value} \n")
                                     try:
                                         test_gen_sentence_pred = True if params.Value.lower() == "true" else False
                                     except Exception as e:
-                                        convAssistLog.Log(f"Exception Parameter suggestions value {params.Value} message {e}")
+                                        convAssistLog.exception(f" Parameter suggestions value {params.Value} message {e}")
                                         addTextToWindow(f"Exception Parameter suggestions value {params.Value} message {e} \n")
                                         test_gen_sentence_pred = False
                                 case ParameterType.RETRIEVEAAC:
-                                    convAssistLog.Log(f"Parameter type: {params.Parameter} Value received {params.Value}")
+                                    convAssistLog.debug(f"Parameter type: {params.Parameter} Value received {params.Value}")
                                     addTextToWindow(f"Parameter type: {params.Parameter} Value received {params.Value} \n")
                                     try:
                                         retrieve_from_AAC = True if params.Value.lower() == "true" else False
                                     except Exception as e:
-                                        convAssistLog.Log(f"Exception Parameter suggestions value {params.Value} message {e}")
+                                        convAssistLog.exception(f" Parameter suggestions value {params.Value} message {e}")
                                         addTextToWindow(f"Exception Parameter suggestions value {params.Value} message {e} \n")
                                         retrieve_from_AAC = False
                                 case ParameterType.PATHSTATIC:
-                                    convAssistLog.Log(f"Parameter type: {params.Parameter} Value received {params.Value}")
+                                    convAssistLog.debug(f"Parameter type: {params.Parameter} Value received {params.Value}")
                                     addTextToWindow(f"Parameter type: {params.Parameter} Value received {params.Value} \n")
                                     try:
                                         path_static = params.Value
                                     except Exception as e:
-                                        convAssistLog.Log(f"Exception Parameter path static value {params.Value} message {e}")
+                                        convAssistLog.exception(f" Parameter path static value {params.Value} message {e}")
                                         addTextToWindow(f"Exception Parameter path static value {params.Value} message {e} \n")
                                         path_static = ""
                                 case ParameterType.PATHPERSONALIZED:
-                                    convAssistLog.Log(f"Parameter type: {params.Parameter} Value received {params.Value}")
+                                    convAssistLog.debug(f"Parameter type: {params.Parameter} Value received {params.Value}")
                                     addTextToWindow(f"Parameter type: {params.Parameter} Value received {params.Value} \n")
                                     try:
                                         path_personalized = params.Value
                                     except Exception as e:
-                                        convAssistLog.Log(f"Exception Parameter path personalized value {params.Value} message {e}")
+                                        convAssistLog.exception(f" Parameter path personalized value {params.Value} message {e}")
                                         addTextToWindow(f"Exception Parameter path personalized value {params.Value} message {e} \n")
                                         path_personalized = ""
                                 case ParameterType.PATHLOG:
@@ -363,7 +363,7 @@ def threaded_function(Pipehandle, retries):
                                             convAssistLog = None
                                             convAssistLog = ConvAssistLogger(getDate() + "_MAIN", path_logs, logging.INFO)
                                             convAssistLog.setLogger()
-                                            convAssistLog.Log(f"Log created in: {path_logs}")
+                                            convAssistLog.debug(f"Log created in: {path_logs}")
                                     except Exception as e:
                                         addTextToWindow(f"Exception Parameter path personalized value {path_logs} message {e} \n")
                                 case ParameterType.ENABLELOGS:
@@ -373,7 +373,7 @@ def threaded_function(Pipehandle, retries):
                                     except Exception as e:
                                         addTextToWindow(f"Exception Parameter enable logs value {params.Value} message {e} \n")
                         except Exception as e:
-                            convAssistLog.Log(f"Exception Parameters received message {e}")
+                            convAssistLog.exception(f" Parameters received message {e}")
                             addTextToWindow(f"Exception Parameters received message {e} \n")
                         PredictionResponse = WordAndCharacterPredictionResponse(
                             ConvAssistMessageTypes.SETPARAM,
@@ -385,11 +385,11 @@ def threaded_function(Pipehandle, retries):
                         json_string_result = json.dumps(PredictionResponse.__dict__)
                         string_result = str(json_string_result).encode()
                         win32file.WriteFile(Pipehandle, string_result)
-                        convAssistLog.Log("Parameters message answered")
+                        convAssistLog.info("Parameters message answered")
                         addTextToWindow("Parameters message answered \n")
 
                     case ConvAssistMessageTypes.NEXTWORDPREDICTION:
-                        convAssistLog.Log(f"Prediction requested type: {messageReceived.PredictionType} Prediction Message: {messageReceived.Data}")
+                        convAssistLog.debug(f"Prediction requested type: {messageReceived.PredictionType} Prediction Message: {messageReceived.Data}")
                         addTextToWindow(f"Prediction requested type: {messageReceived.PredictionType} Prediction Message: {messageReceived.Data} \n")
                         match messageReceived.PredictionType:
                             case ConvAssistPredictionTypes.NONE:
@@ -413,7 +413,7 @@ def threaded_function(Pipehandle, retries):
                                         next_Letter_Probs, word_prediction, sentence_nextLetterProbs, sentence_predictions = conv_normal.predict()
                                         prediction_type = ConvAssistPredictionTypes.NORMAL
                                     except Exception as e:
-                                        convAssistLog.Log(f"Exception ConvAssistPredictionTypes.NORMAL: {e}")
+                                        convAssistLog.exception(f" ConvAssistPredictionTypes.NORMAL: {e}")
                                         addTextToWindow(f"Exception ConvAssistPredictionTypes.NORMAL: {e} \n")
                                         if len(word_prediction) == 0:
                                             word_prediction = []
@@ -433,7 +433,7 @@ def threaded_function(Pipehandle, retries):
                                         next_Letter_Probs, word_prediction, sentence_nextLetterProbs, sentence_predictions = conv_shorthand.predict()
                                         prediction_type = ConvAssistPredictionTypes.SHORTHANDMODE
                                     except Exception as e:
-                                        convAssistLog.Log(f"Exception ConvAssistPredictionTypes.SHORTHANDMODE: {e}")
+                                        convAssistLog.exception(f" ConvAssistPredictionTypes.SHORTHANDMODE: {e}")
                                         addTextToWindow(f"Exception ConvAssistPredictionTypes.SHORTHANDMODE: {e} \n")
                                         word_prediction = []
                                         next_Letter_Probs = []
@@ -451,7 +451,7 @@ def threaded_function(Pipehandle, retries):
                                         next_Letter_Probs, word_prediction, sentence_nextLetterProbs, sentence_predictions = conv_canned_phrases.predict()
                                         prediction_type = ConvAssistPredictionTypes.CANNEDPHRASESMODE
                                     except Exception as e:
-                                        convAssistLog.Log(f"Exception ConvAssistPredictionTypes.CANNEDPHRASESMODE: {e}")
+                                        convAssistLog.exception(f" ConvAssistPredictionTypes.CANNEDPHRASESMODE: {e}")
                                         addTextToWindow(f"Exception ConvAssistPredictionTypes.CANNEDPHRASESMODE: {e} \n")
                                         word_prediction = []
                                         next_Letter_Probs = []
@@ -480,7 +480,7 @@ def threaded_function(Pipehandle, retries):
                         win32file.WriteFile(Pipehandle, string_result)
 
                     case ConvAssistMessageTypes.NEXTSENTENCEPREDICTION:
-                        convAssistLog.Log(f"Prediction requested type: {messageReceived.MessageType} Prediction Message: {messageReceived.Data}")
+                        convAssistLog.debug(f"Prediction requested type: {messageReceived.MessageType} Prediction Message: {messageReceived.Data}")
                         addTextToWindow(f"Prediction requested type: {messageReceived.MessageType} Prediction Message: {messageReceived.Data} \n")
                         if sent_config_set:
                             status_model = conv_sentence.check_model()
@@ -492,7 +492,7 @@ def threaded_function(Pipehandle, retries):
                                 next_Letter_Probs, word_prediction, sentence_nextLetterProbs, sentence_predictions = conv_sentence.predict()
                                 prediction_type = ConvAssistPredictionTypes.NONE
                             except Exception as e:
-                                convAssistLog.Log(f"Exception ConvAssistPredictionTypes.SENTENCEMODE: {e}")
+                                convAssistLog.exception(f" ConvAssistPredictionTypes.SENTENCEMODE: {e}")
                                 addTextToWindow(f"Exception ConvAssistPredictionTypes.SENTENCEMODE: {e} \n")
                                 word_prediction = []
                                 next_Letter_Probs = []
@@ -521,11 +521,11 @@ def threaded_function(Pipehandle, retries):
                         win32file.WriteFile(Pipehandle, string_resultSentence)
                     case ConvAssistMessageTypes.LEARNWORDS:
                         try:
-                            convAssistLog.Log(f"Learn for WORDS/NORMAL mode: Data - {messageReceived.Data}")
+                            convAssistLog.debug(f"Learn for WORDS/NORMAL mode: Data - {messageReceived.Data}")
                             addTextToWindow(f"Learn for WORDS/NORMAL mode: Data - {messageReceived.Data} \n")
                             conv_normal.learn_db(messageReceived.Data)
                         except Exception as e:
-                            convAssistLog.Log(f"Exception Learn received message {e}")
+                            convAssistLog.exception(f" Learn received message {e}")
                             addTextToWindow(f"Exception Learn received message {e} \n")
                         PredictionResponse = WordAndCharacterPredictionResponse(
                             ConvAssistMessageTypes.LEARNWORDS,
@@ -533,15 +533,15 @@ def threaded_function(Pipehandle, retries):
                         json_string_result = json.dumps(PredictionResponse.__dict__)
                         string_result = str(json_string_result).encode()
                         win32file.WriteFile(Pipehandle, string_result)
-                        convAssistLog.Log("Learn message answered")
+                        convAssistLog.info("Learn message answered")
                         addTextToWindow("Learn message answered \n")
                     case ConvAssistMessageTypes.LEARNCANNED:
                         try:
-                            convAssistLog.Log(f"Learn for CANNEDPHRASESMODE mode: Data - {messageReceived.Data}")
+                            convAssistLog.debug(f"Learn for CANNEDPHRASESMODE mode: Data - {messageReceived.Data}")
                             addTextToWindow(f"Learn for CANNEDPHRASESMODE mode: Data - {messageReceived.Data} \n")
                             conv_canned_phrases.learn_db(messageReceived.Data)
                         except Exception as e:
-                            convAssistLog.Log(f"Exception Learn received message {e}")
+                            convAssistLog.exception(f" Learn received message {e}")
                             addTextToWindow(f"Exception Learn received message {e} \n")
                         PredictionResponse = WordAndCharacterPredictionResponse(
                             ConvAssistMessageTypes.LEARNCANNED,
@@ -549,15 +549,15 @@ def threaded_function(Pipehandle, retries):
                         json_string_result = json.dumps(PredictionResponse.__dict__)
                         string_result = str(json_string_result).encode()
                         win32file.WriteFile(Pipehandle, string_result)
-                        convAssistLog.Log("Learn message answered")
+                        convAssistLog.info("Learn message answered")
                         addTextToWindow("Learn message answered \n")
                     case ConvAssistMessageTypes.LEARNSHORTHAND:
                         try:
-                            convAssistLog.Log(f"Learn for SHORTHANDMODE mode: Data - {messageReceived.Data}")
+                            convAssistLog.debug(f"Learn for SHORTHANDMODE mode: Data - {messageReceived.Data}")
                             addTextToWindow(f"Learn for SHORTHANDMODE mode: Data - {messageReceived.Data} \n")
                             conv_shorthand.learn_db(messageReceived.Data)
                         except Exception as e:
-                            convAssistLog.Log(f"Exception Learn received message {e}")
+                            convAssistLog.exception(f" Learn received message {e}")
                             addTextToWindow(f"Exception Learn received message {e} \n")
                         PredictionResponse = WordAndCharacterPredictionResponse(
                             ConvAssistMessageTypes.LEARNSHORTHAND,
@@ -565,15 +565,15 @@ def threaded_function(Pipehandle, retries):
                         json_string_result = json.dumps(PredictionResponse.__dict__)
                         string_result = str(json_string_result).encode()
                         win32file.WriteFile(Pipehandle, string_result)
-                        convAssistLog.Log("Learn message answered")
+                        convAssistLog.info("Learn message answered")
                         addTextToWindow("Learn message answered \n")
                     case ConvAssistMessageTypes.LEARNSENTENCES:
                         try:
-                            convAssistLog.Log(f"Learn for SENTENCES mode: Data - {messageReceived.Data}")
+                            convAssistLog.debug(f"Learn for SENTENCES mode: Data - {messageReceived.Data}")
                             addTextToWindow(f"Learn for SENTENCES mode: Data - {messageReceived.Data} \n")
                             conv_sentence.learn_db(messageReceived.Data)
                         except Exception as e:
-                            convAssistLog.Log(f"Exception Learn received message {e}")
+                            convAssistLog.exception(f" Learn received message {e}")
                             addTextToWindow(f"Exception Learn received message {e} \n")
                         PredictionResponse = WordAndCharacterPredictionResponse(
                             ConvAssistMessageTypes.LEARNSENTENCES,
@@ -581,7 +581,7 @@ def threaded_function(Pipehandle, retries):
                         json_string_result = json.dumps(PredictionResponse.__dict__)
                         string_result = str(json_string_result).encode()
                         win32file.WriteFile(Pipehandle, string_result)
-                        convAssistLog.Log("Learn message answered")
+                        convAssistLog.info("Learn message answered")
                         addTextToWindow("Learn message answered \n")
                     case ConvAssistMessageTypes.FORCEQUITAPP:
                         try:
@@ -595,13 +595,13 @@ def threaded_function(Pipehandle, retries):
                             global kill_ConvAssist
                             kill_ConvAssist = True
                         except Exception as e:
-                            convAssistLog.Log(f"Exception quit App request {e}")
+                            convAssistLog.exception(f" quit App request {e}")
                     case _:
                         try:
-                            convAssistLog.Log("No type Match message answered")
+                            convAssistLog.info("No type Match message answered")
                             addTextToWindow("No type Match message answered \n")
                         except Exception as e:
-                            convAssistLog.Log(f"Exception Default, received message {e}")
+                            convAssistLog.exception(f" Default, received message {e}")
                             addTextToWindow(f"Exception Default, received message {e} \n")
                         PredictionResponse = WordAndCharacterPredictionResponse(
                             ConvAssistMessageTypes.NONE,
@@ -612,7 +612,7 @@ def threaded_function(Pipehandle, retries):
 
 
         except pywintypes.error as e:
-            convAssistLog.Log(f"Exception in main Thread: {e}")
+            convAssistLog.exception(f" in main Thread: {e}")
             addTextToWindow(f"Exception in main Thread: {e} \n")
             if e.args[0] == 2:
                 if counter > retries:
@@ -678,7 +678,7 @@ def InitPredict():
             time.sleep(5)
             addTextToWindow("  An error occurred, no connection established  \n")
             if breakMainLoop:
-                convAssistLog.Log("Closing .exe")
+                convAssistLog.info("Closing .exe")
                 sys.exit()
 
 
@@ -738,7 +738,7 @@ def hide_window():
         text_box.delete(1.0, END)
         text_box.configure(state='disabled')
         ws.withdraw()
-        menu = (item('Exit', quit_window), item('More Info', show_window))
+        menu = (item('Exit', quit_window), item('More info', show_window))
         icon = pystray.Icon("name", image, "ConvAssist", menu)
         icon_logo = icon
         icon.run()
@@ -819,7 +819,7 @@ def findProcessIdByName(process_name):
                 listOfProcessObjects.append(pinfo)
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
-    convAssistLog.Log(f"Number of processes with name ConvAssistCPApp.exe: {len(listOfProcessObjects)}")
+    convAssistLog.debug(f"Number of processes with name ConvAssistCPApp.exe: {len(listOfProcessObjects)}")
     if len(listOfProcessObjects) > 2:
         return True
     return False
@@ -838,19 +838,19 @@ def setModelsParameters(path_database, test_gen_sentence_prediction, retrieve_AA
         """
         global word_config
         global word_config_set
-        convAssistLog.Log(f"INI file static Path: {path_static}")
+        convAssistLog.debug(f"INI file static Path: {path_static}")
         addTextToWindow(f"INI file static Path: {path_static} \n")
-        convAssistLog.Log(f"INI file Personalized Path: {path_personalized}")
+        convAssistLog.debug(f"INI file Personalized Path: {path_personalized}")
         addTextToWindow(f"INI file Personalized Path: {path_personalized} \n")
         config_file = os.path.join(path_database, "wordPredMode.ini")
         word_config = configparser.ConfigParser()
         file_size = len(word_config.read(config_file))
         if file_size > 0:
             word_config_set = True
-            convAssistLog.Log("INI file for Word pred mode found")
+            convAssistLog.info("INI file for Word pred mode found")
             addTextToWindow("INI file for Word pred mode found \n")
             word_config.set('Selector', 'suggestions', str(word_suggestions))
-            convAssistLog.Log(f"INI file modification for suggestions of {word_suggestions}")
+            convAssistLog.debug(f"INI file modification for suggestions of {word_suggestions}")
             addTextToWindow(f"INI file modification for suggestions of {word_suggestions} \n")
             if len(path_static) > 1 and "\\" in path_static and len(path_personalized) > 1 and "\\" in path_personalized:
                 word_config.set('DefaultSmoothedNgramPredictor', 'static_resources_path', path_static)
@@ -861,11 +861,11 @@ def setModelsParameters(path_database, test_gen_sentence_prediction, retrieve_AA
             with open(config_file, 'w') as configfile:
                 word_config.write(configfile)
         else:
-            convAssistLog.Log("INI file for Word pred mode NOT found")
+            convAssistLog.info("INI file for Word pred mode NOT found")
             addTextToWindow("INI file for Word pred mode NOT found \n")
     except Exception as e:
         word_config_set = False
-        convAssistLog.Log(f"Exception INI file for Word pred {e}")
+        convAssistLog.exception(f" INI file for Word pred {e}")
         addTextToWindow(f"Exception INI file for Word pred {e} \n")
     try:
         """
@@ -878,7 +878,7 @@ def setModelsParameters(path_database, test_gen_sentence_prediction, retrieve_AA
         file_size = len(sh_config.read(shorthand_config_file))
         if file_size > 0:
             sh_config_set = True
-            convAssistLog.Log("INI file for shorthand mode found")
+            convAssistLog.info("INI file for shorthand mode found")
             addTextToWindow("INI file for shorthand mode found \n")
             if len(path_static) > 1 and "\\" in path_static and len(path_personalized) > 1 and "\\" in path_personalized:
                 sh_config.set('ShortHandPredictor', 'static_resources_path', path_static)
@@ -886,11 +886,11 @@ def setModelsParameters(path_database, test_gen_sentence_prediction, retrieve_AA
             with open(shorthand_config_file, 'w') as configfile:
                 sh_config.write(configfile)
         else:
-            convAssistLog.Log("INI file for shorthand mode NOT found")
+            convAssistLog.info("INI file for shorthand mode NOT found")
             addTextToWindow("INI file for shorthand mode NOT found \n")
     except Exception as e:
         sh_config_set = False
-        convAssistLog.Log(f"Exception INI file for shorthand {e}")
+        convAssistLog.exception(f" INI file for shorthand {e}")
         addTextToWindow(f"Exception INI file for shorthand {e} \n")
     try:
         """
@@ -904,20 +904,20 @@ def setModelsParameters(path_database, test_gen_sentence_prediction, retrieve_AA
         file_size = len(sent_config.read(sentence_config_file))
         if file_size > 0:
             sent_config_set = True
-            convAssistLog.Log("INI file for sentence completion mode found")
+            convAssistLog.info("INI file for sentence completion mode found")
             addTextToWindow("INI file for sentence completion mode found \n")
             value_test_gen_sentence_prediction = sent_config.get('SentenceCompletionPredictor', 'test_generalSentencePrediction')
             if (value_test_gen_sentence_prediction.lower() == "true") != test_gen_sentence_prediction:
                 sent_config_change = True
                 sent_config.set('SentenceCompletionPredictor', 'test_generalSentencePrediction', str(test_gen_sentence_prediction))
-                convAssistLog.Log(f"INI file modification for test_generalSentencePrediction as {test_gen_sentence_prediction}")
+                convAssistLog.debug(f"INI file modification for test_generalSentencePrediction as {test_gen_sentence_prediction}")
                 addTextToWindow(f"INI file modification for test_generalSentencePrediction as {test_gen_sentence_prediction} \n")
 
             value_retrieve_AAC = sent_config.get('SentenceCompletionPredictor', 'retrieveAAC')
             if (value_retrieve_AAC.lower() == "true") != retrieve_AAC:
                 sent_config_change = True
                 sent_config.set('SentenceCompletionPredictor', 'retrieveAAC', str(retrieve_AAC))
-                convAssistLog.Log(f"INI file modification for retrieveAAC as {retrieve_AAC}")
+                convAssistLog.debug(f"INI file modification for retrieveAAC as {retrieve_AAC}")
                 addTextToWindow(f"INI file modification for retrieveAAC as {retrieve_AAC} \n")
             if len(path_static) > 1 and "\\" in path_static and len(path_personalized) > 1 and "\\" in path_personalized:
                 sent_config.set('SentenceCompletionPredictor', 'static_resources_path', path_static)
@@ -925,11 +925,11 @@ def setModelsParameters(path_database, test_gen_sentence_prediction, retrieve_AA
             with open(sentence_config_file, 'w') as configfileSentence:
                 sent_config.write(configfileSentence)
         else:
-            convAssistLog.Log("INI file for sentence completion mode NOT found")
+            convAssistLog.info("INI file for sentence completion mode NOT found")
             addTextToWindow("INI file for sentence completion mode NOT found \n")
     except Exception as e:
         sent_config_set = False
-        convAssistLog.Log(f"Exception INI file for sentence {e}")
+        convAssistLog.exception(f" INI file for sentence {e}")
         addTextToWindow(f"Exception INI file for sentence {e} \n")
 
     try:
@@ -943,7 +943,7 @@ def setModelsParameters(path_database, test_gen_sentence_prediction, retrieve_AA
         file_size = len(canned_config.read(canned_config_file))
         if file_size > 0:
             canned_config_set = True
-            convAssistLog.Log("INI file for CannedPhrases mode found")
+            convAssistLog.info("INI file for CannedPhrases mode found")
             addTextToWindow("INI file for CannedPhrases mode found \n")
             if len(path_static) > 1 and "\\" in path_static and len(path_personalized) > 1 and "\\" in path_personalized:
                 canned_config.set('CannedWordPredictor', 'static_resources_path', path_static)
@@ -953,11 +953,11 @@ def setModelsParameters(path_database, test_gen_sentence_prediction, retrieve_AA
             with open(canned_config_file, 'w') as configfile:
                 canned_config.write(configfile)
         else:
-            convAssistLog.Log("INI file for CannedPhrases mode NOT found")
+            convAssistLog.info("INI file for CannedPhrases mode NOT found")
             addTextToWindow("INI file for CannedPhrases mode NOT found \n")
     except Exception as e:
         canned_config_set = False
-        convAssistLog.Log(f"Exception INI file for CannedPhrases {e}")
+        convAssistLog.exception(f" INI file for CannedPhrases {e}")
         addTextToWindow(f"Exception INI file for CannedPhrases {e} \n")
 
 
@@ -969,27 +969,27 @@ def deleteOldPyinstallerFolders(time_threshold=100):
     """
     try:
         base_path = sys._MEIPASS
-        convAssistLog.Log(f"Directory for current _MEI Folder {base_path}")
+        convAssistLog.debug(f"Directory for current _MEI Folder {base_path}")
     except Exception as es:
-        convAssistLog.Log(f"Exception Directory for _MEI Folders {es}")
+        convAssistLog.exception(f" Directory for _MEI Folders {es}")
         return  # Not being ran as OneFile Folder -> Return
 
     temp_path = os.path.abspath(os.path.join(base_path, '..'))  # Go to parent folder of MEIPASS
-    convAssistLog.Log(f"temp folder path {temp_path}")
+    convAssistLog.debug(f"temp folder path {temp_path}")
 
     # Search all MEIPASS folders...
     mei_folders = glob.glob(os.path.join(temp_path, '_MEI*'))
-    convAssistLog.Log(f"_MEI folders {mei_folders}")
+    convAssistLog.debug(f"_MEI folders {mei_folders}")
     count_list = len(mei_folders)
-    convAssistLog.Log(f"_MEI Folders count {count_list}")
+    convAssistLog.debug(f"_MEI Folders count {count_list}")
     for item in mei_folders:
         try:
-            convAssistLog.Log(f"----item {item}")
+            convAssistLog.debug(f"----item {item}")
             if (time.time() - os.path.getctime(item)) > time_threshold and item != base_path:
-                convAssistLog.Log(f"Deleting {item}")
+                convAssistLog.debug(f"Deleting {item}")
                 rmtree(item)
         except Exception as es:
-            convAssistLog.Log(f"Exception deleting folder {es} in {item}")
+            convAssistLog.exception(f" deleting folder {es} in {item}")
 
 
 """
@@ -1070,26 +1070,26 @@ if isProcessRunning:
 """
 Thread to delete old temp files and folders from .exe when they where not closed gracefully 
 """
-convAssistLog.Log("Thread to delete old temp files and folders from .exe when they where not closed gracefully")
+convAssistLog.info("Thread to delete old temp files and folders from .exe when they where not closed gracefully")
 delete_old_folders = threading.Thread(target=deleteOldPyinstallerFolders)
 delete_old_folders.start()
 """
 Start the thread to Set the connection with a possible active server (Loop)
 """
-convAssistLog.Log("Start the thread to Set the connection with a possible active server (Loop)")
+convAssistLog.info("Start the thread to Set the connection with a possible active server (Loop)")
 threading.Thread(target=InitPredict).start()
 """
 Define a method to be launch when the window is closed
 """
-convAssistLog.Log("Define a method to be launch when the window is closed")
+convAssistLog.info("Define a method to be launch when the window is closed")
 ws.protocol('WM_DELETE_WINDOW', hide_window)
 """
 Set the Close window after (time) mili seconds to start the SysTray Process
 """
-convAssistLog.Log("Set the Close window after (time) mili seconds to start the SysTray Process")
+convAssistLog.info("Set the Close window after (time) mili seconds to start the SysTray Process")
 ws.after(10, lambda: hide_window())
 """
 Start the Main window
 """
-convAssistLog.Log("Start the Main window")
+convAssistLog.info("Start the Main window")
 ws.mainloop()

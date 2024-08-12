@@ -1,9 +1,7 @@
 # Copyright (C) 2023 Intel Corporation
-
-
 # SPDX-License-Identifier: Apache-2.0
 
-
+from pathlib import Path
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -30,7 +28,7 @@ class ConvAssistLogger:
         try:
             log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
             if len(self.file_path) > 1:
-                logFile = self.file_path + "\\" + self.file_name + ".txt"
+                logFile = Path(self.file_path) / (self.file_name + ".txt")
                 self.my_handler = RotatingFileHandler(logFile, mode='a', maxBytes=5 * 1024 * 1024,
                                                  backupCount=2, encoding=None, delay=0)
                 self.my_handler.setFormatter(log_formatter)
@@ -43,16 +41,27 @@ class ConvAssistLogger:
                 self.isLogInitialized = False
         except Exception as e:
             self.isLogInitialized = False
+            raise
 
-    def Log(self, message):
-        """ 
-            Add the Message to the log file
+    def debug(self, message):
+        if self.isLogInitialized:
+            self.app_log.debug(message)
 
-        Args:
-            message (string): Message to log
-        """
+    def info(self, message):
         if self.isLogInitialized:
             self.app_log.info(message)
+
+    def warning(self, message):
+        if self.isLogInitialized:
+            self.app_log.warning(message)
+
+    def error(self, message):
+        if self.isLogInitialized:
+            self.app_log.error(message)
+
+    def critical(self, message):
+        if self.isLogInitialized:
+            self.app_log.critical(message)
 
     def IsLogInitialized(self):
         """
@@ -67,5 +76,7 @@ class ConvAssistLogger:
         """
             Clears and close the handler used to log into the file
         """
-        self.app_log.removeHandler(self.my_handler)
-        self.my_handler.close()
+        if self.isLogInitialized:
+            self.app_log.removeHandler(self.my_handler)
+            self.my_handler.close()
+        self.isLogInitialized = False

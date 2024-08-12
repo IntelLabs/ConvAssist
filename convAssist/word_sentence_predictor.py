@@ -10,10 +10,7 @@ Classes for predictors and to handle suggestions and predictions.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
+import configparser
 from pathlib import Path
 from tqdm import trange
 import sys
@@ -289,12 +286,12 @@ class PredictorActivator(object):
                 predictor.recreate_canned_db(pers_cannedphrasesLines)
 
     def update_params(self, test_gen_sentence_pred,retrieve_from_AAC):
-        convAssistLog.Log("INSIDE PREDICTOR ACTIVATOR update_params FUNCTION")
+        convAssistLog.info("INSIDE PREDICTOR ACTIVATOR update_params FUNCTION")
         for predictor in self.registry:
             predictor.load_model(test_gen_sentence_pred,retrieve_from_AAC)
     
     def read_updated_toxicWords(self):
-        convAssistLog.Log("READING UPDATED PERSONALIZED TOXIC WORDS")
+        convAssistLog.info("READING UPDATED PERSONALIZED TOXIC WORDS")
         for predictor in self.registry:
             predictor.read_personalized_toxic_words()
 
@@ -409,7 +406,7 @@ class PredictorRegistry(list):  # pressagio.observer.Observer,
             if(str(each).find(PredictorNames.SentenceComp.value)!=-1):
                 status = each.is_model_loaded()
                 if(status):
-                    convAssistLog.Log("SentenceCompletionPredictor model loaded")
+                    convAssistLog.info("SentenceCompletionPredictor model loaded")
                     model_status = 1
                 else:
                     model_status = 0
@@ -417,7 +414,7 @@ class PredictorRegistry(list):  # pressagio.observer.Observer,
                 status = each.is_model_loaded()
                 if(status):
                     model_status = 1
-                    convAssistLog.Log("CannedPhrasesPredictor model loaded")
+                    convAssistLog.info("CannedPhrasesPredictor model loaded")
                 else:
                     model_status = 0
         return model_status
@@ -593,7 +590,7 @@ class SmoothedNgramPredictor(Predictor):  # , pressagio.observer.Observer
             self.stopwords.append(s.strip())
 
         if(self.name == PredictorNames.GeneralWord.value ):
-            convAssistLog.Log("INSIDE init "+PredictorNames.GeneralWord.value)
+            convAssistLog.info("INSIDE init "+PredictorNames.GeneralWord.value)
             ##### Store the set of most frequent starting words based on an AAC dataset
             ##### These will be displayed during empty context
             if(not os.path.isfile(self.startwords)):
@@ -609,11 +606,11 @@ class SmoothedNgramPredictor(Predictor):  # , pressagio.observer.Observer
                     json.dump(self.precomputed_sentenceStart, fp)
 
         if(self.name == PredictorNames.PersonalizedWord.value):
-            convAssistLog.Log("INSIDE init "+PredictorNames.PersonalizedWord.value)
+            convAssistLog.info("INSIDE init "+PredictorNames.PersonalizedWord.value)
             try:
-                convAssistLog.Log("trying to establish connection with "+ self.database)
+                convAssistLog.info("trying to establish connection with "+ self.database)
                 conn_ngram = self.create_connection(self.database)
-                convAssistLog.Log("personalized database connection created "+ self.database)
+                convAssistLog.info("personalized database connection created "+ self.database)
                 
                 sql_create_1gram_table = """ CREATE TABLE IF NOT EXISTS _1_gram (
 
@@ -641,9 +638,9 @@ class SmoothedNgramPredictor(Predictor):  # , pressagio.observer.Observer
                     c.execute(sql_create_1gram_table)
                     c.execute(sql_create_2gram_table)
                     c.execute(sql_create_3gram_table)
-                convAssistLog.Log("done create queries for personalized db")
+                convAssistLog.info("done create queries for personalized db")
             except Error as e:
-                convAssistLog.Log("exception in creating personalized db : "+e)
+                convAssistLog.info("exception in creating personalized db : "+e)
 
     def create_connection(self, db_file):
         """ create a database connection to the SQLite database
@@ -732,7 +729,7 @@ class SmoothedNgramPredictor(Predictor):  # , pressagio.observer.Observer
                                                 UNIQUE(word_2, word_1, word)
                                             ); """
 
-            convAssistLog.Log("executing create queries for canned_ngram db")
+            convAssistLog.info("executing create queries for canned_ngram db")
             self.db.open_database()
             self.db.execute_sql(sql_create_1gram_table)
             self.db.execute_sql(sql_create_2gram_table)
@@ -752,8 +749,8 @@ class SmoothedNgramPredictor(Predictor):  # , pressagio.observer.Observer
                 sent_db_dict[r[0]]= r[1]
             phrases_toRemove = list(set(sent_db_dict.keys())-set(personalized_corpus))
             phrases_toAdd = list(set(personalized_corpus)-set(sent_db_dict.keys()))
-            convAssistLog.Log("PHRASES TO ADD = " + str(phrases_toAdd))
-            convAssistLog.Log("PHRASES TO REMOVE = "+ str(phrases_toRemove))
+            convAssistLog.info("PHRASES TO ADD = " + str(phrases_toAdd))
+            convAssistLog.info("PHRASES TO REMOVE = "+ str(phrases_toRemove))
 
             
             ##### Add phrases_toAdd to the database and ngram
@@ -784,7 +781,7 @@ class SmoothedNgramPredictor(Predictor):  # , pressagio.observer.Observer
             ##### Remove phrases_toRemove from the database
                 query = 'DELETE FROM sentences WHERE sentence=?'
                 self.insert_into_tables(conn_sent, query,(phrase,))
-                convAssistLog.Log("Phrase "+ phrase+ " deleted from sentence_db !!!!")
+                convAssistLog.info("Phrase "+ phrase+ " deleted from sentence_db !!!!")
                 phraseFreq = sent_db_dict[phrase]
                 ### Remove phrase to ngram
                 for curr_card in range(self.cardinality):
@@ -803,11 +800,11 @@ class SmoothedNgramPredictor(Predictor):  # , pressagio.observer.Observer
                             self.db.remove_ngram(ngram)
                             self.db.commit()
                         elif old_count < countToDelete:
-                            convAssistLog.Log("SmoothedNgramPredictor RecreateDB Delete function: Count in DB < count to Delete")
+                            convAssistLog.info("SmoothedNgramPredictor RecreateDB Delete function: Count in DB < count to Delete")
                             print("SmoothedNgramPredictor RecreateDB Delete function: Count in DB < count to Delete")
 
         except Error as e:
-            convAssistLog.Log("Error , Exception in SmoothedNgramPredictor recreateDB  = "+e)
+            convAssistLog.info("Error , Exception in SmoothedNgramPredictor recreateDB  = "+e)
 
     def generate_ngrams(self, token, n):
         n = n+1
@@ -983,13 +980,13 @@ class SmoothedNgramPredictor(Predictor):  # , pressagio.observer.Observer
                 if probability > 0:
                     if all(char in string.punctuation for char in tokens[self.cardinality - 1]):
                         print(tokens[self.cardinality - 1]+ " contains punctuations ")
-                        convAssistLog.Log(tokens[self.cardinality - 1]+ " contains punctuations ")
+                        convAssistLog.info(tokens[self.cardinality - 1]+ " contains punctuations ")
                     else:
                         prediction.add_suggestion(
                             Suggestion(tokens[self.cardinality - 1], probability, self.name)
                         )
         except Error as e:
-            convAssistLog.Log("Exception in SmoothedNgramPredictor predict function  = "+e)
+            convAssistLog.info("Exception in SmoothedNgramPredictor predict function  = "+e)
 
         return prediction
 
@@ -1007,7 +1004,7 @@ class SmoothedNgramPredictor(Predictor):  # , pressagio.observer.Observer
             self.database = os.path.join(self.personalized_resources_path, self.config.get(self.name, "database"))
         if(self.name== PredictorNames.GeneralWord.value ):
             self.aac_dataset = os.path.join(self.static_resources_path, self.config.get(self.name, "aac_dataset"))
-            convAssistLog.Log("self.aac_dataset path = "+self.aac_dataset)
+            convAssistLog.info("self.aac_dataset path = "+self.aac_dataset)
             self.database = os.path.join(self.static_resources_path, self.config.get(self.name, "database"))
             self.startwords = os.path.join(self.personalized_resources_path, self.config.get(self.name, "startwords"))
         if(self.name== PredictorNames.PersonalizedWord.value or self.name== PredictorNames.ShortHand.value):
@@ -1027,9 +1024,9 @@ class SmoothedNgramPredictor(Predictor):  # , pressagio.observer.Observer
         # i.e. learn all ngrams and counts in memory
         if self.learn_mode == "True":
             try:
-                convAssistLog.Log("learning ..."+ str(change_tokens))
+                convAssistLog.info("learning ..."+ str(change_tokens))
                 change_tokens = change_tokens.lower().translate(str.maketrans('', '', string.punctuation))
-                convAssistLog.Log("after removing punctuations, change_tokens = "+change_tokens)
+                convAssistLog.info("after removing punctuations, change_tokens = "+change_tokens)
                 print("after removing punctuations, change_tokens = ", change_tokens)
                 if(self.name == PredictorNames.CannedWord.value):
                     change_tokens = self.extract_svo(change_tokens)
@@ -1057,7 +1054,7 @@ class SmoothedNgramPredictor(Predictor):  # , pressagio.observer.Observer
                             self.db.insert_ngram(ngram, count)
                             self.db.commit()
             except Error as e:
-                convAssistLog.Log("Exception in SmoothedNgramPredictor learn function  = "+e)
+                convAssistLog.info("Exception in SmoothedNgramPredictor learn function  = "+e)
 
 
         pass
@@ -1171,29 +1168,29 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
 
         ###### LOAD INDEX IF EXISTS, ELSE CREATE INDEX 
         if os.path.exists(self.index_path):
-            convAssistLog.Log("Loading index...")
+            convAssistLog.info("Loading index...")
             self.index.load_index(self.index_path)
 
         else:
             ## creating the embeddings pkl file
-            convAssistLog.Log(" index does not exist, creating index")
+            convAssistLog.info(" index does not exist, creating index")
 
 
 
             ### Create the HNSWLIB index
-            convAssistLog.Log("Start creating HNSWLIB index")
+            convAssistLog.info("Start creating HNSWLIB index")
             self.index.init_index(max_elements = 20000, ef_construction = 400, M = 64)
 
             # Then we train the index to find a suitable clustering
             self.index.add_items(self.corpus_embeddings, list(range(len(self.corpus_embeddings))))
 
-            convAssistLog.Log("Saving index to:"+ self.index_path)
+            convAssistLog.info("Saving index to:"+ self.index_path)
             self.index.save_index(self.index_path)
         # Controlling the recall by setting ef:
         self.index.set_ef(50)  # ef should always be > top_k_hits
 
         if(not os.path.isfile(self.sent_database)) :
-            convAssistLog.Log(self.sent_database+" not found, creating it")
+            convAssistLog.info(self.sent_database+" not found, creating it")
             self.createSentDB(self.sent_database)
 
         # if(not os.path.isfile(self.startsents)):
@@ -1244,7 +1241,7 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
             f.close()
         self.personalized_allowed_toxicwords = open(self.personalized_allowed_toxicwords_file, "r").readlines()
         self.personalized_allowed_toxicwords = [s.strip() for s in self.personalized_allowed_toxicwords]
-        convAssistLog.Log("UPDATED TOXIC WORDS = "+ str(self.personalized_allowed_toxicwords))
+        convAssistLog.info("UPDATED TOXIC WORDS = "+ str(self.personalized_allowed_toxicwords))
         return self.personalized_allowed_toxicwords
 
     def extract_svo(self, sent):
@@ -1273,9 +1270,9 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
 
 
     def createSentDB(self, dbname):
-        convAssistLog.Log("IN createSentDB")
+        convAssistLog.info("IN createSentDB")
         try:
-            convAssistLog.Log("creating sentence_db = "+ dbname)
+            convAssistLog.info("creating sentence_db = "+ dbname)
             conn = sqlite3.connect(dbname) 
             c = conn.cursor()
             c.execute('''
@@ -1284,16 +1281,16 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
                     ''')        
             conn.commit()
         except Error as e:
-            convAssistLog.Log("Exception in SentenceCompletionPredictor, createSentDB  = "+e)
+            convAssistLog.info("Exception in SentenceCompletionPredictor, createSentDB  = "+e)
 
     def load_model(self, test_generalSentencePrediction, retrieve): 
         self.test_generalSentencePrediction = test_generalSentencePrediction
         self.retrieve = retrieve
-        convAssistLog.Log("INSIDE SentenceCompletionPredictor LOAD MODEL:"+ str(os.path.exists(self.modelname)))
+        convAssistLog.info("INSIDE SentenceCompletionPredictor LOAD MODEL:"+ str(os.path.exists(self.modelname)))
         #### if we are only testing the models
         if(self.test_generalSentencePrediction=="True"):
             if(self.use_onnx_model=="True" and os.path.exists(self.onnx_path)):
-                convAssistLog.Log("No support for ONNX model ")
+                convAssistLog.info("No support for ONNX model ")
                 # convAssistLog.Log("Loading onnx model from "+self.onnx_path)
                 # model = ORTModelForCausalLM.from_pretrained(self.onnx_path, file_name="decoder_model.onnx")
                 # tokenizer = AutoTokenizer.from_pretrained(self.onnx_path)
@@ -1301,27 +1298,27 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
                 self.MODEL_LOADED = True
 
             elif(self.use_onnx_model=="False" and os.path.exists(self.modelname)):
-                convAssistLog.Log("Loading gpt2 model from "+str(self.modelname))
+                convAssistLog.info("Loading gpt2 model from "+str(self.modelname))
                 self.generator = pipeline('text-generation', model=self.modelname, tokenizer=self.tokenizer)
                 self.MODEL_LOADED = True
 
         else:
             if(self.retrieve=="False"):
-                convAssistLog.Log("RETRIEVE IS FALSE, loading model = "+self.modelname)
+                convAssistLog.info("RETRIEVE IS FALSE, loading model = "+self.modelname)
                 if(self.use_onnx_model=="True" and os.path.exists(self.onnx_path)):
-                    convAssistLog.Log("No support for ONNX model ")
+                    convAssistLog.info("No support for ONNX model ")
                     # model = ORTModelForCausalLM.from_pretrained(self.onnx_path, file_name="decoder_model_quantized.onnx")
                     # tokenizer = AutoTokenizer.from_pretrained(self.onnx_path)
                     # self.generator = onnxpipeline("text-generation", model=model, tokenizer=tokenizer)
                     self.MODEL_LOADED = True
                 elif(self.use_onnx_model=="False" and os.path.exists(self.modelname)):
-                    convAssistLog.Log("Loading gpt2 model from "+self.modelname)
+                    convAssistLog.info("Loading gpt2 model from "+self.modelname)
                     self.generator = pipeline('text-generation', model=self.modelname, tokenizer=self.tokenizer)
                     self.MODEL_LOADED = True
             elif(self.retrieve=="True"):
                 self.MODEL_LOADED = True
 
-        convAssistLog.Log("self.MODEL_LOADED = "+ str(self.MODEL_LOADED))
+        convAssistLog.info("self.MODEL_LOADED = "+ str(self.MODEL_LOADED))
         
     def is_model_loaded(self):
         return self.MODEL_LOADED
@@ -1367,7 +1364,7 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
                 each = re.split('[.\n?!]',each)[0]
                 retrieved.append(each)
         retrieved_set = set(retrieved)
-        convAssistLog.Log("len(retrieved_set = "+str(len(retrieved_set))+ "len(retrieved) = "+ str(len(retrieved)))
+        convAssistLog.info("len(retrieved_set = "+str(len(retrieved_set))+ "len(retrieved) = "+ str(len(retrieved)))
         for s in retrieved_set:
             probs[s] = float(retrieved.count(s))/totalsent
         try:
@@ -1404,7 +1401,7 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
                     addedcompletions.append(k)
                     count = count+1
         except Error as e:
-            convAssistLog.Log("Exception in SentenceCompletionPredictor, retrieveFromDataset function  = "+e)
+            convAssistLog.info("Exception in SentenceCompletionPredictor, retrieveFromDataset function  = "+e)
 
         return pred
 
@@ -1454,7 +1451,7 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
                 
                 ### check for repetitive sentences
                 if (self.checkRepetition(currSentence)):
-                    convAssistLog.Log("REPETITION!!!!!!! in the sentence:  "+currSentence)
+                    convAssistLog.info("REPETITION!!!!!!! in the sentence:  "+currSentence)
                     continue;
 
 
@@ -1502,13 +1499,13 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
                 
                 if(count==num_gen):
                     break
-                convAssistLog.Log("sentence = "+ k+ " score = "+ str(v))
+                convAssistLog.info("sentence = "+ k+ " score = "+ str(v))
                 predi.add_suggestion(Suggestion(k, v, self.name))
                 count = count+1
 
-            convAssistLog.Log("latency in generation = "+ str(time.perf_counter()-start))
+            convAssistLog.info("latency in generation = "+ str(time.perf_counter()-start))
         except Error as e:
-            convAssistLog.Log("Exception in SentenceCompletionPredictor, generate function  = "+e)
+            convAssistLog.info("Exception in SentenceCompletionPredictor, generate function  = "+e)
 
         return predi
 
@@ -1517,9 +1514,9 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
         prediction = Prediction()
         context = self.context_tracker.past_stream().lstrip()
         if(context == "" or context==" "):
-            convAssistLog.Log("context is empty, loading top sentences from "+self.startsents)
+            convAssistLog.info("context is empty, loading top sentences from "+self.startsents)
             if(not os.path.isfile(self.startsents)):
-                convAssistLog.Log(self.startsents+" not found!!!")
+                convAssistLog.info(self.startsents+" not found!!!")
                 # self.writeTopSent(self.startsents)
             ##### retrieve top5 from startsentFile 
             data = open(self.startsents,"r").readlines()
@@ -1527,7 +1524,7 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
                 prediction.add_suggestion(Suggestion(k.strip(), float(1/len(data)), self.name))
             return prediction
         start = time.perf_counter()
-        convAssistLog.Log("context inside predictor predict = "+ context)
+        convAssistLog.info("context inside predictor predict = "+ context)
         #### If we are testing generation models
         if (self.test_generalSentencePrediction == "True"):
             if(self.use_onnx_model=="True" or str(self.modelname).find("DialoGPT")!=-1):
@@ -1538,25 +1535,25 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
         
         #### if we want to Only retrieve from AAC dataset
         elif(self.retrieve=="True"):
-            convAssistLog.Log("retireve is True - retrieving from database")
+            convAssistLog.info("retireve is True - retrieving from database")
             prediction = self.retrieve_fromDataset(context)
 
         #### Hybrid retrieve mode  elif(self.retrieve=="hybrid"):
         elif(self.retrieve=="False"):
-            convAssistLog.Log("Hybrid retrieval - AAC dataset + model generation")
+            convAssistLog.info("Hybrid retrieval - AAC dataset + model generation")
             prediction = self.retrieve_fromDataset(context)
-            convAssistLog.Log("retrieved "+ str(len(prediction))+ " sentences = "+str(prediction))
+            convAssistLog.info("retrieved "+ str(len(prediction))+ " sentences = "+str(prediction))
             ##### ONLY IF THE GENERATION MODEL IS LOADED, GENERATE MODEL BASED PREDICTIONS
             if(len(prediction)<5 and self.MODEL_LOADED):
-                convAssistLog.Log("generating "+ str(5-len(prediction))+ " more predictions")
+                convAssistLog.info("generating "+ str(5-len(prediction))+ " more predictions")
                 if(self.use_onnx_model=="True" or str(self.modelname).find("DialoGPT")!=-1):
                     prediction = self.generate(context.strip(),5-len(prediction), prediction)
                 else:
                     prediction = self.generate("<bos> "+context.strip(),5-len(prediction), prediction)
         latency = time.perf_counter() - start 
-        convAssistLog.Log("latency = "+str(latency))
+        convAssistLog.info("latency = "+str(latency))
         print("latency = ", latency)
-        convAssistLog.Log("prediction = "+ str(prediction))
+        convAssistLog.info("prediction = "+ str(prediction))
         return prediction
 
     def close_database(self):
@@ -1566,7 +1563,7 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
         #### For the sentence completion predictor, learning adds the sentence to the database
         if self.learn_mode == "True":
             change_tokens = change_tokens.strip()
-            convAssistLog.Log("learning, "+str(change_tokens))
+            convAssistLog.info("learning, "+str(change_tokens))
             #### add to sentence database
             try:
                 conn = sqlite3.connect(self.sent_database) 
@@ -1581,7 +1578,7 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
 
                 ### IF SENTENCE DOES NOT EXIST, ADD INTO DATABASE WITH COUNT = 1
                 if count==0:
-                    convAssistLog.Log("count is 0, inserting into database")
+                    convAssistLog.info("count is 0, inserting into database")
                     c.execute('''
                     INSERT INTO sentences (sentence, count)
                     VALUES (?,?)''', (change_tokens, 1))
@@ -1590,7 +1587,7 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
                     # self.index.load_index(self.index_path)
                     print("shape before: ", self.corpus_embeddings.shape, "len*self.corpus_sentences =  ", len(self.corpus_sentences))
                     
-                    convAssistLog.Log("sentence  "+ change_tokens+ " not present, adding to embeddings and creating new index")
+                    convAssistLog.info("sentence  "+ change_tokens+ " not present, adding to embeddings and creating new index")
                     print("sentence  "+ change_tokens+ " not present, adding to embeddings and creating new index")
                     phrase_emb = self.embedder.encode(change_tokens.strip())
                     phrase_id = len(self.corpus_embeddings)
@@ -1605,7 +1602,7 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
                     print("phrase_emb.shape = ", phrase_emb.shape, " id= ", len(self.corpus_embeddings))
                     self.index.add_items(phrase_emb, phrase_id)
 
-                    convAssistLog.Log("Saving index to:"+ self.index_path)
+                    convAssistLog.info("Saving index to:"+ self.index_path)
                     self.index.save_index(self.index_path)
                     print("shape after: ", self.corpus_embeddings.shape, "len*self.corpus_sentences =  ", len(self.corpus_sentences))
 
@@ -1615,7 +1612,7 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
                     res, words = self.filter_text(change_tokens)
                     if(res==True):
                         for tox in words:
-                            convAssistLog.Log("toxic words to be added to personalized db: "+tox)
+                            convAssistLog.info("toxic words to be added to personalized db: "+tox)
                             if(tox not in self.personalized_allowed_toxicwords):
                                 self.personalized_allowed_toxicwords.append(tox)
                                 fout = open(self.personalized_allowed_toxicwords_file, "w")
@@ -1625,12 +1622,12 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
 
                 ### ELSE, IF SENTENCE EXIST, ADD INTO DATABASE WITH UPDATED COUNT
                 else:
-                    convAssistLog.Log("sentence exists, updating count")
+                    convAssistLog.info("sentence exists, updating count")
                     c.execute('''
                     UPDATE sentences SET count = ? where sentence = ?''', (count+1, change_tokens))
                 conn.commit()
             except Error as e:
-                convAssistLog.Log("Exception in SentenceCompletionPredictor learn  = "+str(e))
+                convAssistLog.info("Exception in SentenceCompletionPredictor learn  = "+str(e))
 
     def _read_config(self):
         self.static_resources_path = Path(self.config.get(self.name, "static_resources_path"))
@@ -1657,10 +1654,10 @@ class SentenceCompletionPredictor(Predictor, metaclass=Singleton):  # , pressagi
         self.index_path = os.path.join(self.personalized_resources_path,self.config.get(self.name, "index_path"))
         self.personalized_allowed_toxicwords_file = os.path.join(self.personalized_resources_path,self.config.get(self.name, "personalized_allowed_toxicwords_file"))
 
-        convAssistLog.Log("SENTENCE MODE CONFIGURATIONS")
-        convAssistLog.Log("using Onnx model for inference = "+self.use_onnx_model)
-        convAssistLog.Log("test_generalSentencePrediction = "+self.test_generalSentencePrediction)
-        convAssistLog.Log("model = "+ str(self.modelname)+ "tokenizer = "+ str(self.tokenizer))
+        convAssistLog.info("SENTENCE MODE CONFIGURATIONS")
+        convAssistLog.info("using Onnx model for inference = "+self.use_onnx_model)
+        convAssistLog.info("test_generalSentencePrediction = "+self.test_generalSentencePrediction)
+        convAssistLog.info("model = "+ str(self.modelname)+ "tokenizer = "+ str(self.tokenizer))
 
 class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.observer.Observer
     """
@@ -1694,7 +1691,7 @@ class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.obs
         self.pers_cannedphrasesLines = open(self.personalized_cannedphrases, "r").readlines()
         self.pers_cannedphrasesLines = [s.strip() for s in self.pers_cannedphrasesLines]
             
-        convAssistLog.Log("Logging inside canned phrases init!!!")
+        convAssistLog.info("Logging inside canned phrases init!!!")
         if(not os.path.isfile(self.sentences_db)):
             self.createSentDB(self.sentences_db)
         
@@ -1731,11 +1728,11 @@ class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.obs
 
         ####### CHECK IF INDEX IS PRESENT
         if os.path.exists(self.index_path):
-            convAssistLog.Log("Loading index at ..."+ self.index_path)
+            convAssistLog.info("Loading index at ..."+ self.index_path)
             self.index.load_index(self.index_path)
         else:
             ### Create the HNSWLIB index
-            convAssistLog.Log("Start creating HNSWLIB index")
+            convAssistLog.info("Start creating HNSWLIB index")
             self.index.init_index(max_elements = 10000, ef_construction = 400, M = 64)
             self.index = self.create_index(self.index)
         self.index.set_ef(50)
@@ -1744,7 +1741,7 @@ class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.obs
 
     def create_index(self, ind):
         ind.add_items(self.corpus_embeddings, list(range(len(self.corpus_embeddings))))
-        convAssistLog.Log("Saving index to:"+ self.index_path)
+        convAssistLog.info("Saving index to:"+ self.index_path)
         ind.save_index(self.index_path)
         return ind
         
@@ -1759,7 +1756,7 @@ class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.obs
         return cur.lastrowid
 
     def recreate_canned_db(self, personalized_corpus):
-        convAssistLog.Log("inside CannedPhrasesPredictor recreate_canned_db")
+        convAssistLog.info("inside CannedPhrasesPredictor recreate_canned_db")
         
         self.corpus_sentences = []
         self.pers_cannedphrasesLines = open(self.personalized_cannedphrases, "r").readlines()
@@ -1771,7 +1768,7 @@ class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.obs
             c = conn_sent.cursor()
             c.execute("SELECT * FROM sentences")
             res_all = c.fetchall()
-            convAssistLog.Log("len(sent_db) = "+ str(len(res_all))+ " len(self.pers_cannedphrases) = "+ str(len(self.pers_cannedphrasesLines)))
+            convAssistLog.info("len(sent_db) = "+ str(len(res_all))+ " len(self.pers_cannedphrases) = "+ str(len(self.pers_cannedphrasesLines)))
             for r in res_all:
                 self.cannedPhrases_counts[r[0]] = r[1]
             
@@ -1788,18 +1785,18 @@ class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.obs
             #         self.corpus_embeddings = cache_data['embeddings']
             #         self.corpus_sentences = cache_data['sentences']
             else:
-                convAssistLog.Log("In Recreate_DB of cannedPhrasesPredictor, EMBEDDINGS FILE DOES NOT EXIST!!! ")
+                convAssistLog.info("In Recreate_DB of cannedPhrasesPredictor, EMBEDDINGS FILE DOES NOT EXIST!!! ")
         
 
             ###### check if cannedPhrases file has been modified!!! 
             if(set(self.corpus_sentences) != set(self.pers_cannedphrasesLines) ):
-                convAssistLog.Log("Canned Phrases has been modified externally.. Recreating embeddings and indices")
+                convAssistLog.info("Canned Phrases has been modified externally.. Recreating embeddings and indices")
                 phrasesToAdd = set(self.pers_cannedphrasesLines) - set(self.corpus_sentences)
                 phrasesToRemove = set(self.corpus_sentences) - set(self.pers_cannedphrasesLines)
                 print("phrases to add = ", str(phrasesToAdd))
                 print("phrases to remove = ", str(phrasesToRemove))
-                convAssistLog.Log("phrases to add Recreate_DB of cannedPhrasesPredictor = "+ str(phrasesToAdd))
-                convAssistLog.Log("phrases to phrasesToRemove Recreate_DB of cannedPhrasesPredictor= "+ str(phrasesToRemove))
+                convAssistLog.info("phrases to add Recreate_DB of cannedPhrasesPredictor = "+ str(phrasesToAdd))
+                convAssistLog.info("phrases to phrasesToRemove Recreate_DB of cannedPhrasesPredictor= "+ str(phrasesToRemove))
                 #### update embeddings, 
                 self.corpus_embeddings = self.embedder.encode(self.pers_cannedphrasesLines, show_progress_bar=True, convert_to_numpy=True)
                 # np.save(self.embedding_cache_path,{'sentences': self.pers_cannedphrasesLines, 'embeddings': self.corpus_embeddings})
@@ -1810,15 +1807,15 @@ class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.obs
                 #### update index:
                 self.index = self.create_index(self.index)
             else:
-                convAssistLog.Log("Recreate_DB of cannedPhrasesPredictor: NO modifications to cannedPhrases= ")
+                convAssistLog.info("Recreate_DB of cannedPhrasesPredictor: NO modifications to cannedPhrases= ")
 
         except Error as e:
-            convAssistLog.Log("Exception in CannedPhrasePredictor recreateDB  = "+e)
+            convAssistLog.info("Exception in CannedPhrasePredictor recreateDB  = "+e)
 
     def createSentDB(self, dbname):
-        convAssistLog.Log("IN createSentDB")
+        convAssistLog.info("IN createSentDB")
         try:
-            convAssistLog.Log("creating db = "+ dbname)
+            convAssistLog.info("creating db = "+ dbname)
             conn = sqlite3.connect(dbname) 
             c = conn.cursor()
             c.execute('''
@@ -1827,7 +1824,7 @@ class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.obs
                     ''')        
             conn.commit()
         except Error as e:
-            convAssistLog.Log("Exception in createSentDB  = "+str(e))
+            convAssistLog.info("Exception in createSentDB  = "+str(e))
 
     def find_semantic_matches(self,context, sent_prediction, cannedph):
         try:
@@ -1843,7 +1840,7 @@ class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.obs
                 if ret_sent.strip() not in direct_matchedSentences:
                     sent_prediction.add_suggestion(Suggestion(ret_sent.strip(), hits[i]["score"], self.name))
         except Error as e:
-            convAssistLog.Log("Exception in CannedPhrasePredictor find_semantic_matches  = "+e)
+            convAssistLog.info("Exception in CannedPhrasePredictor find_semantic_matches  = "+e)
         return sent_prediction
 
     def find_direct_matches(self,context, lines, sent_prediction, cannedph):
@@ -1866,7 +1863,7 @@ class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.obs
                 if(row["matches"]>0):
                     sent_prediction.add_suggestion(Suggestion(row['sentence'], row["matches"]+row["probability"], self.name))
         except Error as e:
-            convAssistLog.Log("Exception in CannedPhrasePredictor find_direct_matches  = "+e)
+            convAssistLog.info("Exception in CannedPhrasePredictor find_direct_matches  = "+e)
         return sent_prediction
 
     def getTop5InitialPhrases(self, cannedph, sent_prediction):
@@ -1904,10 +1901,10 @@ class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.obs
 
             ###### Get semantic matches based on both databases: 
             sent_prediction = self.find_semantic_matches(context, sent_prediction, self.cannedPhrases_counts)
-            convAssistLog.Log("sent_prediction = "+str(sent_prediction))
+            convAssistLog.info("sent_prediction = "+str(sent_prediction))
 
         except Error as e:
-            convAssistLog.Log("Exception in cannedPhrases Predict = "+e)
+            convAssistLog.info("Exception in cannedPhrases Predict = "+e)
         return sent_prediction, word_prediction
             
     def close_database(self):
@@ -1916,12 +1913,12 @@ class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.obs
     def learn(self, change_tokens):
         #### For the cannedPhrase predictor, learning adds the sentence to the PSMCannedPhrases 
         if self.learn_mode == "True":
-            convAssistLog.Log("learning ..."+change_tokens)
+            convAssistLog.info("learning ..."+change_tokens)
             try:
 
                 #### ADD THE NEW PHRASE TO THE EMBEDDINGS, AND RECREATE THE INDEX. 
                 if(change_tokens not in self.corpus_sentences):
-                    convAssistLog.Log("phrase "+ change_tokens+ " not present, adding to embeddings and creating new index")
+                    convAssistLog.info("phrase "+ change_tokens+ " not present, adding to embeddings and creating new index")
                     phrase_emb = self.embedder.encode(change_tokens.strip())
                     self.corpus_embeddings = np.vstack((self.corpus_embeddings, phrase_emb))
                     self.corpus_sentences.append(change_tokens.strip())
@@ -1961,7 +1958,7 @@ class CannedPhrasesPredictor(Predictor, metaclass=Singleton):  # , pressagio.obs
                     self.cannedPhrases_counts[change_tokens] = count +1 
                 conn.commit()
             except Error as e:
-                convAssistLog.Log("Exception in LEARN CANNED PHRASES SENTENCES  = "+e)
+                convAssistLog.info("Exception in LEARN CANNED PHRASES SENTENCES  = "+e)
 
     def _read_config(self):
         self.static_resources_path = self.config.get(self.name, "static_resources_path")

@@ -17,7 +17,7 @@ from convAssist.word_sentence_predictor import *
 from convAssist.logger import ConvAssistLogger
 convAssistLog = ConvAssistLogger("ConvAssist_Predictor_Log",".", logging.INFO)
 convAssistLog.setLogger()
-convAssistLog.Log("LOGGING IN COMBINER")
+convAssistLog.info("LOGGING IN COMBINER")
 class Combiner(object):
     """
     Base class for all combiners
@@ -33,7 +33,6 @@ class Combiner(object):
         result = convAssist.word_sentence_predictor.Prediction()
         for i, suggestion in enumerate(prediction):
             token = suggestion.word
-            predictor_name = suggestion.predictor_name
             if token not in seen_tokens:
                 for j in range(i + 1, len(prediction)):
                     if token == prediction[j].word:
@@ -63,7 +62,7 @@ class MeritocracyCombiner(Combiner):
         nextLetterProbs = {}
         for each in result:
             word_predicted = each.word.lower().strip()
-            convAssistLog.Log("context = "+ context + "word_predicted = "+ word_predicted+ " predictor = "+ each.predictor_name)
+            convAssistLog.debug(f"computeLetterProbs: context = {context} word_predicted = {word_predicted} predictor = {each.predictor_name}")
             nextLetter = " "
             if(each.predictor_name !=convAssist.word_sentence_predictor.PredictorNames.Spell.value):
                 if(each.predictor_name == convAssist.word_sentence_predictor.PredictorNames.SentenceComp.value):
@@ -97,5 +96,6 @@ class MeritocracyCombiner(Combiner):
             for suggestion in prediction:
                 result.add_suggestion(suggestion)
 
+        convAssistLog.debug(f"Combiner.combine: Result {result}")
         nextLetterProb = self.computeLetterProbs(result, context)
         return (nextLetterProb, self.filter(result))
