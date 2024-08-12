@@ -312,16 +312,20 @@ class DatabaseConnector(object):
         return result
 
     def _build_where_like_clause(self, ngram):
+        re_escape_singlequote = re.compile(r"(')")
+
         where_clause = " WHERE"
-        for i in range(len(ngram)):
-            ngram[i] = re_escape_singlequote.sub("''", ngram[i])
-            if i < (len(ngram) - 1):
+        escaped_ngram = [re_escape_singlequote.sub("''", item) for item in ngram]
+
+        for i, item in enumerate(escaped_ngram):
+            if i < (len(escaped_ngram) - 1):
                 where_clause += " word_{0} = '{1}' AND".format(
-                    len(ngram) - i - 1, ngram[i]
+                    len(escaped_ngram) - i - 1, item
                 )
             else:
-                where_clause += " word LIKE '{0}%'".format(ngram[-1])
+                where_clause += " word LIKE '{0}%'".format(item)
         return where_clause
+
 
     def _extract_first_integer(self, table):
         count = 0
