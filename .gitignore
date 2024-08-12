@@ -4,7 +4,6 @@ convAssist.egg-info/
 tests/test_data/test.db
 build/
 dist/
-.vscode/
 
 .coverage
 .DS_Store
