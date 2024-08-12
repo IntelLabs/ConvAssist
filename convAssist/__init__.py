@@ -13,6 +13,27 @@ import convAssist.context_tracker
 
 
 class ConvAssist:
+    """
+    ConvAssist class represents a conversational assistant.
+
+    Attributes:
+        config (object): The configuration object for ConvAssist.
+        callback (object): The callback object for ConvAssist.
+        predictor_registry (object): The predictor registry for ConvAssist.
+        context_tracker (object): The context tracker for ConvAssist.
+        predictor_activator (object): The predictor activator for ConvAssist.
+
+    Methods:
+        __init__(self, callback, config, dbconnection=None): Initializes a new instance of the ConvAssist class.
+        predict(self): Calls the predict function on the predictor_activator.
+        update_params(self, test_gen_sentence_pred, retrieve_from_AAC): Updates the parameters in ACAT and syncs them with the initialized parameters in ConvAssist predictors.
+        read_updated_toxicWords(self): Reads the updated toxic words from the predictor_activator.
+        setLogLocation(self, filename, pathLoc, level): Sets the log location for ConvAssist's logger.
+        cannedPhrase_recreateDB(self): Recreates the databases for the cannedPhrases predictor.
+        learn_db(self, text): Learns a sentence, word, or phrase.
+        check_model(self): Checks if the models associated with a predictor are loaded.
+        close_database(self): Closes the database for ConvAssist.
+    """
     def __init__(self, callback, config, dbconnection=None):
         self.config = config
         self.callback = callback
