@@ -7,21 +7,17 @@
 import os
 import unittest
 
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
-
+import configparser
 import convAssist.word_sentence_predictor
 import convAssist.tokenizer
 import convAssist.dbconnector
-import convAssist.context_tracker
+import convAssist.context_tracker 
 import convAssist.callback
 
 
 class TestSuggestion(unittest.TestCase):
     def setUp(self):
-        self.suggestion = convAssist.word_sentence_predictor.Suggestion("Test", 0.3)
+        self.suggestion = convAssist.word_sentence_predictor.Suggestion("Test", 0.3, "test_predictor")
 
     def test_probability(self):
         self.suggestion.probability = 0.1
@@ -33,17 +29,17 @@ class TestPrediction(unittest.TestCase):
         self.prediction = convAssist.word_sentence_predictor.Prediction()
 
     def test_add_suggestion(self):
-        self.prediction.add_suggestion(convAssist.word_sentence_predictor.Suggestion("Test", 0.3))
+        self.prediction.add_suggestion(convAssist.word_sentence_predictor.Suggestion("Test", 0.3, "test_predictor"))
         assert self.prediction[0].word == "Test"
         assert self.prediction[0].probability == 0.3
 
-        self.prediction.add_suggestion(convAssist.word_sentence_predictor.Suggestion("Test2", 0.2))
+        self.prediction.add_suggestion(convAssist.word_sentence_predictor.Suggestion("Test2", 0.2, "test_predictor"))
         assert self.prediction[0].word == "Test"
         assert self.prediction[0].probability == 0.3
         assert self.prediction[1].word == "Test2"
         assert self.prediction[1].probability == 0.2
 
-        self.prediction.add_suggestion(convAssist.word_sentence_predictor.Suggestion("Test3", 0.6))
+        self.prediction.add_suggestion(convAssist.word_sentence_predictor.Suggestion("Test3", 0.6, "test_predictor"))
         assert self.prediction[0].word == "Test3"
         assert self.prediction[0].probability == 0.6
         assert self.prediction[1].word == "Test"
@@ -54,7 +50,7 @@ class TestPrediction(unittest.TestCase):
         self.prediction[:] = []
 
     def test_suggestion_for_token(self):
-        self.prediction.add_suggestion(convAssist.word_sentence_predictor.Suggestion("Token", 0.8))
+        self.prediction.add_suggestion(convAssist.word_sentence_predictor.Suggestion("Token", 0.8, "test_predictor"))
         assert self.prediction.suggestion_for_token("Token").probability == 0.8
         self.prediction[:] = []
 

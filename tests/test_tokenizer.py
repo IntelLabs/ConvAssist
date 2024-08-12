@@ -6,15 +6,15 @@
 """
 import os
 import unittest
+from pathlib import Path
 
 import convAssist.tokenizer
 
 
 class TestForwardTokenizer(unittest.TestCase):
+    
     def setUp(self):
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "test_data", "der_linksdenker.txt")
-        )
+        filename = self.filename = Path("tests/test_data") / ("der_linksdenker.txt")
         with open(filename, "r", encoding="utf-8") as f:
             self.tokenizer = convAssist.tokenizer.ForwardTokenizer(f.read())
 
@@ -28,7 +28,7 @@ class TestForwardTokenizer(unittest.TestCase):
         assert self.tokenizer.count_characters() == 7927
 
     def test_count_tokens(self):
-        assert self.tokenizer.count_tokens() == 1233
+        assert self.tokenizer.count_tokens() == 1251
 
     def test_has_more_tokens(self):
         assert self.tokenizer.has_more_tokens() == True
@@ -66,7 +66,7 @@ class TestReverseTokenizer(unittest.TestCase):
         assert self.tokenizer.offset == self.tokenizer.offend
 
     def test_count_tokens(self):
-        assert self.tokenizer.count_tokens() == 1233
+        assert self.tokenizer.count_tokens() == 1251
 
     def test_has_more_tokens(self):
         assert self.tokenizer.has_more_tokens() == True

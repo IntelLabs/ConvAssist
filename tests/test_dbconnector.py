@@ -6,6 +6,8 @@
 """
 import os
 import unittest
+from . import utils
+from pathlib import Path
 
 import convAssist.dbconnector
 
@@ -17,15 +19,22 @@ try:
 except ImportError:
     pass
 
-
 class TestSqliteDatabaseConnector(unittest.TestCase):
     def setUp(self):
-        self.filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "test_data", "test.db")
-        )
+        self.file_path = "tests/test_data/"
+        self.file_name = "connector-test.db"
+        self.filename = Path(self.file_path) / (self.file_name)
         self.connector = convAssist.dbconnector.SqliteDatabaseConnector(self.filename)
         self.connector.open_database()
 
+    @classmethod
+    def teardown_class(self):
+        if hasattr(self, "connector"):
+            self.connector.close_database()
+            utils.safe_delete_file(self.filename)
+        else:
+            pass
+        
     def test_execute_sql(self):
         self.connector.execute_sql(
             "CREATE TABLE IF NOT EXISTS test ( c1 TEXT, c2 INTEGER );"
@@ -125,11 +134,6 @@ class TestSqliteDatabaseConnector(unittest.TestCase):
         result = self.connector.ngram_like_table(("der", "links"))
         assert result == [("der", "linksabbieger", 32), ("der", "linksdenker", 22)]
         self.connector.execute_sql("DROP TABLE _2_gram;")
-
-    def teardown(self):
-        self.connector.close_database()
-        if os.path.isfile(self.filename):
-            os.remove(self.filename)
 
 
 if psycopg2_installed:
