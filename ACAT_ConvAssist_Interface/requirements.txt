@@ -2,6 +2,6 @@
 psutil==5.8.0
 pystray==0.16.0
 # wxPython==4.2.1
-pywin32==301;sys_platform=="win32"
+pywin32==302;sys_platform=="win32"
 pywin32-ctypes==0.2.0;sys_platform=="win32"
 pyinstaller==4.5.1

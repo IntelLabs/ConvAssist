@@ -23,13 +23,14 @@ class TestLogger(unittest.TestCase):
         self.file_path = "tests/test_data/"
         self.file_name = "test_log"
         self.full_file_path = Path(self.file_path) / (self.file_name + ".txt")
+        # safe_delete_file(self.full_file_path)
         self.logger = ConvAssistLogger(self.file_name, self.file_path, logging.INFO)
             
     def tearDown(self) -> None: 
         #TODO: fix logger to not append a file extension...
+        self.logger.Close()
         safe_delete_file(self.full_file_path)
         
-        self.logger.Close()
            
         return super().tearDown()
     

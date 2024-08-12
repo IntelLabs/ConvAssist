@@ -11,9 +11,12 @@ Classes to connect to databases.
 
 from __future__ import absolute_import, unicode_literals
 
+from convAssist.logger import ConvAssistLogger
+import logging
 import abc
 import sqlite3
 import re
+import os
 
 try:
     import psycopg2
@@ -358,6 +361,8 @@ class SqliteDatabaseConnector(DatabaseConnector):
         """
         DatabaseConnector.__init__(self, dbname, cardinality)
         self.con = None
+        self.convAssistLog = ConvAssistLogger("ConvAssist_DBConnector_Log", "logs", logging.DEBUG)
+        self.convAssistLog.setLogger()
         self.open_database()
 
     def commit(self):
@@ -365,6 +370,7 @@ class SqliteDatabaseConnector(DatabaseConnector):
         Sends a commit to the database.
 
         """
+        self.convAssistLog.debug(f"Committing changes to sqlite db: {self.dbname}")
         self.con.commit()
 
     def open_database(self):
@@ -372,8 +378,13 @@ class SqliteDatabaseConnector(DatabaseConnector):
         Opens the sqlite database.
 
         """
-        print("opening sqlite db: ", self.dbname)
-        self.con = sqlite3.connect(self.dbname)
+        self.convAssistLog.debug(f"opening sqlite db: {self.dbname}")
+        self.convAssistLog.debug(f"current directory: {os.getcwd()}")
+        try:
+            self.con = sqlite3.connect(self.dbname)
+        except sqlite3.Error as e:
+            self.convAssistLog.error(f"Error while opening sqlite database: {self.dbname}")
+            raise e
 
     def close_database(self):
         """
@@ -381,20 +392,27 @@ class SqliteDatabaseConnector(DatabaseConnector):
 
         """
         if self.con:
-            self.con.close()
+            self.convAssistLog.debug(f"closing sqlite db: {self.dbname}")
+            try:
+                self.con.close()
+            except sqlite3.Error as e:
+                self.convAssistLog.error(f"Error while closing sqlite database: {self.dbname}")
+                raise e
 
     def execute_sql(self, query):
         """
         Executes a given query string on an open sqlite database.
 
         """
+        self.convAssistLog.debug(f"Executing sql query: {query}")
         c = self.con.cursor()
         try:
             c.execute(query)
             result = c.fetchall()
-        except:
-            print("Exception while processing this sql query: ", query)
-            return []
+        except sqlite3.Error as e:
+            self.convAssistLog.error(f"Exception while processing this sql query: {query}")
+            raise e
+
         return result
 
 
