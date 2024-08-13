@@ -15,8 +15,7 @@ import convAssist.word_sentence_predictor
 from convAssist.word_sentence_predictor import * 
 
 from convAssist.logger import ConvAssistLogger
-convAssistLog = ConvAssistLogger("ConvAssist_Predictor_Log",".", logging.INFO)
-convAssistLog.setLogger()
+convAssistLog = ConvAssistLogger().configure(True, ConvAssistLogger.INFO, "ConvAssist_Predictor.log")
 convAssistLog.info("LOGGING IN COMBINER")
 class Combiner(object):
     """

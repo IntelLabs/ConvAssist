@@ -25,11 +25,11 @@ from pystray import MenuItem as item
 from tkinter import *
 from PIL import Image, ImageTk
 from Messages import *
-from ACAT_ConvAssist_Interface.ConvAssistUtilities import *
+import ConvAssistUtilities
 from enum import IntEnum
 from convAssist.logger import *
 from datetime import datetime
-from shutil import rmtree
+import shutil
 from convAssist import callback
 import logging
 
@@ -957,8 +957,9 @@ def setModelsParameters(path_database, test_gen_sentence_prediction, retrieve_AA
             addTextToWindow("INI file for CannedPhrases mode NOT found \n")
     except Exception as e:
         canned_config_set = False
-        convAssistLog.exception(f" INI file for CannedPhrases {e}")
+        convAssistLog.critical(f" INI file for CannedPhrases {e}")
         addTextToWindow(f"Exception INI file for CannedPhrases {e} \n")
+        raise e
 
 
 def deleteOldPyinstallerFolders(time_threshold=100):
@@ -968,28 +969,35 @@ def deleteOldPyinstallerFolders(time_threshold=100):
     :return: void
     """
     try:
-        base_path = sys._MEIPASS
-        convAssistLog.debug(f"Directory for current _MEI Folder {base_path}")
+        
+        if hasattr(sys, '_MEIPASS'):
+            base_path = sys._MEIPASS
+            convAssistLog.debug(f"Directory for current _MEI Folder {base_path}")
+        else:
+            convAssistLog.info("Not running in a PyInstaller bundle.")
+            return
+        
+        temp_path = os.path.abspath(os.path.join(base_path, '..'))  # Go to parent folder of MEIPASS
+        convAssistLog.debug(f"temp folder path {temp_path}")
+
+        # Search all MEIPASS folders...
+        mei_folders = glob.glob(os.path.join(temp_path, '_MEI*'))
+        convAssistLog.debug(f"_MEI folders {mei_folders}")
+        count_list = len(mei_folders)
+        convAssistLog.debug(f"_MEI Folders count {count_list}")
+        for item in mei_folders:
+            try:
+                convAssistLog.debug(f"----item {item}")
+                if (time.time() - os.path.getctime(item)) > time_threshold and item != base_path:
+                    convAssistLog.debug(f"Deleting {item}")
+                    if os.path.isdir(item):
+                        shutil.rmtree(item)
+            except Exception as es:
+                convAssistLog.error(f" deleting folder {item}: {es}")
+                raise es
     except Exception as es:
-        convAssistLog.exception(f" Directory for _MEI Folders {es}")
-        return  # Not being ran as OneFile Folder -> Return
-
-    temp_path = os.path.abspath(os.path.join(base_path, '..'))  # Go to parent folder of MEIPASS
-    convAssistLog.debug(f"temp folder path {temp_path}")
-
-    # Search all MEIPASS folders...
-    mei_folders = glob.glob(os.path.join(temp_path, '_MEI*'))
-    convAssistLog.debug(f"_MEI folders {mei_folders}")
-    count_list = len(mei_folders)
-    convAssistLog.debug(f"_MEI Folders count {count_list}")
-    for item in mei_folders:
-        try:
-            convAssistLog.debug(f"----item {item}")
-            if (time.time() - os.path.getctime(item)) > time_threshold and item != base_path:
-                convAssistLog.debug(f"Deleting {item}")
-                rmtree(item)
-        except Exception as es:
-            convAssistLog.exception(f" deleting folder {es} in {item}")
+        convAssistLog.critical(f" Directory for _MEI Folders {es}")
+        raise es
 
 
 """

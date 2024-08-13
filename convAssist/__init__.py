@@ -10,7 +10,9 @@ from glob import glob
 from nltk import sent_tokenize
 import convAssist.word_sentence_predictor
 import convAssist.context_tracker
+from convAssist.logger import ConvAssistLogger
 
+__all__ = ['word_sentence_predictor', 'context_tracker', 'ConvAssistLogger']  # This is the list of submodules that should be imported when using `from convAssist import *`
 
 class ConvAssist:
     """

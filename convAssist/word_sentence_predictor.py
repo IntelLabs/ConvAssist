@@ -76,8 +76,7 @@ except Exception as e:
 MIN_PROBABILITY = 0.0
 MAX_PROBABILITY = 1.0
 global convAssistLog
-convAssistLog = ConvAssistLogger("ConvAssist_Predictor_Log", "", logging.INFO)
-convAssistLog.setLogger()
+convAssistLog = ConvAssistLogger().configure(True, ConvAssistLogger.INFO, "ConvAssist_Predictor.log")
 
 
 class PredictorNames(Enum):
@@ -304,8 +303,7 @@ class PredictorActivator(object):
         if convAssistLog.IsLogInitialized():
             convAssistLog.Close()
         convAssistLog = None
-        convAssistLog = ConvAssistLogger(filename, pathLoc, level)
-        convAssistLog.setLogger()
+        convAssistLog = ConvAssistLogger().configure(True, ConvAssistLogger.INFO,Path(pathLoc) / (filename + ".log"))
 
 
 class PredictorRegistry(list):  # pressagio.observer.Observer,
