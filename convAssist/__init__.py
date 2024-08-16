@@ -1,18 +1,10 @@
 # Copyright (C) 2023 Intel Corporation
-
-
 # SPDX-License-Identifier: Apache-2.0
-"""
-Init class for ConvAssist Language Model Predictors - config files, predictor registry, are all initialized. 
-"""
 
-from glob import glob
 from nltk import sent_tokenize
-import convAssist.word_sentence_predictor
-import convAssist.context_tracker
-from convAssist.logger import ConvAssistLogger
-
-__all__ = ['word_sentence_predictor', 'context_tracker', 'ConvAssistLogger']  # This is the list of submodules that should be imported when using `from convAssist import *`
+from ConvAssist.utilities.context_tracker import ContextTracker
+from ConvAssist.utilities.predictor_registry import PredictorRegistry
+from ConvAssist.predictor.utilities.predictior_activator import PredictorActivator
 
 class ConvAssist:
     """
@@ -40,14 +32,14 @@ class ConvAssist:
         self.config = config
         self.callback = callback
 
-        self.predictor_registry = convAssist.word_sentence_predictor.PredictorRegistry(
+        self.predictor_registry = PredictorRegistry(
             self.config, dbconnection
         )
-        self.context_tracker = convAssist.context_tracker.ContextTracker(
+        self.context_tracker = ContextTracker(
             self.config, self.predictor_registry, callback
         )
 
-        self.predictor_activator = convAssist.word_sentence_predictor.PredictorActivator(
+        self.predictor_activator = PredictorActivator(
             self.config, self.predictor_registry, self.context_tracker
         )
         self.predictor_activator.combination_policy = "meritocracy"
@@ -74,8 +66,8 @@ class ConvAssist:
     Paramters updated in ACAT are synced with the parameters initialized in ConvAssist Predictors. 
     """
 
-    def update_params(self,test_gen_sentence_pred,retrieve_from_AAC):
-        self.predictor_activator.update_params(test_gen_sentence_pred,retrieve_from_AAC)
+    def update_params(self, test_gen_sentence_pred, retrieve_from_AAC):
+        self.predictor_activator.update_params(test_gen_sentence_pred, retrieve_from_AAC)
 
 
     def read_updated_toxicWords(self):

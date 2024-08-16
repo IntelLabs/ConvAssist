@@ -1,9 +1,10 @@
 import unittest
 from unittest.mock import MagicMock
 
-import convAssist.word_sentence_predictor
-import convAssist.context_tracker
-import convAssist.__init__
+from ConvAssist.predictor.utilities.predictior_activator import PredictorActivator
+from ConvAssist.utilities.predictor_registry import PredictorRegistry
+from ConvAssist.utilities.context_tracker import ContextTracker
+from ConvAssist import ConvAssist
 
 
 class TestConvAssist(unittest.TestCase):
@@ -13,17 +14,17 @@ class TestConvAssist(unittest.TestCase):
         self.dbconnection = MagicMock()
 
     def test_init(self):
-        conv_assist = convAssist.__init__.ConvAssist(self.callback, self.config, self.dbconnection)
+        conv_assist = ConvAssist(self.callback, self.config, self.dbconnection)
 
         self.assertEqual(conv_assist.callback, self.callback)
         self.assertEqual(conv_assist.config, self.config)
-        self.assertIsInstance(conv_assist.predictor_registry, convAssist.word_sentence_predictor.PredictorRegistry)
-        self.assertIsInstance(conv_assist.context_tracker, convAssist.context_tracker.ContextTracker)
-        self.assertIsInstance(conv_assist.predictor_activator, convAssist.word_sentence_predictor.PredictorActivator)
+        self.assertIsInstance(conv_assist.predictor_registry, PredictorRegistry)
+        self.assertIsInstance(conv_assist.context_tracker, ContextTracker)
+        self.assertIsInstance(conv_assist.predictor_activator, PredictorActivator)
         self.assertEqual(conv_assist.predictor_activator.combination_policy, "meritocracy")
 
     def test_predict(self):
-        conv_assist = convAssist.__init__.ConvAssist(self.callback, self.config, self.dbconnection)
+        conv_assist = ConvAssist(self.callback, self.config, self.dbconnection)
 
         # Mock the predict method of predictor_activator
         conv_assist.predictor_activator.predict = MagicMock(return_value=(1.0, [], 0.5, []))
@@ -36,7 +37,7 @@ class TestConvAssist(unittest.TestCase):
         self.assertEqual(sent, [])
 
     def test_update_params(self):
-        conv_assist = convAssist.__init__.ConvAssist(self.callback, self.config, self.dbconnection)
+        conv_assist = ConvAssist(self.callback, self.config, self.dbconnection)
 
         # Mock the update_params method of predictor_activator
         conv_assist.predictor_activator.update_params = MagicMock()
@@ -46,7 +47,7 @@ class TestConvAssist(unittest.TestCase):
         conv_assist.predictor_activator.update_params.assert_called_with(True, False)
 
     def test_read_updated_toxicWords(self):
-        conv_assist = convAssist.__init__.ConvAssist(self.callback, self.config, self.dbconnection)
+        conv_assist = ConvAssist(self.callback, self.config, self.dbconnection)
 
         # Mock the read_updated_toxicWords method of predictor_activator
         conv_assist.predictor_activator.read_updated_toxicWords = MagicMock()
@@ -56,7 +57,7 @@ class TestConvAssist(unittest.TestCase):
         conv_assist.predictor_activator.read_updated_toxicWords.assert_called()
 
     def test_setLogLocation(self):
-        conv_assist = convAssist.__init__.ConvAssist(self.callback, self.config, self.dbconnection)
+        conv_assist = ConvAssist(self.callback, self.config, self.dbconnection)
 
         # Mock the set_log method of predictor_activator
         conv_assist.predictor_activator.set_log = MagicMock()
@@ -66,7 +67,7 @@ class TestConvAssist(unittest.TestCase):
         conv_assist.predictor_activator.set_log.assert_called_with("filename", "pathLoc", "level")
 
     def test_cannedPhrase_recreateDB(self):
-        conv_assist = convAssist.__init__.ConvAssist(self.callback, self.config, self.dbconnection)
+        conv_assist = ConvAssist(self.callback, self.config, self.dbconnection)
 
         # Mock the recreate_canned_phrasesDB method of predictor_activator
         conv_assist.predictor_activator.recreate_canned_phrasesDB = MagicMock()
@@ -76,7 +77,7 @@ class TestConvAssist(unittest.TestCase):
         conv_assist.predictor_activator.recreate_canned_phrasesDB.assert_called()
 
     def test_learn_db(self):
-        conv_assist = convAssist.__init__.ConvAssist(self.callback, self.config, self.dbconnection)
+        conv_assist = ConvAssist(self.callback, self.config, self.dbconnection)
 
         # Mock the learn_text method of predictor_activator
         conv_assist.predictor_activator.learn_text = MagicMock()
@@ -86,7 +87,7 @@ class TestConvAssist(unittest.TestCase):
         conv_assist.predictor_activator.learn_text.assert_called_with("This is a test sentence.")
 
     def test_check_model(self):
-        conv_assist = convAssist.__init__.ConvAssist(self.callback, self.config, self.dbconnection)
+        conv_assist = ConvAssist(self.callback, self.config, self.dbconnection)
 
         # Mock the model_status method of predictor_registry
         conv_assist.predictor_registry.model_status = MagicMock(return_value="Model loaded")
@@ -96,7 +97,7 @@ class TestConvAssist(unittest.TestCase):
         self.assertEqual(status, "Model loaded")
 
     def test_close_database(self):
-        conv_assist = convAssist.__init__.ConvAssist(self.callback, self.config, self.dbconnection)
+        conv_assist = ConvAssist(self.callback, self.config, self.dbconnection)
 
         # Mock the close_database method of predictor_registry
         conv_assist.predictor_registry.close_database = MagicMock()

@@ -1,14 +1,12 @@
-"""
- Copyright (C) <year(s)> Intel Corporation
+# Copyright (C) <year(s)> Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
 
- SPDX-License-Identifier: Apache-2.0
-
-"""
 import os
 import unittest
 from pathlib import Path
 
-import convAssist.tokenizer
+from  ConvAssist.tokenizer.forward_tokenizer import ForwardTokenizer
+from ConvAssist.tokenizer.reverse_tokenizer import ReverseTokenizer
 
 
 class TestForwardTokenizer(unittest.TestCase):
@@ -16,7 +14,7 @@ class TestForwardTokenizer(unittest.TestCase):
     def setUp(self):
         filename = self.filename = Path("tests/test_data") / ("der_linksdenker.txt")
         with open(filename, "r", encoding="utf-8") as f:
-            self.tokenizer = convAssist.tokenizer.ForwardTokenizer(f.read())
+            self.tokenizer = ForwardTokenizer(f.read())
 
     def test_reset_stream(self):
         self.tokenizer.next_token()
@@ -38,9 +36,9 @@ class TestForwardTokenizer(unittest.TestCase):
         self.tokenizer.reset_stream()
 
     def test_tokenization(self):
-        tokenizer = convAssist.tokenizer.ForwardTokenizer("This is pressagio.")
+        tokenizer = ForwardTokenizer("This is ConvAssist.")
         tokens = list(tokenizer)
-        self.assertEqual(tokens, ["This", "is", "pressagio"])
+        self.assertEqual(tokens, ["This", "is", "ConvAssist"])
 
     def test_is_blankspace(self):
         assert self.tokenizer.is_blankspace("\n") == True
@@ -57,7 +55,7 @@ class TestReverseTokenizer(unittest.TestCase):
             os.path.join(os.path.dirname(__file__), "test_data", "der_linksdenker.txt")
         )
         with open(filename, "r", encoding="utf-8") as f:
-            self.tokenizer = convAssist.tokenizer.ReverseTokenizer(f.read())
+            self.tokenizer = ReverseTokenizer(f.read())
 
     def test_reset_stream(self):
         self.tokenizer.next_token()
@@ -82,9 +80,9 @@ class TestEqual(unittest.TestCase):
             os.path.join(os.path.dirname(__file__), "test_data", "der_linksdenker.txt")
         )
         with open(filename, "r", encoding="utf-8") as f:
-            reverse_tokenizer = convAssist.tokenizer.ReverseTokenizer(f.read())
+            reverse_tokenizer = ReverseTokenizer(f.read())
             f.seek(0)
-            forward_tokenizer = convAssist.tokenizer.ForwardTokenizer(f.read())
+            forward_tokenizer = ForwardTokenizer(f.read())
 
         forward_tokens = []
         reverse_tokens = []

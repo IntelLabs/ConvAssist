@@ -16,7 +16,7 @@ from distutils.sysconfig import get_python_inc
 from distutils import ccompiler, msvccompiler
 
 # Package meta-data.
-NAME = "convAssist"
+NAME = "ConvAssist"
 DESCRIPTION = "A language modeling library for the Assistive Context Aware Toolkit (ACAT)"
 URL = ""
 EMAIL = ""
@@ -163,9 +163,6 @@ def setup_package():
         ext_modules.append(
             Extension(mod_name, [mod_path], language="c++", include_dirs=include_dirs)
         )
-
-    # if not is_source_release(here):
-    #    generate_cython(here, "pressagio")
 
     # Where the magic happens:
     setup(

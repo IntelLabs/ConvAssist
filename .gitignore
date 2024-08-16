@@ -1,9 +1,12 @@
 venv
+tmp/
+htmlcov/
 __pycache__/
-convAssist.egg-info/
+ConvAssist.egg-info/
 tests/test_data/test.db
 build/
 dist/
 
 .coverage
 .DS_Store
+results/

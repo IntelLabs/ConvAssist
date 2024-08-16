@@ -1,0 +1,566 @@
+# Copyright (C) 2023 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+import numpy as np
+from pathlib import Path
+import torch
+import time
+import re
+import hnswlib
+import nltk
+import joblib
+import collections
+from pathlib import Path
+from nltk import word_tokenize, sent_tokenize
+from nltk.stem.porter import PorterStemmer
+from sentence_transformers import SentenceTransformer
+from transformers import pipeline
+
+from ConvAssist.predictor import Predictor
+from ConvAssist.utilities.suggestion import Suggestion
+from ConvAssist.utilities.nlp import NLP
+from ConvAssist.predictor.utilities.prediction import Prediction
+
+from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
+
+class SentenceCompletionPredictor(Predictor):
+    """
+    Calculates prediction from n-gram model using gpt-2.
+    """
+
+    def set_seed(self, seed):
+        numpy.random.seed(seed)
+        torch.manual_seed(seed)
+        if self.n_gpu > 0:
+            torch.cuda.manual_seed_all(seed)
+
+    def __init__(self, 
+                 config, 
+                 context_tracker, 
+                 predictor_name, 
+                 short_desc=None, 
+                 long_desc=None, 
+                 dbconnection=None, 
+                 logger=None):
+
+        Predictor.__init__(
+            self, 
+            config, 
+            context_tracker, 
+            predictor_name, 
+            short_desc, 
+            long_desc,
+            dbconnection=dbconnection,
+            logger=logger
+        )
+        self.db = None
+        self.dbconnection = dbconnection
+        self.cardinality = 3
+        self.learn_mode_set = False
+
+        self._database = None
+        self._deltas = None
+        self._learn_mode = None
+        self.config = config
+        self.name = predictor_name
+        self.context_tracker = context_tracker
+        self._read_config()
+        self.MODEL_LOADED = False
+        self.corpus_sentences=[]
+        
+        self.nlp = NLP().get_nlp()
+        
+        ################ check if saved torch model exists  
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
+            self.n_gpu = torch.cuda.device_count()
+        elif torch.backends.mps.is_available():
+            self.device = torch.device("mps")
+            self.n_gpu = torch.mps.device_count()
+        else:
+            self.device = torch.device("cpu")
+            self.n_gpu = 0
+            
+        self.load_model(self.test_generalSentencePrediction, self.retrieve)            
+        self.stemmer = PorterStemmer()
+        
+        ####### CREATE INDEX TO QUERY DATABASE
+        self.embedder = SentenceTransformer(str(self.sentence_transformer_model))
+        self.embedding_size = 384    #Size of embeddings
+        self.top_k_hits = 2       #Output k hits
+        self.n_clusters = 350
+        
+        #We use Inner Product (dot-product) as Index. 
+        #We will normalize our vectors to unit length, then is Inner Product equal to cosine similarity
+        self.index = hnswlib.Index(space = 'cosine', dim = self.embedding_size)
+
+        self.corpus_sentences = open(self.retrieve_database).readlines()
+        self.corpus_sentences = [s.strip() for s in self.corpus_sentences]
+
+        self.blacklist_words = open(self.blacklist_file).readlines()
+        self.blacklist_words = [s.strip() for s in self.blacklist_words]
+
+        self.personalized_allowed_toxicwords = self.read_personalized_toxic_words()
+
+        self.OBJECT_DEPS = {"dobj","pobj", "dative", "attr", "oprd", "npadvmod", "amod","acomp","advmod"}
+        self.SUBJECT_DEPS = {"nsubj", "nsubjpass", "csubj", "agent", "expl"}
+        
+        # tags that define wether the word is wh-
+        self.WH_WORDS = {"WP", "WP$", "WRB"}
+        self.stopwords = []
+        stoplist = open(self.stopwordsFile,"r").readlines()
+        for s in stoplist:
+            self.stopwords.append(s.strip())
+
+        if(not Path.is_file(self.embedding_cache_path)):
+            self.corpus_embeddings = self.embedder.encode(self.corpus_sentences, show_progress_bar=True, convert_to_numpy=True)
+            joblib.dump({'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings}, self.embedding_cache_path)
+            # np.save(self.embedding_cache_path,{'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings})
+
+        else:
+            # cache_data = np.load(self.embedding_cache_path)
+            cache_data = joblib.load(self.embedding_cache_path)
+            self.corpus_sentences = cache_data['sentences']
+            self.corpus_embeddings = cache_data['embeddings']
+
+        ###### LOAD INDEX IF EXISTS, ELSE CREATE INDEX 
+        if Path.exists(self.index_path):
+            self.log.debug("Loading index...")
+            self.index.load_index(str(self.index_path))
+
+        else:
+            ## creating the embeddings pkl file
+            self.log.debug(" index does not exist, creating index")
+
+            ### Create the HNSWLIB index
+            self.log.debug("Start creating HNSWLIB index")
+            self.index.init_index(max_elements = 20000, ef_construction = 400, M = 64)
+
+            # Then we train the index to find a suitable clustering
+            self.index.add_items(self.corpus_embeddings, list(range(len(self.corpus_embeddings))))
+
+            self.log.debug(f"Saving index to: {self.index_path}")
+            self.index.save_index(self.index_path)
+            
+        # Controlling the recall by setting ef:
+        self.index.set_ef(50)  # ef should always be > top_k_hits
+
+        if(not Path.is_file(self.sent_database)) :
+            self.log.debug("{self.sent_database} not found, creating it")
+            self.createSentDB(self.sent_database)
+
+    def read_personalized_toxic_words(self):
+        if not Path.exists(self.personalized_allowed_toxicwords_file):
+            f = open(self.personalized_allowed_toxicwords_file, "w")
+            f.close()
+        self.personalized_allowed_toxicwords = open(self.personalized_allowed_toxicwords_file, "r").readlines()
+        self.personalized_allowed_toxicwords = [s.strip() for s in self.personalized_allowed_toxicwords]
+        self.log.debug(f"UPDATED TOXIC WORDS = {self.personalized_allowed_toxicwords}")
+        return self.personalized_allowed_toxicwords
+
+    def extract_svo(self, sent):
+        doc = self.nlp(sent)
+        sub = []
+        at = []
+        ve = []
+        imp_tokens = []
+        for token in doc:
+            # is this a verb?
+            if token.pos_ == "VERB":
+                ve.append(token.text)
+                if(token.text.lower() not in self.stopwords and token.text.lower() not in imp_tokens):
+                    imp_tokens.append(token.text.lower())
+            # is this the object?
+            if token.dep_ in self.OBJECT_DEPS or token.head.dep_ in self.OBJECT_DEPS:
+                at.append(token.text)
+                if(token.text.lower() not in self.stopwords and token.text.lower() not in imp_tokens):
+                    imp_tokens.append(token.text.lower())
+            # is this the subject?
+            if token.dep_ in self.SUBJECT_DEPS or token.head.dep_ in self.SUBJECT_DEPS:
+                sub.append(token.text)
+                if(token.text.lower() not in self.stopwords and token.text.lower() not in imp_tokens):
+                    imp_tokens.append(token.text.lower())
+        return imp_tokens
+
+
+    def createSentDB(self, dbname):
+        self.log.debug("IN createSentDB")
+        try:
+            conn = SQLiteDatabaseConnector(dbname, self.log).connect()
+
+            conn.execute_query('''
+                CREATE TABLE IF NOT EXISTS sentences
+                (sentence TEXT UNIQUE, count INTEGER)
+            ''')
+            conn.close()
+        except Exception as e:
+            self.log.error(f"Exception in SentenceCompletionPredictor, createSentDB {e}")
+
+    def load_model(self, test_generalSentencePrediction, retrieve): 
+        self.test_generalSentencePrediction = test_generalSentencePrediction
+        self.retrieve = retrieve
+        # self.log.debug(f"INSIDE SentenceCompletionPredictor LOAD MODEL: {Path.exists(self.modelname)}")
+        #### if we are only testing the models
+        if(self.test_generalSentencePrediction=="True"):
+            if(self.use_onnx_model=="True" and Path.exists(self.onnx_path)):
+                self.log.debug("No support for ONNX model ")
+                # self.log.debug("Loading onnx model from "+self.onnx_path)
+                # model = ORTModelForCausalLM.from_pretrained(self.onnx_path, file_name="decoder_model.onnx")
+                # tokenizer = AutoTokenizer.from_pretrained(self.onnx_path)
+                # self.generator = onnxpipeline("text-generation", model=model, tokenizer=tokenizer)
+                self.MODEL_LOADED = True
+
+            elif(self.use_onnx_model=="False" and Path.exists(self.modelname)):
+                self.log.debug(f"Loading gpt2 model from {self.modelname}")
+                self.generator = pipeline('text-generation', model=self.modelname, tokenizer=self.tokenizer)
+                self.MODEL_LOADED = True
+
+        else:
+            if(self.retrieve=="False"):
+                self.log.debug(f"RETRIEVE IS FALSE, loading model = {self.modelname}")
+                if(self.use_onnx_model=="True" and Path.exists(self.onnx_path)):
+                    self.log.debug("No support for ONNX model ")
+                    # model = ORTModelForCausalLM.from_pretrained(self.onnx_path, file_name="decoder_model_quantized.onnx")
+                    # tokenizer = AutoTokenizer.from_pretrained(self.onnx_path)
+                    # self.generator = onnxpipeline("text-generation", model=model, tokenizer=tokenizer)
+                    self.MODEL_LOADED = True
+                elif(self.use_onnx_model=="False" and Path.exists(self.modelname)):
+                    self.log.debug(f"Loading gpt2 model from {self.modelname} with {self.tokenizer} tokenizer.")
+                    self.generator = pipeline('text-generation', model=str(self.modelname), tokenizer=str(self.tokenizer), device=self.device)
+                    self.MODEL_LOADED = True
+            elif(self.retrieve=="True"):
+                self.MODEL_LOADED = True
+
+        self.log.debug(f"self.MODEL_LOADED = {self.MODEL_LOADED}")
+        
+    def is_model_loaded(self):
+        return self.MODEL_LOADED
+
+    def ngram_to_string(self, ngram):
+        "|".join(ngram)
+
+    def filter_text(self, text):
+        res = False
+        words = []
+        toxicwordsList = list(set(self.blacklist_words) - set(self.personalized_allowed_toxicwords))
+
+        if(any(x in text.lower().split() for x in toxicwordsList)):
+            words = list(set(text.lower().split()) & set(toxicwordsList))
+            # print("blacklisted word is present!!", set(text.split()) & set(self.blacklist_words))
+            res = True
+        return (res, words)
+
+    def textInCorpus(self, text):
+        query_embedding = self.embedder.encode(text)
+        
+        #We use hnswlib knn_query method to find the top_k_hits
+        corpus_ids, distances = self.index.knn_query(query_embedding, k=self.top_k_hits)
+        hits = [{'corpus_id': id, 'score': 1-score} for id, score in zip(corpus_ids[0], distances[0])]
+        hits = sorted(hits, key=lambda x: x['score'], reverse=True)
+        self.logger.debug(f"score = {hits[0]['score']}, corpus_id = {hits[0]['corpus_id']}, len(corpus_sentences) = {len(self.corpus_sentences)}, corpus_embeddings.shape = {self.corpus_embeddings.shape}")
+        self.logger.debug(f"text = {text}, score = {hits[0]['score']}, sentence = {self.corpus_sentences[hits[0]['corpus_id']]}")
+        return hits[0]['score']
+        
+    def retrieve_fromDataset(self, context):
+        pred = Prediction()
+        probs = {}
+
+        lines = open(self.retrieve_database, "r").readlines()
+        retrieved = []
+        totalsent= len(lines)
+        for each in lines:
+            # if(each.lower().find(context.lower())!=-1):
+            if(each.lower().startswith(context.lower())):
+                each = re.split('[.\n?!]',each)[0]
+                retrieved.append(each)
+        retrieved_set = set(retrieved)
+        self.log.debug(f"len(retrieved_set = {len(retrieved_set)}) len(retrieved) = {len(retrieved)}")
+        for s in retrieved_set:
+            probs[s] = float(retrieved.count(s))/totalsent
+        try:
+            pers_results = {}
+            totalsentences = 0
+            dbconn = SQLiteDatabaseConnector(self.sent_database, self.log)
+            dbconn.connect()
+            count = 0
+            #### CHECK IF SENTENCE EXISITS IN THE DATABASE
+            res = dbconn.fetch_all("SELECT * FROM sentences")
+            for r in res:
+                sent = r[0]
+                totalsentences = totalsentences+r[1]
+                if(sent.lower().startswith(context.lower())):
+                    sent = re.split('[.\n?!]',sent)[0]
+                    if(sent in pers_results):
+                        pers_results[sent] = pers_results[sent]+r[1]
+                    else:
+                        pers_results[sent] = r[1]
+            for k,v in pers_results.items():
+                probs[k] = float(v/totalsentences)
+
+
+            sorted_x = collections.OrderedDict(sorted(probs.items(), key=lambda kv: kv[1], reverse=True))
+            count = 0
+            addedcompletions = []
+            for k,v in sorted_x.items():
+                if(count > 5):
+                    break
+                k = k[len(context):]
+                if (not k in addedcompletions):
+                    pred.add_suggestion(Suggestion(k, v, self.name))
+                    addedcompletions.append(k)
+                    count = count+1
+        except Exception as e:
+            self.log.debug(f"Exception in SentenceCompletionPredictor, retrieveFromDataset function {e}")
+
+        return pred
+
+    def checkRepetition(self, text):
+        tokens = nltk.word_tokenize(text)
+
+        #Create bigrams and check if there are any repeititions. 
+        bgs = nltk.bigrams(tokens)
+        #compute frequency distribution for all the bigrams in the text
+        fdist = nltk.FreqDist(bgs)
+        fdist = {k:v for (k,v) in fdist.items() if v >= 2}
+        if (fdist!={}):
+            return True
+
+        #Create trigrams and check if there are any repeititions. 
+        bgs = nltk.trigrams(tokens)
+        #compute frequency distribution for all the trigrams in the text
+        fdist = nltk.FreqDist(bgs)
+        fdist = {k:v for (k,v) in fdist.items() if v >= 2}
+        if (fdist!={}):
+            return True        
+        return False
+
+    def generate(self, context, num_gen, predi):
+        try:
+            start = time.perf_counter()
+            out = self.generator(context, do_sample=False, max_new_tokens=20, num_return_sequences=10, num_beams = 10, num_beam_groups=10, diversity_penalty=1.5, repetition_penalty = 1.1) 
+            
+            inputContext = context
+            allsent = []
+            probability = 1/len(out)
+            counts= {}
+            totalsent = 0
+            if(num_gen<5):
+                num_gen = 5
+            num_gen = 10
+            inputContext = inputContext.replace("<bos> ","")
+            contextList = sent_tokenize(inputContext)
+            num_context_sent = len(contextList)
+            for o in out:
+                print(o["generated_text"])
+                gentext = o["generated_text"]
+                newgen = re.split(r'<bos> |<eos> |bos|eos|<bos>|<eos>|<|>|\[|\]|\d',gentext)
+                # print("Full generated Text = "+newgen[1])
+                gen_text_sent = sent_tokenize(newgen[1])
+                currSentence = gen_text_sent[num_context_sent-1]
+                
+                ### check for repetitive sentences
+                if (self.checkRepetition(currSentence)):
+                    self.log.warning(f"REPETITION!!!!!!! in the sentence: {currSentence}")
+                    continue;
+
+
+                # print("cursetnence = ", currSentence)
+                reminderText = currSentence[len(contextList[-1]):]
+                reminderTextForFilter = re.sub(r'[?,!.\n]', '', reminderText.strip())
+                # print("remindertext - sending to filter = ", reminderTextForFilter)
+                if(self.filter_text(reminderTextForFilter)[0]!=True):
+                    reminderText = re.sub(r'[?!.\n]', '', reminderText.strip())
+                    score = self.textInCorpus(currSentence.strip())
+
+                    ################ TODO: DO WE THRESHOLD SCORES?
+                    ########### TODO: DETOXIFY
+                    # self.log.debug("reminderTExt = "+reminderText+ " currentSentence = "+currSentence+" , score = "+score)
+                    if reminderText!='':
+                        if(currSentence not in allsent):
+                            imp_tokens = self.extract_svo(currSentence)
+                            imp_tokens_reminder = []
+                            #### get important tokens only of the generated completion
+                            for imp in imp_tokens:
+                                if imp in word_tokenize(reminderText):
+                                    imp_tokens_reminder.append(imp)
+                            present = False
+                            for a in allsent:
+                                for it in imp_tokens_reminder:
+                                    if(self.stemmer.stem(it) in [self.stemmer.stem(w) for w in word_tokenize(a[len(contextList[-1]):])]):
+                                        present = True
+                                        break
+                            if(present==False):
+                                allsent.append(currSentence)
+                                counts[reminderText] = 1*score
+                                totalsent = totalsent + 1 
+                        else:
+                            counts[reminderText] = counts[reminderText]+1*score
+                            totalsent = totalsent + 1 
+
+            # toxic_filtered_sent = self.detoxify(allsent)
+            # print(toxic_filtered_sent)
+            for k, v in counts.items():
+                counts[k] = float(v)/totalsent
+
+            sorted_x = collections.OrderedDict(sorted(counts.items(), key=lambda kv: kv[1], reverse=True))
+            count = 0
+            for k,v in sorted_x.items():
+                
+                if(count==num_gen):
+                    break
+                self.log.debug(f"sentence = {k} score = {v}")
+                predi.add_suggestion(Suggestion(k, v, self.name))
+                count = count+1
+
+            self.log.debug(f"latency in generation = {time.perf_counter()-start}")
+        except Exception as e:
+            self.log.debug(f"Exception in SentenceCompletionPredictor.{e}")
+
+        return predi
+
+    def predict(self, max_partial_prediction_size, filter):
+        tokens = [""] * self.cardinality
+        prediction = Prediction()
+        context = self.context_tracker.past_stream().lstrip()
+        if(context == "" or context==" "):
+            self.log.debug(f"context is empty, loading top sentences from {self.startsents}")
+            if (not Path.is_file(self.startsents)):
+                self.log.error(f"{self.startsents} not found!!!")
+
+            ##### retrieve top5 from startsentFile 
+            data = open(self.startsents,"r").readlines()
+            for k in data:
+                prediction.add_suggestion(Suggestion(k.strip(), float(1/len(data)), self.name))
+            return prediction
+        start = time.perf_counter()
+        self.log.debug("context inside predictor predict = {context}")
+
+        #### If we are testing generation models
+        if (self.test_generalSentencePrediction == "True"):
+            if(self.use_onnx_model=="True" or self.modelname).find("DialoGPT")!=-1:
+                prediction = self.generate(context.strip(),5,prediction)
+            else:
+                prediction = self.generate("<bos> "+context.strip(),5, prediction)
+
+        
+        #### if we want to Only retrieve from AAC dataset
+        elif(self.retrieve=="True"):
+            self.log.debug("retireve is True - retrieving from database")
+            prediction = self.retrieve_fromDataset(context)
+
+        #### Hybrid retrieve mode  elif(self.retrieve=="hybrid"):
+        elif(self.retrieve=="False"):
+            self.log.debug("Hybrid retrieval - AAC dataset + model generation")
+            prediction = self.retrieve_fromDataset(context)
+            self.log.debug(f"retrieved {len(prediction)} sentences in {str(prediction)}")
+            ##### ONLY IF THE GENERATION MODEL IS LOADED, GENERATE MODEL BASED PREDICTIONS
+            if(len(prediction)<5 and self.MODEL_LOADED):
+                self.log.debug(f"generating {5-len(prediction)} more predictions")
+                if(self.use_onnx_model=="True" or self.modelname).find("DialoGPT")!=-1:
+                    prediction = self.generate(context.strip(),5-len(prediction), prediction)
+                else:
+                    prediction = self.generate("<bos> "+context.strip(),5-len(prediction), prediction)
+        latency = time.perf_counter() - start 
+        self.log.debug(f"latency = {latency}")
+        print("latency = ", latency)
+        self.log.debug("prediction = {prediction}")
+        return prediction
+
+    def close_database(self):
+        self.db.close_database()
+
+    def learn(self, change_tokens):
+        #### For the sentence completion predictor, learning adds the sentence to the database
+        if self.learn_mode == "True":
+            change_tokens = change_tokens.strip()
+            self.log.debug(f"learning, {change_tokens}")
+            #### add to sentence database
+            try:
+                dbconn = SQLiteDatabaseConnector(self.sent_database, self.log) 
+                dbconn.connect()
+                count = 0
+                #### CHECK IF SENTENCE EXISITS IN THE DATABASE
+                dbconn.fetch_all("SELECT count FROM sentences WHERE sentence = ?", (change_tokens,))
+                if len(res) > 0:
+                    if len(res[0]) > 0:
+                        count = int(res[0][0])
+
+                ### IF SENTENCE DOES NOT EXIST, ADD INTO DATABASE WITH COUNT = 1
+                if count==0:
+                    self.log.debug("count is 0, inserting into database")
+                    dbconn.execute_query('''
+                    INSERT INTO sentences (sentence, count)
+                    VALUES (?,?)''', (change_tokens, 1))
+                    ### update retrieval index: 
+                    # self.index.load_index(self.index_path)
+                    self.log.debug("shape before: {} len*self.corpus_sentences = {}".format(self.corpus_embeddings.shape, len(self.corpus_sentences)))
+                    
+                    self.log.debug("sentence  {} not present, adding to embeddings and creating new index".format(change_tokens))
+                    phrase_emb = self.embedder.encode(change_tokens.strip())
+                    phrase_id = len(self.corpus_embeddings)
+                    self.corpus_embeddings = np.vstack((self.corpus_embeddings, phrase_emb))
+                    self.corpus_sentences.append(change_tokens.strip())
+                    # np.save(self.embedding_cache_path,{'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings})
+                    joblib.dump({'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings}, self.embedding_cache_path)
+                    # with open(self.embedding_cache_path, "wb") as fOut:
+                    #     pickle.dump({'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings}, fOut)
+                    
+                    # Then we train the index to find a suitable clustering
+                    self.log.debug("phrase_emb.shape = {} id= {}".format(str(phrase_emb.shape), str(len(self.corpus_embeddings))))
+                    self.index.add_items(phrase_emb, phrase_id)
+
+                    self.log.debug("Saving index to:{}".format(self.index_path))
+                    self.index.save_index(self.index_path)
+                    self.log.debug("shape after: {} len*self.corpus_sentences =  {}".format(str(self.corpus_embeddings.shape), str(len(self.corpus_sentences))))
+
+
+                    #### DEALING WITH PERSONALIZED, ALLOWED TOXIC WORDS
+                    #### if sentence to be learnt contains a toxic word, add the toxic word to the "allowed" word list
+                    res, words = self.filter_text(change_tokens)
+                    if(res==True):
+                        for tox in words:
+                            self.log.debug(f"toxic words to be added to personalized db: {tox}")
+                            if(tox not in self.personalized_allowed_toxicwords):
+                                self.personalized_allowed_toxicwords.append(tox)
+                                fout = open(self.personalized_allowed_toxicwords_file, "w")
+                                for tox_word in self.personalized_allowed_toxicwords:
+                                    fout.write(tox_word+"\n")
+                                fout.close()
+
+                ### ELSE, IF SENTENCE EXIST, ADD INTO DATABASE WITH UPDATED COUNT
+                else:
+                    self.log.debug("sentence exists, updating count")
+                    dbconn.execute('''
+                    UPDATE sentences SET count = ? where sentence = ?''', (count+1, change_tokens))
+                dbconn.commit()
+            except Exception as e:
+                self.log.debug(f"Exception in SentenceCompletionPredictor learn  = {e}")
+
+    def _read_config(self):
+        self.static_resources_path = Path(self.config.get(self.name, "static_resources_path")).resolve()
+        self.personalized_resources_path = Path(self.config.get(self.name, "personalized_resources_path"))
+        self.learn_mode = self.config.get(self.name, "learn")
+        self.retrieve = self.config.get(self.name, "retrieveAAC")
+        self.use_onnx_model = self.config.get(self.name,"use_onnx_model")
+        self.test_generalSentencePrediction = self.config.get(self.name,"test_generalSentencePrediction")
+        #### define static databases, models
+
+        self.modelname = Path(self.static_resources_path) / self.config.get(self.name, "modelname")
+        self.tokenizer = Path(self.static_resources_path) / self.config.get(self.name, "tokenizer")
+        self.retrieve_database = Path(self.static_resources_path) / self.config.get(self.name, "retrieve_database")
+        self.onnx_path = Path(self.static_resources_path) / self.config.get(self.name,"onnx_path")                
+        self.sentence_transformer_model = Path(self.static_resources_path) /self.config.get(self.name,"sentence_transformer_model")
+        self.blacklist_file = Path(self.static_resources_path) /self.config.get(self.name,"blacklist_file")
+        self.stopwordsFile = Path(self.static_resources_path) /self.config.get(self.name,"stopwords")
+        
+        #### define personalized databases
+
+        self.sent_database = Path(self.personalized_resources_path) / self.config.get(self.name, "sent_database")
+        self.startsents = Path(self.personalized_resources_path) / self.config.get(self.name,"startsents")
+        self.embedding_cache_path = Path(self.personalized_resources_path) /self.config.get(self.name,"embedding_cache_path")
+        self.index_path = Path(self.personalized_resources_path) /self.config.get(self.name, "index_path")
+        self.personalized_allowed_toxicwords_file = Path(self.personalized_resources_path) /self.config.get(self.name, "personalized_allowed_toxicwords_file")
+
+        self.log.debug(f"SENTENCE MODE CONFIGURATIONS")
+        self.log.debug(f"using Onnx model for inference {self.use_onnx_model}")
+        self.log.debug(f"test_generalSentencePrediction {self.test_generalSentencePrediction}")
+        self.log.debug(f"model = {self.modelname} tokenizer = {self.tokenizer}")
