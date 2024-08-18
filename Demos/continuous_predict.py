@@ -15,32 +15,35 @@ class CPCallback(BufferedCallback):
         print("updated stream = ", self.buffer)
         print("past stream = ", self.past_stream())
 
-### config file for shorthand mode
+# config file for shorthand mode
 shorthand_config_file = Path(SCRIPT_DIR) / ("resources/shortHandMode.ini")
 sh_config = configparser.ConfigParser()
 sh_config.read(shorthand_config_file)
 
-### config file for sentence completion mode
+# config file for sentence completion mode
 sentence_config_file = Path(SCRIPT_DIR) / ("resources/sentenceMode.ini")
 sent_config = configparser.ConfigParser()
 sent_config.read(sentence_config_file)
 
-### config file for word prediction mode
+# config file for word prediction mode
 wordpred_config_file = Path(SCRIPT_DIR) / ("resources/wordPredMode.ini")
 wordpred_config = configparser.ConfigParser()
 wordpred_config.read(wordpred_config_file)
 
-### config file for CannedPhrases mode
+# config file for canned phrases mode
 canned_config_file = Path(SCRIPT_DIR) / ("resources/cannedPhrasesMode.ini")
 canned_config = configparser.ConfigParser()
 canned_config.read(canned_config_file)
 
-###### Define the shorthand and sentence completion ConvAssist objects
+###### Define the shorthand ConvAssist objects
 callback = CPCallback("")
 shortHandConvAssist = ConvAssist(callback, sh_config)
+
+# Define the word prediction and sentence completion ConvAssist objects
 sentCompleteConvAssist = ConvAssist(callback, sent_config)
 if(sentCompleteConvAssist.check_model()==1):
     print("SENTENCE COMPLETION MODEL LOADED")
+
 wordCompleteConvAssist = ConvAssist(callback, wordpred_config)
 if(wordCompleteConvAssist.check_model()==1):
     print("WORD PREDICTION MODEL LOADED")

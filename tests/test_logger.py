@@ -33,7 +33,7 @@ class TestLogger(unittest.TestCase):
         return super().tearDown()
         
     def testInfo(self):
-        self.my_logger = ConvAssistLogger(level=ConvAssistLogger.INFO, log_file=self.full_file_path)
+        self.my_logger = ConvAssistLogger(level="INFO", log_file=self.full_file_path)
 
         self.my_logger.info("All your bases are mine.")
         
@@ -43,7 +43,7 @@ class TestLogger(unittest.TestCase):
         asssert_log_message(contents, "INFO", "All your bases are mine.")
     
     def testClose(self):
-        self.my_logger = ConvAssistLogger(level=ConvAssistLogger.INFO, log_file=self.full_file_path)
+        self.my_logger = ConvAssistLogger(level="INFO", log_file=self.full_file_path)
 
         self.my_logger.close()
         self.my_logger.info("All your bases are mine.")

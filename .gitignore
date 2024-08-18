@@ -10,3 +10,5 @@ dist/
 .coverage
 .DS_Store
 results/
+.mypy_cache/
+.pytest_cache/

@@ -3,9 +3,11 @@ import collections
 import json
 import string
 from pathlib import Path
+from typing import Any, List, Optional
 
 from ConvAssist.predictor import Predictor
 from ConvAssist.predictor.utilities.predictor_names import PredictorNames
+from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 from ConvAssist.utilities.ngram_map import NgramMap
 from ConvAssist.utilities.suggestion import Suggestion
 from ConvAssist.predictor.utilities.prediction import Prediction
@@ -25,20 +27,20 @@ class SmoothedNgramPredictor(Predictor):
             predictor_name,
             short_desc=None,
             long_desc=None,
-            dbconnection=None,
+            
             logger=None
     ):
         super().__init__(
             config, context_tracker, 
             predictor_name, short_desc, long_desc, logger
         )
-        self.db = None
-        self.dbconnection = dbconnection
-        self.cardinality = None
+        self.db: SQLiteNgramDatabaseConnector
+        
+        self.cardinality:int = 1
         self.learn_mode_set = False
 
         self._database = None
-        self._deltas = None
+        self._deltas = []
         self._learn_mode = None
         self.config = config
         self.name = predictor_name
@@ -75,48 +77,8 @@ class SmoothedNgramPredictor(Predictor):
                     json.dump(self.precomputed_sentenceStart, fp)
 
         if(self.name == PredictorNames.PersonalizedWord.value):
-            # try:
-            #     self.log.debug("trying to establish connection with "+ self.database)
-            #     conn_ngram = self.create_connection(self.database)
-            #     self.log.debug("personalized database connection created "+ self.database)
-
-            #     sql_create_1gram_table = """ CREATE TABLE IF NOT EXISTS _1_gram (
-
-            #                                         word TEXT UNIQUE,
-            #                                         count INTEGER 
-            #                                     ); """
-
-            #     sql_create_2gram_table = """ CREATE TABLE IF NOT EXISTS _2_gram (
-
-            #                                         word_1 TEXT ,
-            #                                         word TEXT ,
-            #                                         count INTEGER ,
-            #                                         UNIQUE(word_1, word)
-            #                                     ); """
-
-            #     sql_create_3gram_table = """ CREATE TABLE IF NOT EXISTS _3_gram (
-            #                                         word_2 TEXT ,
-            #                                         word_1 TEXT ,
-            #                                         word TEXT ,
-            #                                         count INTEGER ,
-            #                                         UNIQUE(word_2, word_1, word)
-            #                                     ); """
-            #     if conn_ngram is not None:
-            #         c = conn_ngram.cursor()
-            #         c.execute(sql_create_1gram_table)
-            #         c.execute(sql_create_2gram_table)
-            #         c.execute(sql_create_3gram_table)
-            #     self.log.info("done create queries for personalized db")
-            # except Exception as e:
-            #     self.log.error(f"exception in creating personalized db : {e}")
-            
-            try:
-                self.db.create_ngram_table(cardinality=1)
-                self.db.create_ngram_table(cardinality=2)
-                self.db.create_ngram_table(cardinality=3)
-            except Exception as e:
-                self.log.error(f"exception in creating personalized db : {e}")
-
+            # Create the personalized database if it does not exist
+            self.recreate_canned_db()
 
     def extract_svo(self, sent):
         doc = self.nlp(sent)
@@ -153,114 +115,88 @@ class SmoothedNgramPredictor(Predictor):
                 return True, token.text.lower()
         return False, ""
 
-    def recreate_canned_db(self, personalized_corpus):
-        ##### Check all phrases from the personalized corpus
-        ##### if the phrase is found in the cannedSentences DB, continue,
-        ##### Else, add it to both ngram and cannedSentences DB
+    def recreate_canned_db(self, personalized_corpus=None):
+        # Check all phrases from the personalized corpus
+        # if the phrase is found in the cannedSentences DB, continue,
+        # Else, add it to both ngram and cannedSentences DB
 
-        #### STEP1: CREATE CANNED_NGRAM DATABASE IF IT DOES NOT EXIST
+        # STEP 1: CREATE CANNED_NGRAM DATABASE IF IT DOES NOT EXIST
         try:
-            sql_create_1gram_table = """ CREATE TABLE IF NOT EXISTS _1_gram (
-
-                                                word TEXT UNIQUE,
-                                                count INTEGER 
-                                            ); """
-
-            sql_create_2gram_table = """ CREATE TABLE IF NOT EXISTS _2_gram (
-
-                                                word_1 TEXT ,
-                                                word TEXT ,
-                                                count INTEGER ,
-                                                UNIQUE(word_1, word)
-                                            ); """
-
-            sql_create_3gram_table = """ CREATE TABLE IF NOT EXISTS _3_gram (
-                                                word_2 TEXT ,
-                                                word_1 TEXT ,
-                                                word TEXT ,
-                                                count INTEGER ,
-                                                UNIQUE(word_2, word_1, word)
-                                            ); """
-
-            self.log.info("executing create queries for canned_ngram db")
-            self.db.open_database()
-            self.db.execute_sql(sql_create_1gram_table)
-            self.db.execute_sql(sql_create_2gram_table)
-            self.db.execute_sql(sql_create_3gram_table)
-            # self.db.close_database()
-            self.log.info("done create queries for canned_ngram db")
-
-            #### STEP1: CHECK IF THE PHRASE EXISTS IN THE CANNED_SENTENCES DATABASE
-            sentence_db = SQLiteNgramDatabaseConnector(self.sentences_db)
-            sentence_db.connect()
-            # c = conn_sent.cursor()
-
-            ###################### CHECK FOR PHRASES TO ADD AND PHRASES TO DELETE FROM THE DATABASES
-            sent_db_dict = {}
-            res = sentence_db.fetch_all("SELECT * FROM sentences")
-            for r in res:
-                sent_db_dict[r[0]]= r[1]
-            phrases_toRemove = list(set(sent_db_dict.keys())-set(personalized_corpus))
-            phrases_toAdd = list(set(personalized_corpus)-set(sent_db_dict.keys()))
-            self.log.info("PHRASES TO ADD = " + str(phrases_toAdd))
-            self.log.info("PHRASES TO REMOVE = "+ str(phrases_toRemove))
-
-
-            ##### Add phrases_toAdd to the database and ngram
-            for phrase in phrases_toAdd:
-                # Add to 
-                query = '''INSERT INTO sentences (sentence, count)
-                                VALUES (?,?)'''
-                phraseToInsert = (phrase, 1)
-                # self.insert_into_tables(conn_sent, query,phraseToInsert)
-                sentence_db.execute_query(query, phraseToInsert)
-
-                ### Add phrase to ngram
-                for curr_card in range(self.cardinality):
-                    ngram_map = NgramMap()
-                    ngs = self.generate_ngrams(phrase.lower().split(), curr_card)
-                    ngram_map = self.getNgramMap(ngs, ngram_map)
-
-                    # for every ngram, get db count, update or insert
-                    for ngram, count in ngram_map.items():
-                        old_count = self.db.ngram_count(ngram)
-                        if old_count > 0:
-                            self.db.update_ngram(ngram, old_count + count)
-                            self.db.commit()
-                        else:
-                            self.db.insert_ngram(ngram, count)
-                            self.db.commit()
-
-            for phrase in phrases_toRemove:
-            ##### Remove phrases_toRemove from the database
-                query = 'DELETE FROM sentences WHERE sentence=?'
-                # self.insert_into_tables(conn_sent, query,(phrase,))
-                sentence_db.execute_query(query, (phrase,))
-                self.log.info(f"Phrase {phrase} deleted from sentence_db.")
-                phraseFreq = sent_db_dict[phrase]
-                ### Remove phrase to ngram
-                for curr_card in range(self.cardinality):
-                    ngram_map = NgramMap()
-                    imp_words = self.extract_svo(phrase)
-                    ngs = self.generate_ngrams(imp_words.split(), curr_card)
-                    ngram_map = self.getNgramMap(ngs, ngram_map)
-                    # for every ngram, get db count, update or insert
-                    for ngram, count in ngram_map.items():
-                        countToDelete = phraseFreq*count
-                        old_count = self.db.ngram_count(ngram)
-                        if old_count > countToDelete:
-                            self.db.update_ngram(ngram, old_count - countToDelete)
-                            self.db.commit()
-                        elif old_count == countToDelete:
-                            self.db.remove_ngram(ngram)
-                            self.db.commit()
-                        elif old_count < countToDelete:
-                            self.log.info("SmoothedNgramPredictor RecreateDB Delete function: Count in DB < count to Delete")
-
+            self.db.create_ngram_table(cardinality=1)
+            self.db.create_ngram_table(cardinality=2)
+            self.db.create_ngram_table(cardinality=3)
         except Exception as e:
-            self.log.error(f"Error , Exception in SmoothedNgramPredictor recreateDB  = {e}")
-        finally:
-            sentence_db.close()
+            self.log.error(f"exception in creating personalized db : {e}")
+
+        # STEP 2: Update personalized_corups if it is not None
+        if personalized_corpus:
+            try:
+                sentence_db = SQLiteDatabaseConnector(self.sentences_db)
+                sentence_db.connect()
+
+                # CHECK FOR PHRASES TO ADD AND PHRASES TO DELETE FROM THE DATABASES
+                sent_db_dict = {}
+                res = sentence_db.fetch_all("SELECT * FROM sentences")
+                for r in res:
+                    sent_db_dict[r[0]]= r[1]
+                phrases_toRemove = list(set(sent_db_dict.keys())-set(personalized_corpus))
+                phrases_toAdd = list(set(personalized_corpus)-set(sent_db_dict.keys()))
+                self.log.info("PHRASES TO ADD = " + str(phrases_toAdd))
+                self.log.info("PHRASES TO REMOVE = "+ str(phrases_toRemove))
+
+                # Add phrases_toAdd to the database and ngram
+                for phrase in phrases_toAdd:
+                    # Add to 
+                    query = '''INSERT INTO sentences (sentence, count)
+                                    VALUES (?,?)'''
+                    phraseToInsert = (phrase, 1)
+                    sentence_db.execute_query(query, phraseToInsert)
+
+                    ### Add phrase to ngram
+                    for curr_card in range(self.cardinality):
+                        ngram_map = NgramMap()
+                        ngs = self.generate_ngrams(phrase.lower().split(), curr_card)
+                        ngram_map = self.getNgramMap(ngs, ngram_map)
+
+                        # for every ngram, get db count, update or insert
+                        for ngram, count in ngram_map.items():
+                            old_count = self.db.ngram_count(ngram)
+                            if old_count > 0:
+                                self.db.update_ngram(ngram, old_count + count)
+                                self.db.commit()
+                            else:
+                                self.db.insert_ngram(ngram, count)
+                                self.db.commit()
+
+                for phrase in phrases_toRemove:
+                ##### Remove phrases_toRemove from the database
+                    query = 'DELETE FROM sentences WHERE sentence=?'
+                    sentence_db.execute_query(query, (phrase,))
+                    self.log.info(f"Phrase {phrase} deleted from sentence_db.")
+                    phraseFreq = sent_db_dict[phrase]
+                    ### Remove phrase to ngram
+                    for curr_card in range(self.cardinality):
+                        ngram_map = NgramMap()
+                        imp_words = self.extract_svo(phrase)
+                        ngs = self.generate_ngrams(imp_words.split(), curr_card)
+                        ngram_map = self.getNgramMap(ngs, ngram_map)
+                        # for every ngram, get db count, update or insert
+                        for ngram, count in ngram_map.items():
+                            countToDelete = phraseFreq*count
+                            old_count = self.db.ngram_count(ngram)
+                            if old_count > countToDelete:
+                                self.db.update_ngram(ngram, old_count - countToDelete)
+                                self.db.commit()
+                            elif old_count == countToDelete:
+                                self.db.remove_ngram(ngram)
+                                self.db.commit()
+                            elif old_count < countToDelete:
+                                self.log.info("SmoothedNgramPredictor RecreateDB Delete function: Count in DB < count to Delete")
+
+            except Exception as e:
+                self.log.error(f"= {e}")
+            finally:
+                sentence_db.close()
 
     def generate_ngrams(self, token, n):
         n = n+1
@@ -281,63 +217,55 @@ class SmoothedNgramPredictor(Predictor):
         return ngram_map
 
     # Property - deltas
-    def deltas():
-        doc = "The deltas property."
-
-        def fget(self):
-            return self._deltas
-
-        def fset(self, value):
-            self._deltas = []
-            # make sure that values are floats
-            for i, d in enumerate(value):
-                self._deltas.append(float(d))
-            self.cardinality = len(value)
-            self.init_database_connector_if_ready()
-
-        def fdel(self):
-            del self._deltas
-
-        return locals()
-
-    deltas = property(**deltas())
+    @property
+    def deltas(self):
+        """The deltas property."""
+        return self._deltas
+    
+    @deltas.setter
+    def deltas(self, value):
+        self._deltas:List[float] = []
+        # make sure that values are floats 
+        for d in value:
+            self._deltas.append(float(d))
+        self.cardinality = len(value)
+        self.init_database_connector_if_ready()
+        
+    @deltas.deleter
+    def deltas(self):
+        del self._deltas
 
     # Property - learn_mode
-    def learn_mode():
-        doc = "The learn_mode property."
+    @property
+    def learn_mode(self):
+        """The learn_mode property."""
+        return self._learn_mode
 
-        def fget(self):
-            return self._learn_mode
+    @learn_mode.setter
+    def learn_mode(self, value):
+        self._learn_mode = value
+        self.learn_mode_set = True
+        self.init_database_connector_if_ready()
 
-        def fset(self, value):
-            self._learn_mode = value
-            self.learn_mode_set = True
-            self.init_database_connector_if_ready()
-
-        def fdel(self):
-            del self._learn_mode
-
-        return locals()
-
-    learn_mode = property(**learn_mode())
+    @learn_mode.deleter
+    def learn_mode(self):
+        del self._learn_mode
 
     # Property - database
-    def database():
-        doc = "The database property."
+    @property
+    def database(self):
+        """The database property."""
+        return self._database
 
-        def fget(self):
-            return self._database
+    @database.setter
+    def database(self, value):
+        self._database = value
+        self.init_database_connector_if_ready()
 
-        def fset(self, value):
-            self._database = value
-            self.init_database_connector_if_ready()
+    @database.deleter
+    def database(self):
+        del self._database
 
-        def fdel(self):
-            del self._database
-
-        return locals()
-
-    database = property(**database())
 
     def init_database_connector_if_ready(self):
         if (
@@ -373,23 +301,25 @@ class SmoothedNgramPredictor(Predictor):
                 # tokens[self.cardinality - 1 - i] = json.dumps(self.context_tracker.token(i))
                 tok = self.context_tracker.token(i)
                 tokens[self.cardinality - 1 - i] = tok
-            prefix_completion_candidates = []
+                
+            prefix_completion_candidates: List[str] = []
             for k in reversed(range(self.cardinality)):
                 if len(prefix_completion_candidates) >= max_partial_prediction_size:
                     break
                 prefix_ngram = tokens[(len(tokens) - k - 1):]
-                partial = None
+                partial: List[tuple[Any, Any]] = []
                 if not filter:
                     partial = self.db.ngram_like_table(
                         prefix_ngram,
                         max_partial_prediction_size - len(prefix_completion_candidates),
                     )
                 else:
-                    partial = self.db.ngram_like_table_filtered(
-                        prefix_ngram,
-                        filter,
-                        max_partial_prediction_size - len(prefix_completion_candidates),
-                    )
+                    self.log.debug(f"TODO: Implement filter in SmoothedNgramPredictor")
+                    # partial = self.db.ngram_like_table_filtered(
+                    #     prefix_ngram,
+                    #     filter,
+                    #     max_partial_prediction_size - len(prefix_completion_candidates),
+                    # )
 
                 for p in partial:
                     if len(prefix_completion_candidates) > max_partial_prediction_size:
@@ -489,5 +419,5 @@ class SmoothedNgramPredictor(Predictor):
                             self.db.insert_ngram(ngram, count)
                             self.db.commit()
             except Exception as e:
-                self.log.error("Exception in SmoothedNgramPredictor learn function  = "+e)
+                self.log.error(f"SmoothedNgramPredictor learn function: {e}")
         pass

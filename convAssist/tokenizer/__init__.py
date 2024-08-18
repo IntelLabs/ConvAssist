@@ -7,8 +7,6 @@ from ConvAssist.utilities.ngram_map import NgramMap
 import ConvAssist.utilities.character
 from abc import ABCMeta, abstractmethod
 
-__all__ = ["tokenizer", "forward_tokenizer", "reverse_tokenizer"]
-
 class Tokenizer(metaclass=ABCMeta):
     """
     Base class for all tokenizers.
@@ -65,9 +63,9 @@ class Tokenizer(metaclass=ABCMeta):
         self.text = text
         self.lowercase = False
 
-        self.offbeg = 0
-        self.offset = None
-        self.offend = None
+        self.offbeg: int = 0
+        self.offset: int = 0
+        self.offend: int = 0
 
     def is_blankspace(self, char):
         """
@@ -112,7 +110,7 @@ class Tokenizer(metaclass=ABCMeta):
         return False
 
     @abc.abstractmethod
-    def count_characters(self):
+    def count_characters(self) -> int:
         raise NotImplementedError("Method must be implemented")
 
     @abc.abstractmethod
@@ -120,17 +118,17 @@ class Tokenizer(metaclass=ABCMeta):
         raise NotImplementedError("Method must be implemented")
 
     @abc.abstractmethod
-    def count_tokens(self):
+    def count_tokens(self) -> int:
         raise NotImplementedError("Method must be implemented")
 
     @abc.abstractmethod
-    def has_more_tokens(self):
+    def has_more_tokens(self) -> bool:
         raise NotImplementedError("Method must be implemented")
 
     @abc.abstractmethod
-    def next_token(self):
+    def next_token(self) -> str:
         raise NotImplementedError("Method must be implemented")
 
     @abc.abstractmethod
-    def progress(self):
+    def progress(self) -> float:
         raise NotImplementedError("Method must be implemented")

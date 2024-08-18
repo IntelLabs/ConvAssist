@@ -19,7 +19,7 @@ class DatabaseConnector(ABC):
             self.log = logger
         else:
             self.log = ConvAssistLogger(name="DatabaseConnector", 
-                                        level=ConvAssistLogger.DEBUG)
+                                        level="DEBUG")
 
     @abstractmethod
     def connect(self, **kwargs) -> None:

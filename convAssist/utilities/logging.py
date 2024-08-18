@@ -13,18 +13,19 @@ class ConvAssistLogger:
     DEBUG = logging.DEBUG
     NOTSET = logging.NOTSET
 
-    _levelToName = {
-        CRITICAL: 'CRITICAL',
-        ERROR: 'ERROR',
-        WARNING: 'WARNING',
-        INFO: 'INFO',
-        DEBUG: 'DEBUG',
-        NOTSET: 'NOTSET'
+    _nameToLevel = {
+        'CRITICAL': CRITICAL,
+        'ERROR': ERROR,
+        'WARNING': WARNING,
+        'INFO': INFO,
+        'DEBUG': DEBUG,
+        'NOTSET': NOTSET
     }
 
-    def __init__(self, name='ConvAssistLogger', level=DEBUG, log_file=None):
+    def __init__(self, name='ConvAssistLogger', level="DEBUG", log_file=None):
         self.logger = logging.getLogger(name)
-        self.logger.setLevel(level)
+        loglevel = self._nameToLevel.get(level, logging.DEBUG)
+        self.logger.setLevel(loglevel)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s %(message)s')
 
         if len(self.logger.handlers) > 0:

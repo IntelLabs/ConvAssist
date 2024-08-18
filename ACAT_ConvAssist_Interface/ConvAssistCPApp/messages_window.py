@@ -4,21 +4,22 @@
  SPDX-License-Identifier: Apache-2.0
 
 """
-from tkinter import *
+import tkinter as tk
+from tkinter import Label, Text, Scrollbar, PhotoImage, END, BOTH, VERTICAL
 
 
 class MessagesWindow:
 
     def __init__(self):
-        self.ws = Tk()
+        self.ws = tk.Tk()
         self.ws.title('Messages Window')
         self.ws.geometry("600x350")
-        self.ws.overrideredirect(1)
+        self.ws.overrideredirect(True)
         self.ws.wm_attributes("-transparentcolor", "grey")
         self.frame_photo = PhotoImage(file='frame.png')
         self.frame_label = Label(self.ws, border=0, bg='grey', image=self.frame_photo)
         self.frame_label.pack(fill=BOTH, expand=True)
-        self.ws.resizable(False, False)
+        self.ws.resizable(True, True)
 
         self.label = Label(self.ws, text="ConvAssist - Messages Window", fg="black", bg='#64b4ff', font=("Verdana", 14))
         self.label.place(x=75, y=12.5)
@@ -39,7 +40,7 @@ class MessagesWindow:
 
         self.exit_button = Label(self.ws, image=self.button_image, border=0, bg='#FFFFFF', text="Clear")
         self.exit_button.place(x=160, y=300)
-        self.exit_button.bind("<Button>", lambda e: self.quit())
+        self.exit_button.bind("<Button>", lambda e: self.ws.quit)
 
 
 

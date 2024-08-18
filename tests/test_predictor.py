@@ -1,14 +1,15 @@
 import unittest
+from unittest.mock import MagicMock
 from ConvAssist.predictor import Predictor
 
 class TestPredictor(unittest.TestCase):
     def setUp(self):
-        self.config = {}  # Add your config here
-        self.context_tracker = {}  # Add your context tracker here
-        self.predictor_name = "TestPredictor"
+        self.config = MagicMock()
+        self.context_tracker = MagicMock()
+        self.predictor_name = "test_predictor"
         self.short_desc = "Short description"
         self.long_desc = "Long description"
-        self.logger = None  # Add your logger here
+        self.logger = MagicMock()
 
         self.predictor = Predictor(
             self.config,
@@ -20,25 +21,35 @@ class TestPredictor(unittest.TestCase):
         )
 
     def test_get_name(self):
-        self.assertEqual(self.predictor.get_name(), self.predictor_name)
+        self.assertEqual(self.predictor.get_name(), "test_predictor")
 
     def test_get_description(self):
-        self.assertEqual(self.predictor.get_description(), self.long_desc)
+        self.assertEqual(self.predictor.get_description(), "Long description")
 
     def test_get_long_description(self):
-        self.assertEqual(self.predictor.get_long_description(), self.long_desc)
+        self.assertEqual(self.predictor.get_long_description(), "Long description")
 
-    def test_predict_not_impl(self):
+    def test_predict(self):
         with self.assertRaises(NotImplementedError):
             self.predictor.predict()
 
-    def test_learn_not_impl(self):
+    def test_learn(self):
         with self.assertRaises(NotImplementedError):
             self.predictor.learn()
 
-    def test_read_config_not_impl(self):
+    def test_read_config(self):
         with self.assertRaises(NotImplementedError):
             self.predictor._read_config()
 
-if __name__ == '__main__':
+    def test_create_table(self):
+        dbname = "test_db"
+        tablename = "test_table"
+        columns = ["column1", "column2"]
+
+        self.predictor.log = MagicMock()
+        self.predictor.createTable(dbname, tablename, columns)
+
+        self.predictor.log.critical.assert_not_called()
+
+if __name__ == "__main__":
     unittest.main()

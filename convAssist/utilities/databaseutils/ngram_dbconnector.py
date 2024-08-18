@@ -27,7 +27,7 @@ class NGramDatabaseConnector(DatabaseConnector):
             self.log = logger
         else:
             self.log = ConvAssistLogger(name="DatabaseConnector", 
-                                        level=ConvAssistLogger.DEBUG)
+                                        level="DEBUG")
 
     @abstractmethod
     def connect(self, **kwargs) -> None:
@@ -205,15 +205,15 @@ class NGramDatabaseConnector(DatabaseConnector):
 
         query += " FROM _{0}_gram;".format(self.cardinality)
 
-        result = self.execute_query(query)
+        result = self.fetch_all(query)
         for row in result:
             yield tuple(row)
 
-    def unigram_counts_sum(self):
+    def unigram_counts_sum(self) -> int:
         query = "SELECT SUM(count) from _1_gram;"
-        result = self.execute_query(query)
+        result = self.fetch_all(query)
         if(result==[(None,)]):
-            return [(0,)]
+            return 0
         return self._extract_first_integer(result)
 
     def ngram_count(self, ngram):
@@ -249,7 +249,7 @@ class NGramDatabaseConnector(DatabaseConnector):
         else:
             query += " LIMIT {0};".format(limit)
 
-        return self.execute_query(query)
+        return self.fetch_all(query)
 
     def ngram_like_table_filtered(self, ngram, filter, limit=-1):
         pass

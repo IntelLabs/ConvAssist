@@ -15,8 +15,8 @@ class TestPredictorRegistry(unittest.TestCase):
             'spellingdatabase': 'big.txt',
         }
         self.config['ContextTracker'] = {
-            'sliding_window_size': 80,
-            'lowercase_mode': True
+            'sliding_window_size': '80',
+            'lowercase_mode': 'True'
         }
         self.config['PredictorRegistry'] = {
             'predictors': ''

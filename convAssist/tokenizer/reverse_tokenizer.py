@@ -11,7 +11,7 @@ class ReverseTokenizer(Tokenizer):
         blankspaces=blankspaces,
         separators=separators,
     ):
-        Tokenizer.__init__(self, text, blankspaces, separators)
+        super().__init__(text, blankspaces, separators)
         self.offend = self.count_characters() - 1
         self.offset = self.offend
 
@@ -42,7 +42,7 @@ class ReverseTokenizer(Tokenizer):
         token = ""
 
         while (self.offbeg <= self.offset) and len(token) == 0:
-            current = self.text[self.offset]
+            current: str = self.text[self.offset]
 
             if (self.offset == self.offend) and (
                 self.is_separator(current) or self.is_blankspace(current)

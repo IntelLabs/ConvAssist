@@ -1,11 +1,20 @@
 import unittest
+from configparser import ConfigParser
 from ConvAssist.utilities.context_tracker import ContextTracker, InvalidCallbackException
 from ConvAssist.utilities.callback import Callback
 from ConvAssist.utilities.predictor_registry import PredictorRegistry
 
 class TestContextTracker(unittest.TestCase):
     def setUp(self):
-        self.config = {}
+        self.config:ConfigParser = ConfigParser()
+        self.config['ContextTracker'] = {
+            'sliding_window_size': '80',
+            'lowercase_mode': 'True'
+        }
+        self.config['PredictorRegistry'] = {
+            'predictors': ''
+        }
+
         self.predictor_registry = PredictorRegistry(self.config)
         self.my_callback = Callback()
 

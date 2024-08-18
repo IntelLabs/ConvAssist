@@ -1,5 +1,6 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
+from configparser import ConfigParser
 import os
 from pathlib import Path
 
@@ -20,39 +21,34 @@ class PredictorActivator(object):
     """
 
     def __init__(self, config, registry, context_tracker):
-        self.config = config
+        self.config:ConfigParser = config
         self.registry = registry
         self.context_tracker = context_tracker
         self.predictions = []
         self.word_predictions = []
         self.sent_predictions = []
         self.spell_word_predictions = []
-        self.combiner = None
-        self.max_partial_prediction_size = int(config.get("Selector", "suggestions"))
+        self.combiner: MeritocracyCombiner
+        self.max_partial_prediction_size = self.config.getint("Selector", "suggestions", fallback=10)
         self.predict_time = None
         self._combination_policy = None
-        # self.log = ConvAssistLogger().configure(True, ConvAssistLogger.INFO, "PredictorActivator.log")
 
+    @property
+    def combination_policy(self):
+        """The combination_policy property."""
+        return self._combination_policy
 
-    def combination_policy():
-        doc = "The combination_policy property."
+    @combination_policy.setter
+    def combination_policy(self, value):
+        self._combination_policy = value
+        if value.lower() == "meritocracy":
+            self.combiner = MeritocracyCombiner()
+        else:
+            raise UnknownCombinerException()
 
-        def fget(self):
-            return self._combination_policy
-
-        def fset(self, value):
-            self._combination_policy = value
-            if value.lower() == "meritocracy":
-                self.combiner = MeritocracyCombiner()
-            else:
-                raise UnknownCombinerException()
-
-        def fdel(self):
+    @combination_policy.deleter
+    def combination_policy(self):
             del self._combination_policy
-
-        return locals()
-
-    combination_policy = property(**combination_policy())
 
     def predict(self, multiplier=1, prediction_filter=None):
         self.word_predictions[:] = []
@@ -78,6 +74,7 @@ class PredictorActivator(object):
                 if(words!=[]):
                     for w in words:
                         self.word_predictions.append(w)
+
             ### If the predictor is spell predictor, use the predictions only if the other predictors return empty lists
             elif(predictor.name == PredictorNames.Spell.value):
                 self.spell_word_predictions.append(predictor.predict(
@@ -107,12 +104,10 @@ class PredictorActivator(object):
                 predictor.recreate_canned_db(pers_cannedphrasesLines)
 
     def update_params(self, test_gen_sentence_pred,retrieve_from_AAC):
-        self.log.info("INSIDE PREDICTOR ACTIVATOR update_params FUNCTION")
         for predictor in self.registry:
             predictor.load_model(test_gen_sentence_pred,retrieve_from_AAC)
 
     def read_updated_toxicWords(self):
-        self.log.info("READING UPDATED PERSONALIZED TOXIC WORDS")
         for predictor in self.registry:
             predictor.read_personalized_toxic_words()
 
@@ -120,6 +115,6 @@ class PredictorActivator(object):
         for predictor in self.registry:
             predictor.learn(text)
 
-    def set_log(self,filename, pathLoc, level):
-        # provide a way to set the log location for the predictor activator
-        pass
+    # def set_log(self,filename, pathLoc, level):
+    #     # provide a way to set the log location for the predictor activator
+    #     pass

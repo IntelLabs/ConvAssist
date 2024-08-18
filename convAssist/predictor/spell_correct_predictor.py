@@ -26,7 +26,8 @@ class SpellCorrectPredictor(Predictor):
             predictor_name,
             short_desc=None,
             long_desc=None,
-            dbconnection=None,
+            
+            logger=None
     ):
         Predictor.__init__(
             self, 
@@ -35,10 +36,11 @@ class SpellCorrectPredictor(Predictor):
             predictor_name, 
             short_desc, 
             long_desc,
-            dbconnection
+            
+            logger
         )
         self.db = None
-        self.dbconnection = dbconnection
+        
         self.cardinality = None
         self.learn_mode_set = False
 

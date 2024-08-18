@@ -1,10 +1,9 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-from ConvAssist.predictor import canned_phrases_predictor, \
-                    sentence_completion_predictor, \
-                    smoothed_ngram_predictor, \
-                    spell_correct_predictor
+from typing import Any
+from configparser import ConfigParser
+
 from ConvAssist.predictor.utilities.predictor_names import PredictorNames
 from ConvAssist.utilities.logging import ConvAssistLogger
 
@@ -25,81 +24,98 @@ class PredictorRegistry(list):
 
     """
 
-    def __init__(self, config, dbconnection=None):
-        self.config = config
-        self.dbconnection = dbconnection
+    def __init__(self, config, logger=None):
+        super().__init__()
+
+        self.config: ConfigParser = config
+        
         self._context_tracker = None
         self.set_predictors()
-        self.log = ConvAssistLogger(__name__, level=ConvAssistLogger.DEBUG)
+        if logger:
+            self.logger = logger
+        else:
+            self.logger = ConvAssistLogger(__name__, level="DEBUG")
 
-    def context_tracker():
-        doc = "The context_tracker property."
+    @property
+    def context_tracker(self):
+        """The context_tracker property."""
+        return self._context_tracker
 
-        def fget(self):
-            return self._context_tracker
+    @context_tracker.setter
+    def context_tracker(self, value):
+        if self._context_tracker is not value:
+            self._context_tracker = value
+            self[:] = []
+            self.set_predictors()
 
-        def fset(self, value):
-            if self._context_tracker is not value:
-                self._context_tracker = value
-                self[:] = []
-                self.set_predictors()
-
-        def fdel(self):
-            del self._context_tracker
-
-        return locals()
-
-    context_tracker = property(**context_tracker())
+    @context_tracker.deleter
+    def context_tracker(self):
+        del self._context_tracker
 
     def set_predictors(self):
         if self.context_tracker:
             self[:] = []
-            for predictor in self.config.get("PredictorRegistry", "predictors").split():
+            for predictor in self.config.get("PredictorRegistry", "predictors", fallback="").split():
                 self.add_predictor(predictor)
 
     def add_predictor(self, predictor_name):
-        predictor = None
+        from ConvAssist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
+        from ConvAssist.predictor.sentence_completion_predictor import SentenceCompletionPredictor
+        from ConvAssist.predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
+        from ConvAssist.predictor.spell_correct_predictor import SpellCorrectPredictor
+
+        predictor: Any = None
         
         if (self.config.get(predictor_name, "predictor_class") == "SmoothedNgramPredictor"
         ):
-            predictor = smoothed_ngram_predictor.SmoothedNgramPredictor(
+            predictor = SmoothedNgramPredictor(
                 self.config,
                 self.context_tracker,
                 predictor_name,
-                dbconnection=self.dbconnection,
+                
+                logger=self.logger
             )
         if (self.config.get(predictor_name, "predictor_class") == "SpellCorrectPredictor"
         ):
-            predictor = spell_correct_predictor.SpellCorrectPredictor(
+            predictor = SpellCorrectPredictor(
                 self.config,
                 self.context_tracker,
                 predictor_name,
-                dbconnection=self.dbconnection,
+                
+                logger=self.logger
             )
 
         if (self.config.get(predictor_name, "predictor_class") == "SentenceCompletionPredictor"
         ):
-            predictor = sentence_completion_predictor.SentenceCompletionPredictor(
-                self.config, self.context_tracker, predictor_name, "gpt2",
-                "gpt-2 model predictions", self.dbconnection)
+            predictor = SentenceCompletionPredictor(
+                self.config, 
+                self.context_tracker, 
+                predictor_name, "gpt2",
+                "gpt-2 model predictions", 
+                logger=self.logger
+            )
 
 
         if (self.config.get(predictor_name, "predictor_class") == "CannedPhrasesPredictor"
         ):
-            predictor = canned_phrases_predictor.CannedPhrasesPredictor(
-                self.config, self.context_tracker, predictor_name, "gpt2",
-                                           "gpt-2 model predictions", self.dbconnection)
+            predictor = CannedPhrasesPredictor(
+                self.config, 
+                self.context_tracker, 
+                predictor_name, "gpt2",
+                "gpt-2 model predictions", 
+                logger=self.logger
+            )
 
         if predictor:
             self.append(predictor)
 
-    def model_status(self):
+    def model_status(self) -> int:
         model_status = 999
         for each in self:
             if(str(each).find(PredictorNames.SentenceComp.value)!=-1):
                 status = each.is_model_loaded()
                 if(status):
-                    self.log.info("SentenceCompletionPredictor model loaded")
+                    self.logger.info("SentenceCompletionPredictor model loaded")
                     model_status = 1
                 else:
                     model_status = 0
@@ -107,7 +123,7 @@ class PredictorRegistry(list):
                 status = each.is_model_loaded()
                 if(status):
                     model_status = 1
-                    self.log.info("CannedPhrasesPredictor model loaded")
+                    self.logger.info("CannedPhrasesPredictor model loaded")
                 else:
                     model_status = 0
         return model_status

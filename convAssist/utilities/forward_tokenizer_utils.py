@@ -51,9 +51,9 @@ def forward_tokenize_files(
 def forward_tokenize_file(
     infile: str,
     ngram_size: int,
-    lowercase: bool = False,
+    ngram_map: NgramMap,
     cutoff: int = 0,
-    ngram_map: NgramMap = None,
+    lowercase: bool = False
 ):
     """
     Tokenize a file and return an ngram store.

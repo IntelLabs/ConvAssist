@@ -11,7 +11,7 @@ class ForwardTokenizer(Tokenizer):
         blankspaces=blankspaces,
         separators=separators,
     ):
-        Tokenizer.__init__(self, text, blankspaces, separators)
+        super().__init__(text, blankspaces, separators)
 
         self.offend = self.count_characters() - 1
         self.reset_stream()
@@ -44,12 +44,10 @@ class ForwardTokenizer(Tokenizer):
         return self
 
     def has_more_tokens(self):
-        if self.offset < self.offend:
-            return True
-        return False
+        return self.offset < self.offend
 
     def next_token(self):
-        current = self.text[self.offset]
+        current: str = self.text[self.offset]
         self.offset += 1
         token = ""
 

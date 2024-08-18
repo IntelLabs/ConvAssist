@@ -7,12 +7,14 @@ import joblib
 import hnswlib
 from nltk import word_tokenize
 from nltk.stem import PorterStemmer
+import numpy
 import pandas as pd
 from sentence_transformers import SentenceTransformer
-
+from ConvAssist.utilities.context_tracker import ContextTracker
 from ConvAssist.predictor.utilities.prediction import Prediction
 from ConvAssist.predictor import Predictor
 from ConvAssist.utilities.suggestion import Suggestion
+from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
 class CannedPhrasesPredictor(Predictor):
     """
@@ -26,27 +28,27 @@ class CannedPhrasesPredictor(Predictor):
             predictor_name, 
             short_desc=None, 
             long_desc=None, 
-            dbconnection=None
+                        logger=None
         ):
-        Predictor.__init__(
-            self, config, context_tracker, predictor_name, short_desc, long_desc
+        super().__init__(
+            config, 
+            context_tracker, 
+            predictor_name, 
+            short_desc, 
+            long_desc,
+            
+            logger
         )
-        self.db = None
-        self.dbconnection = dbconnection
+        self.sentences_db: SQLiteDatabaseConnector
         self.cardinality = 3
         self.learn_mode_set = False
-        self.dbclass = None
-        self.dbuser = None
-        self.dbpass = None
-        self.dbhost = None
-        self.dbport = None
         self.MODEL_LOADED = False
         self._database = None
         self._deltas = None
         self._learn_mode = None
         self.config = config
         self.name = predictor_name
-        self.context_tracker = context_tracker
+        self.context_tracker: ContextTracker = context_tracker
         self._read_config()
         self.seed = 42
         self.cannedPhrases_counts={}
@@ -56,9 +58,10 @@ class CannedPhrasesPredictor(Predictor):
         self.pers_cannedphrasesLines = [s.strip() for s in self.pers_cannedphrasesLines]
 
         self.log.info("Logging inside canned phrases init!!!")
-        if(not os.path.isfile(self.sentences_db)):
-            self.createSentDB(self.sentences_db)
-
+        if(not os.path.isfile(self.sentences_db_path)):
+            self.log.debug(f"{self.sentences_db_path} does not exist, creating.")
+            columns = ['sentence TEXT UNIQUE', 'count INTEGER']
+            self.createTable(self.sentences_db_path, "sentences", columns)
 
         if(not os.path.isfile(self.embedding_cache_path)):
             self.corpus_embeddings = self.embedder.encode(self.pers_cannedphrasesLines, show_progress_bar=True, convert_to_numpy=True)
@@ -72,22 +75,8 @@ class CannedPhrasesPredictor(Predictor):
             self.corpus_sentences = cache_data['sentences']
             self.corpus_embeddings = cache_data['embeddings']
 
-
-
-        # #### IF CANNED PHRASES EMBEDDING NOT FOUND, 
-        # if(not os.path.isfile(self.embedding_cache_path)):
-        #     self.corpus_embeddings = self.embedder.encode(self.pers_cannedphrasesLines, show_progress_bar=True, convert_to_numpy=True)
-        #     with open(self.embedding_cache_path, "wb") as fOut:
-        #         pickle.dump({'sentences': self.pers_cannedphrasesLines, 'embeddings': self.corpus_embeddings}, fOut)
-
-        # else:
-        #     with open(self.embedding_cache_path, "rb") as fIn:
-        #         cache_data = pickle.load(fIn)
-        #         self.corpus_embeddings = cache_data['embeddings']
-        #         self.corpus_sentences = cache_data['sentences']
-
         self.n_clusters = 20     ### clusters for hnswlib index
-        self.embedding_size = self.corpus_embeddings.shape[1]
+        self.embedding_size = self.corpus_embeddings[0].shape[1]
         self.index = hnswlib.Index(space = 'cosine', dim = self.embedding_size)
 
         ####### CHECK IF INDEX IS PRESENT
@@ -112,13 +101,6 @@ class CannedPhrasesPredictor(Predictor):
     def is_model_loaded(self):
         return self.MODEL_LOADED
 
-    def insert_into_tables(self, conn, sql, task):
-        cur = conn.cursor()
-        cur.execute(sql, task)
-        conn.commit()
-
-        return cur.lastrowid
-
     def recreate_canned_db(self, personalized_corpus):
         self.log.info("inside CannedPhrasesPredictor recreate_canned_db")
 
@@ -127,71 +109,41 @@ class CannedPhrasesPredictor(Predictor):
         self.pers_cannedphrasesLines = [s.strip() for s in self.pers_cannedphrasesLines]
 
         try:
-            raise NotImplementedError
             #### RETRIEVE ALL SENTENCES FROM THE DATABASE
-            conn_sent = sqlite3.connect(self.sentences_db)
-            c = conn_sent.cursor()
-            c.execute("SELECT * FROM sentences")
-            res_all = c.fetchall()
-            #self.log.debug("len(sent_db) = "+ str(len(res_all))+ " len(self.pers_cannedphrases) = "+ str(len(self.pers_cannedphrasesLines)))
+            self.sentences_db = SQLiteDatabaseConnector(self.sentences_db_path)
+            self.sentences_db.connect()
+            res_all = self.sentences_db.fetch_all("SELECT * FROM sentences")
+
             for r in res_all:
                 self.cannedPhrases_counts[r[0]] = r[1]
 
             if(os.path.isfile(self.embedding_cache_path)):
-                # cache_data = np.load(self.embedding_cache_path)
                 cache_data = joblib.load(self.embedding_cache_path)
                 self.corpus_sentences = cache_data['sentences']
                 self.corpus_embeddings = cache_data['embeddings']
-
-
-            # if(os.path.isfile(self.embedding_cache_path)):
-            #     with open(self.embedding_cache_path, "rb") as fIn:
-            #         cache_data = pickle.load(fIn)
-            #         self.corpus_embeddings = cache_data['embeddings']
-            #         self.corpus_sentences = cache_data['sentences']
             else:
                 self.log.info("In Recreate_DB of cannedPhrasesPredictor, EMBEDDINGS FILE DOES NOT EXIST!!! ")
 
 
-            ###### check if cannedPhrases file has been modified!!! 
+            # check if cannedPhrases file has been modified!!! 
             if(set(self.corpus_sentences) != set(self.pers_cannedphrasesLines) ):
-                self.log.info("Canned Phrases has been modified externally.. Recreating embeddings and indices")
+                self.log.debug("Canned Phrases has been modified externally.. Recreating embeddings and indices")
                 phrasesToAdd = set(self.pers_cannedphrasesLines) - set(self.corpus_sentences)
                 phrasesToRemove = set(self.corpus_sentences) - set(self.pers_cannedphrasesLines)
-                print("phrases to add = ", str(phrasesToAdd))
-                print("phrases to remove = ", str(phrasesToRemove))
-                self.log.info("phrases to add Recreate_DB of cannedPhrasesPredictor = "+ str(phrasesToAdd))
-                self.log.info("phrases to phrasesToRemove Recreate_DB of cannedPhrasesPredictor= "+ str(phrasesToRemove))
-                #### update embeddings, 
-                self.corpus_embeddings = self.embedder.encode(self.pers_cannedphrasesLines, show_progress_bar=True, convert_to_numpy=True)
-                # np.save(self.embedding_cache_path,{'sentences': self.pers_cannedphrasesLines, 'embeddings': self.corpus_embeddings})
-                joblib.dump({'sentences': self.pers_cannedphrasesLines, 'embeddings': self.corpus_embeddings}, self.embedding_cache_path)
-                # with open(self.embedding_cache_path, "wb") as fOut:
-                #     pickle.dump({'sentences': self.pers_cannedphrasesLines, 'embeddings': self.corpus_embeddings}, fOut)
+                self.log.debug(f"phrases to add Recreate_DB of cannedPhrasesPredictor = {str(phrasesToAdd)}")
+                self.log.debug(f"phrases to phrasesToRemove Recreate_DB of cannedPhrasesPredictor = {str(phrasesToRemove)}")
 
-                #### update index:
+                # update embeddings
+                self.corpus_embeddings = self.embedder.encode(self.pers_cannedphrasesLines, show_progress_bar=True, convert_to_numpy=True)
+                joblib.dump({'sentences': self.pers_cannedphrasesLines, 'embeddings': self.corpus_embeddings}, self.embedding_cache_path)
+
+                # update index:
                 self.index = self.create_index(self.index)
             else:
-                self.log.info("Recreate_DB of cannedPhrasesPredictor: NO modifications to cannedPhrases= ")
+                self.log.info("Recreate_DB of cannedPhrasesPredictor: NO modifications to cannedPhrases")
 
         except Exception as e:
-            self.log.info("Exception in CannedPhrasePredictor recreateDB  = "+e)
-
-    def createSentDB(self, dbname):
-        self.log.info("IN createSentDB")
-        try:
-            raise NotImplementedError
-            #self.log.debug("creating db = "+ dbname)
-            conn = sqlite3.connect(dbname)
-            c = conn.cursor()
-            c.execute('''
-                    CREATE TABLE IF NOT EXISTS sentences
-                    (sentence TEXT UNIQUE, count INTEGER)
-                    ''')
-            conn.commit()
-        except Exception as e:
-            #self.log.debug("Exception in createSentDB  = "+str(e))
-            pass
+            self.log.error("CannedPhrasePredictor recreateDB: {e}")
 
     def find_semantic_matches(self,context, sent_prediction, cannedph):
         try:
@@ -207,8 +159,8 @@ class CannedPhrasesPredictor(Predictor):
                 if ret_sent.strip() not in direct_matchedSentences:
                     sent_prediction.add_suggestion(Suggestion(ret_sent.strip(), hits[i]["score"], self.name))
         except Exception as e:
-            #self.log.debug("Exception in CannedPhrasePredictor find_semantic_matches  = "+e)
-            pass
+            self.log.error(f"Exception in CannedPhrasePredictor find_semantic_matches {e}")
+            raise e
 
         return sent_prediction
 
@@ -232,7 +184,7 @@ class CannedPhrasesPredictor(Predictor):
                 if(row["matches"]>0):
                     sent_prediction.add_suggestion(Suggestion(row['sentence'], row["matches"]+row["probability"], self.name))
         except Exception as e:
-            self.log.debug("Exception in CannedPhrasePredictor find_direct_matches  = "+e)
+            self.log.error(f"CannedPhrasePredictor find_direct_matches {e}")
 
         return sent_prediction
 
@@ -274,7 +226,7 @@ class CannedPhrasesPredictor(Predictor):
             #self.log.debug("sent_prediction = "+str(sent_prediction))
 
         except Exception as e:
-            self.log.debug("Exception in cannedPhrases Predict = "+e)
+            self.log.error("Exception in cannedPhrases Predict: {e} ")
 
         return sent_prediction, word_prediction
 
@@ -285,27 +237,20 @@ class CannedPhrasesPredictor(Predictor):
     def learn(self, change_tokens):
         #### For the cannedPhrase predictor, learning adds the sentence to the PSMCannedPhrases 
         if self.learn_mode == "True":
-            #self.log.debug("learning ..."+change_tokens)
             try:
-                raise NotImplementedError
                 #### ADD THE NEW PHRASE TO THE EMBEDDINGS, AND RECREATE THE INDEX. 
                 if(change_tokens not in self.corpus_sentences):
-                    #self.log.debug("phrase "+ change_tokens+ " not present, adding to embeddings and creating new index")
                     phrase_emb = self.embedder.encode(change_tokens.strip())
-                    self.corpus_embeddings = np.vstack((self.corpus_embeddings, phrase_emb))
+                    self.corpus_embeddings = numpy.vstack((self.corpus_embeddings, phrase_emb))
                     self.corpus_sentences.append(change_tokens.strip())
-                    # np.save(self.embedding_cache_path,{'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings})
                     joblib.dump({'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings}, self.embedding_cache_path)
-                    # with open(self.embedding_cache_path, "wb") as fOut:
-                    #     pickle.dump({'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings}, fOut)
                     self.index = self.create_index(self.index)
 
-                conn = sqlite3.connect(self.sentences_db)
-                c = conn.cursor()
+                self.sentences_db.connect()
                 count = 0
                 #### CHECK IF SENTENCE EXISITS IN THE DATABASE
-                c.execute("SELECT count FROM sentences WHERE sentence = ?", (change_tokens,))
-                res = c.fetchall()
+                res = self.sentences_db.fetch_all("SELECT count FROM sentences WHERE sentence = ?", (change_tokens,))
+                
                 if len(res) > 0:
                     if len(res[0]) > 0:
                         count = int(res[0][0])
@@ -317,27 +262,27 @@ class CannedPhrasesPredictor(Predictor):
                     for l in self.pers_cannedphrasesLines:
                         fout.write(l+"\n")
                     fout.close()
-                    c.execute('''
+                    self.sentences_db.execute_query('''
                     INSERT INTO sentences (sentence, count)
                     VALUES (?,?)''', (change_tokens, 1))
 
                     self.cannedPhrases_counts[change_tokens] = 1
                 ### ELSE, IF SENTENCE EXIST, ADD INTO DATABASE WITH UPDATED COUNT
                 else:
-                    c.execute('''
+                    self.sentences_db.execute_query('''
                     UPDATE sentences SET count = ? where sentence = ?''', (count+1, change_tokens))
 
                     self.cannedPhrases_counts[change_tokens] = count +1
-                conn.commit()
+                self.sentences_db.commit()
             except Exception as e:
-                self.log.debug("Exception in LEARN CANNED PHRASES SENTENCES  = "+e)
+                self.log.error("Exception in LEARN CANNED PHRASES SENTENCES  = {e}")
 
     def _read_config(self):
         self.static_resources_path = self.config.get(self.name, "static_resources_path")
         self.personalized_resources_path = self.config.get(self.name, "personalized_resources_path")
         self.learn_mode = self.config.get(self.name, "learn")
         self.personalized_cannedphrases = os.path.join(self.personalized_resources_path, self.config.get(self.name, "personalized_cannedphrases"))
-        self.sentences_db  = os.path.join(self.personalized_resources_path, self.config.get(self.name, "sentences_db"))
+        self.sentences_db_path  = os.path.join(self.personalized_resources_path, self.config.get(self.name, "sentences_db"))
         self.embedding_cache_path = os.path.join(self.personalized_resources_path, self.config.get(self.name, "embedding_cache_path"))
         self.index_path = os.path.join(self.personalized_resources_path, self.config.get(self.name, "index_path"))
         self.sbertmodel = os.path.join(self.static_resources_path, self.config.get(self.name, "sbertmodel"))
