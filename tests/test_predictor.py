@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 from src.predictor.predictor import Predictor
+from tests.utils import safe_delete_file
 
 class TestPredictor(unittest.TestCase):
     def setUp(self):
@@ -9,6 +10,8 @@ class TestPredictor(unittest.TestCase):
         self.predictor_name = "test_predictor"
         self.short_desc = "Short description"
         self.long_desc = "Long description"
+        self.db_path = "tests/test_data/dbs/test_predictor.db"
+
         self.logger = MagicMock()
 
         self.predictor = Predictor(
@@ -19,6 +22,10 @@ class TestPredictor(unittest.TestCase):
             self.long_desc,
             self.logger
         )
+
+    def tearDown(self) -> None:
+        safe_delete_file(self.db_path)
+        return super().tearDown()
 
     def test_get_name(self):
         self.assertEqual(self.predictor.get_name(), "test_predictor")
@@ -42,12 +49,11 @@ class TestPredictor(unittest.TestCase):
             self.predictor._read_config()
 
     def test_create_table(self):
-        dbname = "test_db"
         tablename = "test_table"
         columns = ["column1", "column2"]
 
         self.predictor.log = MagicMock()
-        self.predictor.createTable(dbname, tablename, columns)
+        self.predictor.createTable(self.db_path, tablename, columns)
 
         self.predictor.log.critical.assert_not_called()
 

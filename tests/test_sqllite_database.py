@@ -5,7 +5,7 @@ from tests.utils import safe_delete_file
 
 class TestSQLiteDatabase(unittest.TestCase):
     def setUp(self):
-        self.db_path = "tests/test_data/test.db"
+        self.db_path = "tests/test_data/dbs/test_sqllite.db"
         self.db = SQLiteDatabaseConnector(self.db_path)
 
     def tearDown(self):
@@ -48,7 +48,7 @@ class TestSQLiteDatabase(unittest.TestCase):
 
 class TestSQLiteFetchCommands(unittest.TestCase):
     def setUp(self):
-        self.db_path = "tests/test_data/test.db"
+        self.db_path = "tests/test_data/dbs/test_sqllite_fetch.db"
         self.db = SQLiteDatabaseConnector(self.db_path)
         self.db.connect()
         query = "CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, name TEXT)"

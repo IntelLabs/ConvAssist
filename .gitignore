@@ -3,7 +3,7 @@ tmp/
 htmlcov/
 __pycache__/
 ConvAssist.egg-info/
-# tests/test_data/test.db
+tests/test_data/dbs/*
 build/
 dist/
 
