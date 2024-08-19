@@ -28,8 +28,6 @@ class PredictorRegistry(list):
         super().__init__()
 
         self.config: ConfigParser = config
-        
-        self._context_tracker = None
         self.set_predictors()
         if logger:
             self.logger = logger

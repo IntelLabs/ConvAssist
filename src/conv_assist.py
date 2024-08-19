@@ -6,7 +6,7 @@ from typing import Any
 from nltk import sent_tokenize
 from src.context_tracker import ContextTracker
 from src.predictor_registry import PredictorRegistry
-from src.predictor.utilities.predictior_activator import PredictorActivator
+from src.predictior_activator import PredictorActivator
 from src.utilities.logging import ConvAssistLogger
 
 class ConvAssist:
