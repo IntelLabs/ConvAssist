@@ -10,9 +10,14 @@ def safe_delete_file(file_path):
             try:
                 file_to_delete.unlink()
                 break
-            except PermissionError:
+            except PermissionError: 
                 time.sleep(.1)
                 pass
             
     if file_to_delete.is_file():
         raise Exception(f"Could not delete file {file_path}")
+
+def safe_check_folder(folder_path):
+    folder = Path(folder_path)
+    if not folder.exists():
+        folder.mkdir()

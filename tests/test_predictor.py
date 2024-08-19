@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 from src.predictor.predictor import Predictor
-from tests.utils import safe_delete_file
+from tests.utils import safe_delete_file, safe_check_folder
 
 class TestPredictor(unittest.TestCase):
     def setUp(self):
@@ -11,6 +11,7 @@ class TestPredictor(unittest.TestCase):
         self.short_desc = "Short description"
         self.long_desc = "Long description"
         self.db_path = "tests/test_data/dbs/test_predictor.db"
+        safe_check_folder("tests/test_data/dbs/")
 
         self.logger = MagicMock()
 

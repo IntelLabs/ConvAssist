@@ -1,17 +1,20 @@
 import sqlite3
+from pathlib import Path
 import unittest
 # from unittest.mock import MagicMock
 from src.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
-from tests.utils import safe_delete_file 
+from tests.utils import safe_delete_file, safe_check_folder
 
 class TestSQLiteDatabase(unittest.TestCase):
     def setUp(self):
-        self.db_path = "tests/test_data/dbs/test_sqllite.db"
-        self.db = SQLiteDatabaseConnector(self.db_path)
+        self.db_path = "tests/test_data/dbs/"
+        self.db_file = "test_sqllite.db"
+        safe_check_folder(self.db_path)
+        self.db = SQLiteDatabaseConnector(str(Path(self.db_path) / (self.db_file)))
 
     def tearDown(self):
         self.db.close()
-        safe_delete_file(self.db_path)
+        safe_delete_file(str(Path(self.db_path) / (self.db_file)))
 
     def test_connect(self):
         self.db.connect()
@@ -49,15 +52,17 @@ class TestSQLiteDatabase(unittest.TestCase):
 
 class TestSQLiteFetchCommands(unittest.TestCase):
     def setUp(self):
-        self.db_path = "tests/test_data/dbs/test_sqllite_fetch.db"
-        self.db = SQLiteDatabaseConnector(self.db_path)
+        self.db_path = "tests/test_data/dbs/"
+        self.db_file = "test_sqllite_fetch.db"
+        safe_check_folder(self.db_path)
+        self.db = SQLiteDatabaseConnector(str(Path(self.db_path) / (self.db_file)))
         self.db.connect()
         query = "CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, name TEXT)"
         self.db.execute_query(query)
 
     def tearDown(self):
         self.db.close()
-        safe_delete_file(self.db_path)
+        safe_delete_file(str(Path(self.db_path) / (self.db_file)))
 
     def test_fetch_one(self):
         self.db.connect()
