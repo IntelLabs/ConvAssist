@@ -2,9 +2,9 @@
 #SPDX-License-Identifier: Apache-2.0
 
 import unittest
-from ConvAssist.combiner.meritocrity_combiner import MeritocracyCombiner
-from ConvAssist.utilities.suggestion import Suggestion
-from ConvAssist.predictor.utilities.prediction import Prediction
+from src.combiner.meritocrity_combiner import MeritocracyCombiner
+from src.utilities.suggestion import Suggestion
+from src.predictor.utilities.prediction import Prediction
 
 
 class TestMeritocracyCombiner(unittest.TestCase):

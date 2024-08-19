@@ -3,7 +3,7 @@
 
 import sqlite3
 from typing import Any, Optional, Tuple, List
-from ConvAssist.utilities.databaseutils.dbconnector import DatabaseError, DatabaseConnector
+from src.utilities.databaseutils.dbconnector import DatabaseError, DatabaseConnector
 
 class SQLiteDatabaseConnector(DatabaseConnector):
     def __init__(self, dbname: str, logger=None):

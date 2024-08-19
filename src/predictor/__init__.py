@@ -1,10 +1,10 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-from ConvAssist.utilities.logging import ConvAssistLogger
-from ConvAssist.utilities.singleton import PredictorSingleton
-from ConvAssist.predictor.utilities.prediction import Prediction
-from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
+from src.utilities.logging import ConvAssistLogger
+from src.utilities.singleton import PredictorSingleton
+from src.predictor.utilities.prediction import Prediction
+from src.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
 class Predictor(metaclass=PredictorSingleton):
     """

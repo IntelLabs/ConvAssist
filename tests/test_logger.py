@@ -8,7 +8,7 @@ import re
 # import sys 
 
 from .utils import safe_delete_file
-from ConvAssist.utilities.logging import ConvAssistLogger
+from src.utilities.logging import ConvAssistLogger
 from pathlib import Path
 
 def asssert_log_message(log_string, log_level, expected):

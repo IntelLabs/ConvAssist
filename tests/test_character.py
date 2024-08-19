@@ -6,7 +6,7 @@
 """
 import unittest
 
-import ConvAssist.utilities.character as character
+import src.utilities.character as character
 
 
 class TestCharacter(unittest.TestCase):

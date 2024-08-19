@@ -1,9 +1,9 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-from ConvAssist.combiner import Combiner
-from ConvAssist.predictor.utilities.prediction import Prediction
-from ConvAssist.predictor.utilities.predictor_names import PredictorNames
+from src.combiner import Combiner
+from src.predictor.utilities.prediction import Prediction
+from src.predictor.utilities.predictor_names import PredictorNames
 
 #TODO - this isn't the best way to combine the probs (from ngram db and deep
 # learning based model, just concat m,n predictions and take the top n

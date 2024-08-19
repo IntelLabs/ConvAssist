@@ -5,10 +5,10 @@
 Class for context tracker.
 
 """
-from ConvAssist.utilities.character import *
-from ConvAssist.tokenizer.forward_tokenizer import ForwardTokenizer
-from ConvAssist.tokenizer.reverse_tokenizer import ReverseTokenizer
-from ConvAssist.utilities.predictor_registry import PredictorRegistry
+from src.utilities.character import *
+from src.tokenizer.forward_tokenizer import ForwardTokenizer
+from src.tokenizer.reverse_tokenizer import ReverseTokenizer
+from src.utilities.predictor_registry import PredictorRegistry
 
 DEFAULT_SLIDING_WINDOW_SIZE = 80
 

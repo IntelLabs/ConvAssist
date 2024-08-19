@@ -4,10 +4,10 @@
 from configparser import ConfigParser
 from typing import Any
 from nltk import sent_tokenize
-from ConvAssist.utilities.context_tracker import ContextTracker
-from ConvAssist.utilities.predictor_registry import PredictorRegistry
-from ConvAssist.predictor.utilities.predictior_activator import PredictorActivator
-from ConvAssist.utilities.logging import ConvAssistLogger
+from src.utilities.context_tracker import ContextTracker
+from src.utilities.predictor_registry import PredictorRegistry
+from src.predictor.utilities.predictior_activator import PredictorActivator
+from src.utilities.logging import ConvAssistLogger
 
 class ConvAssist:
     """

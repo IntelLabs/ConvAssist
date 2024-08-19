@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional, Tuple
 
-from ConvAssist.utilities.logging import ConvAssistLogger
+from src.utilities.logging import ConvAssistLogger
 
 class DatabaseError(Exception):
     """Base class for database-related errors."""

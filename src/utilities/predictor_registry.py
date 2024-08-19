@@ -4,8 +4,8 @@
 from typing import Any
 from configparser import ConfigParser
 
-from ConvAssist.predictor.utilities.predictor_names import PredictorNames
-from ConvAssist.utilities.logging import ConvAssistLogger
+from src.predictor.utilities.predictor_names import PredictorNames
+from src.utilities.logging import ConvAssistLogger
 
 class PredictorRegistry(list):
     """
@@ -59,10 +59,10 @@ class PredictorRegistry(list):
                 self.add_predictor(predictor)
 
     def add_predictor(self, predictor_name):
-        from ConvAssist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
-        from ConvAssist.predictor.sentence_completion_predictor import SentenceCompletionPredictor
-        from ConvAssist.predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
-        from ConvAssist.predictor.spell_correct_predictor import SpellCorrectPredictor
+        from src.predictor.canned_phrases_predictor import CannedPhrasesPredictor
+        from src.predictor.sentence_completion_predictor import SentenceCompletionPredictor
+        from src.predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
+        from src.predictor.spell_correct_predictor import SpellCorrectPredictor
 
         predictor: Any = None
         

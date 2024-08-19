@@ -5,7 +5,7 @@ import os
 import sys
 import spacy
 
-from ConvAssist.utilities.singleton import Singleton
+from src.utilities.singleton import Singleton
 
 class NLP(metaclass=Singleton):
     def __init__(self):

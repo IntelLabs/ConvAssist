@@ -5,14 +5,14 @@ import string
 from pathlib import Path
 from typing import Any, List, Optional
 
-from ConvAssist.predictor import Predictor
-from ConvAssist.predictor.utilities.predictor_names import PredictorNames
-from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
-from ConvAssist.utilities.ngram_map import NgramMap
-from ConvAssist.utilities.suggestion import Suggestion
-from ConvAssist.predictor.utilities.prediction import Prediction
-from ConvAssist.utilities.nlp import NLP
-from ConvAssist.utilities.databaseutils.sqllite_ngram_dbconnector import SQLiteNgramDatabaseConnector
+from src.predictor import Predictor
+from src.predictor.utilities.predictor_names import PredictorNames
+from src.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
+from src.utilities.ngram_map import NgramMap
+from src.utilities.suggestion import Suggestion
+from src.predictor.utilities.prediction import Prediction
+from src.utilities.nlp import NLP
+from src.utilities.databaseutils.sqllite_ngram_dbconnector import SQLiteNgramDatabaseConnector
 
 class SmoothedNgramPredictor(Predictor):
     """

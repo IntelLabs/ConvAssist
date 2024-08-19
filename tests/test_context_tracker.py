@@ -1,8 +1,8 @@
 import unittest
 from configparser import ConfigParser
-from ConvAssist.utilities.context_tracker import ContextTracker, InvalidCallbackException
-from ConvAssist.utilities.callback import Callback
-from ConvAssist.utilities.predictor_registry import PredictorRegistry
+from src.utilities.context_tracker import ContextTracker, InvalidCallbackException
+from src.utilities.callback import Callback
+from src.utilities.predictor_registry import PredictorRegistry
 
 class TestContextTracker(unittest.TestCase):
     def setUp(self):

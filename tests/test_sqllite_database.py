@@ -1,6 +1,6 @@
 import unittest
 # from unittest.mock import MagicMock
-from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
+from src.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 from tests.utils import safe_delete_file 
 
 class TestSQLiteDatabase(unittest.TestCase):
