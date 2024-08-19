@@ -17,7 +17,7 @@ from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline, Pipeline
 
-from src.predictor import Predictor
+from src.predictor.predictor import Predictor
 from src.utilities.suggestion import Suggestion
 from src.utilities.nlp import NLP
 from src.predictor.utilities.prediction import Prediction

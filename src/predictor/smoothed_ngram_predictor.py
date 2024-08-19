@@ -5,7 +5,7 @@ import string
 from pathlib import Path
 from typing import Any, List, Optional
 
-from src.predictor import Predictor
+from src.predictor.predictor import Predictor
 from src.predictor.utilities.predictor_names import PredictorNames
 from src.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 from src.utilities.ngram_map import NgramMap

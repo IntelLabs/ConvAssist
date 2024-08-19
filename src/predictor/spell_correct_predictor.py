@@ -6,7 +6,7 @@ import os
 from collections import Counter
 from pathlib import Path
 
-from src.predictor import Predictor
+from src.predictor.predictor import Predictor
 from src.utilities.suggestion import Suggestion
 from src.predictor.utilities.prediction import Prediction
 

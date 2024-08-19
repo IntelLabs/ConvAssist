@@ -8,7 +8,7 @@ Class for context tracker.
 from src.utilities.character import *
 from src.tokenizer.forward_tokenizer import ForwardTokenizer
 from src.tokenizer.reverse_tokenizer import ReverseTokenizer
-from src.utilities.predictor_registry import PredictorRegistry
+from src.predictor_registry import PredictorRegistry
 
 DEFAULT_SLIDING_WINDOW_SIZE = 80
 
