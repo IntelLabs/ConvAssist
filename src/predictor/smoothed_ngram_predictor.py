@@ -40,8 +40,6 @@ class SmoothedNgramPredictor(Predictor):
         self.learn_mode_set = False
 
         self._database = None
-        self._deltas = []
-        self._learn_mode = None
         self.config = config
         self.name = predictor_name
         self.context_tracker = context_tracker

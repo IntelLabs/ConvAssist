@@ -12,7 +12,7 @@ class Suggestion(object):
 
     def __init__(self, word, probability, predictor_name):
         self.word = word
-        self._probability = probability
+        self.probability = probability
         self.predictor_name = predictor_name
 
     def __eq__(self, other):
@@ -30,22 +30,18 @@ class Suggestion(object):
     def __repr__(self):
         return "Word: {0} - Probability: {1}".format(self.word, self.probability)
 
-    def probability():
-        doc = "The probability property."
+    @property
+    def probability(self):
+        return self._probability
 
-        def fget(self):
-            return self._probability
+    @probability.setter
+    def probability(self, value):
+        if value < MIN_PROBABILITY or value > MAX_PROBABILITY:
+            raise SuggestionException("Probability is too high or too low = " + str(value))
 
-        def fset(self, value):
-            if(value> MAX_PROBABILITY):
-                value = 1.0
-            if value < MIN_PROBABILITY or value > MAX_PROBABILITY:
-                raise SuggestionException("Probability is too high or too low = " + str(value))
-            self._probability = value
+        self._probability = value
 
-        def fdel(self):
+    @probability.deleter
+    def probability(self):
             del self._probability
 
-        return locals()
-
-    probability = property(**probability())

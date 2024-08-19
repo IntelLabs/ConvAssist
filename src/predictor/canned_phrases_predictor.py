@@ -10,7 +10,7 @@ from nltk.stem import PorterStemmer
 import numpy
 import pandas as pd
 from sentence_transformers import SentenceTransformer
-from src.context_tracker import ContextTracker
+from src.utilities.context_tracker import ContextTracker
 from src.predictor.utilities.prediction import Prediction
 from src.predictor import Predictor
 from src.utilities.suggestion import Suggestion

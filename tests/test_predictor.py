@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
-from ConvAssist.predictor import Predictor
+from src.predictor import Predictor
 
 class TestPredictor(unittest.TestCase):
     def setUp(self):

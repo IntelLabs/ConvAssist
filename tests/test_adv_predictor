@@ -8,38 +8,40 @@ import os
 import unittest
 
 import configparser
-import ConvAssist.predictor.utilities.prediction
-import ConvAssist.tokenizer.tokenizer
-from ConvAssist.utilities.databaseutils.dbconnector import DatabaseConnector
-import ConvAssist.utilities.context_tracker 
-import ConvAssist.utilities.callback
+from src.predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
+import src.predictor.utilities
+from src.predictor.utilities.prediction import Prediction
+import src.utilities.context_tracker 
+import src.utilities.callback
+from src.utilities.predictor_registry import PredictorRegistry
+from src.utilities.suggestion import Suggestion
 
 
 class TestSuggestion(unittest.TestCase):
     def setUp(self):
-        self.suggestion = ConvAssist.predictor.Prediction.Suggestion("Test", 0.3, "test_predictor")
+        self.my_suggestion = Suggestion("Test", 0.3, "test_predictor")
 
     def test_probability(self):
-        self.suggestion.probability = 0.1
-        assert self.suggestion.probability == 0.1
+        self.my_suggestion.probability = 0.1
+        assert self.my_suggestion.probability == 0.1
 
 
 class TestPrediction(unittest.TestCase):
     def setUp(self):
-        self.prediction = ConvAssist.predictor.utilities.prediction.Prediction()
+        self.prediction = Prediction()
 
     def test_add_suggestion(self):
-        self.prediction.add_suggestion(ConvAssist.predictor.Prediction.Suggestion("Test", 0.3, "test_predictor"))
+        self.prediction.add_suggestion(Suggestion("Test", 0.3, "test_predictor"))
         assert self.prediction[0].word == "Test"
         assert self.prediction[0].probability == 0.3
 
-        self.prediction.add_suggestion(ConvAssist.predictor.Prediction.Suggestion("Test2", 0.2, "test_predictor"))
+        self.prediction.add_suggestion(Suggestion("Test2", 0.2, "test_predictor"))
         assert self.prediction[0].word == "Test"
         assert self.prediction[0].probability == 0.3
         assert self.prediction[1].word == "Test2"
         assert self.prediction[1].probability == 0.2
 
-        self.prediction.add_suggestion(ConvAssist.predictor.Prediction.Suggestion("Test3", 0.6, "test_predictor"))
+        self.prediction.add_suggestion(Suggestion("Test3", 0.6, "test_predictor"))
         assert self.prediction[0].word == "Test3"
         assert self.prediction[0].probability == 0.6
         assert self.prediction[1].word == "Test"
@@ -50,21 +52,21 @@ class TestPrediction(unittest.TestCase):
         self.prediction[:] = []
 
     def test_suggestion_for_token(self):
-        self.prediction.add_suggestion(ConvAssist.predictor.Prediction.Suggestion("Token", 0.8, "test_predictor"))
+        self.prediction.add_suggestion(Suggestion("Token", 0.8, "test_predictor"))
         assert self.prediction.suggestion_for_token("Token").probability == 0.8
         self.prediction[:] = []
 
 
-class StringStreamCallback(ConvAssist.utilities.callback.Callback):
+class StringStreamCallback(src.utilities.callback.Callback):
     def __init__(self, stream):
-        ConvAssist.utilities.callback.Callback.__init__(self)
+        src.utilities.callback.Callback.__init__(self)
         self.stream = stream
 
 
 class TestSmoothedNgramPredictor(unittest.TestCase):
     def setUp(self):
         
-        self.prediction = ConvAssist.predictor.Prediction.SmoothedNgramPredictor()
+        self.prediction = SmoothedNgramPredictor()
         
    
         
@@ -77,10 +79,10 @@ class TestSmoothedNgramPredictor(unittest.TestCase):
         )
 
         for ngram_size in range(3):
-            ngram_map = ConvAssist.tokenizer.tokenizer.forward_tokenize_file(
+            ngram_map = src.tokenizer.tokenizer.forward_tokenize_file(
                 self.infile, ngram_size + 1, False
             )
-            ConvAssist.utilities.dbconnector.insert_ngram_map_sqlite(
+            src.utilities.dbconnector.insert_ngram_map_sqlite(
                 ngram_map, ngram_size + 1, self.dbfilename, False
             )
 
@@ -93,10 +95,10 @@ class TestSmoothedNgramPredictor(unittest.TestCase):
         config.read(config_file)
         config.set("Database", "database", self.dbfilename)
 
-        self.predictor_registry = ConvAssist.predictor.Prediction.PredictorRegistry(config)
+        self.predictor_registry = PredictorRegistry(config)
 
         self.callback = StringStreamCallback("")
-        context_tracker = ConvAssist.utilities.context_tracker.ContextTracker(
+        context_tracker = src.utilities.context_tracker.ContextTracker(
             config, self.predictor_registry, self.callback
         )
 
