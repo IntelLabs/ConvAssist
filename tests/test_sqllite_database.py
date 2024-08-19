@@ -1,3 +1,4 @@
+import sqlite3
 import unittest
 # from unittest.mock import MagicMock
 from src.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
@@ -14,12 +15,12 @@ class TestSQLiteDatabase(unittest.TestCase):
 
     def test_connect(self):
         self.db.connect()
-        self.assertIsNotNone(self.db.connection)
+        self.assertIsNotNone(self.db.conn)
 
     def test_close(self):
         self.db.connect()
         self.db.close()
-        self.assertIsNone(self.db.connection)
+        self.assertIsNone(self.db.conn)   
 
     def test_execute_query(self):
         self.db.connect()
@@ -32,19 +33,19 @@ class TestSQLiteDatabase(unittest.TestCase):
     def test_begin_transaction(self):
         self.db.connect()
         self.db.begin_transaction()
-        self.assertIsNotNone(self.db.connection)
+        self.assertIsNotNone(self.db.conn)
 
     def test_commit(self):
         self.db.connect()
         self.db.begin_transaction()
         self.db.commit()
-        self.assertIsNotNone(self.db.connection)
+        self.assertIsNotNone(self.db.conn)
 
     def test_rollback(self):
         self.db.connect()
         self.db.begin_transaction()
         self.db.rollback()
-        self.assertIsNotNone(self.db.connection)
+        self.assertIsNotNone(self.db.conn)
 
 class TestSQLiteFetchCommands(unittest.TestCase):
     def setUp(self):
