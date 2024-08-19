@@ -2,8 +2,8 @@ import unittest
 from unittest.mock import mock_open, patch
 import configparser
 
-from src.utilities.predictor_registry import PredictorRegistry
-from src.utilities.context_tracker import ContextTracker
+from src.predictor_registry import PredictorRegistry
+from src.context_tracker import ContextTracker
 from src.utilities.callback import Callback
 
 class TestPredictorRegistry(unittest.TestCase):

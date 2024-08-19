@@ -1,8 +1,8 @@
 import unittest
 from configparser import ConfigParser
-from src.utilities.context_tracker import ContextTracker, InvalidCallbackException
+from src.context_tracker import ContextTracker, InvalidCallbackException
 from src.utilities.callback import Callback
-from src.utilities.predictor_registry import PredictorRegistry
+from src.predictor_registry import PredictorRegistry
 
 class TestContextTracker(unittest.TestCase):
     def setUp(self):
