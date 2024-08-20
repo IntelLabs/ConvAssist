@@ -4,8 +4,9 @@
 from typing import Any
 from configparser import ConfigParser
 
-from src.predictor.utilities.predictor_names import PredictorNames
-from src.utilities.logging import ConvAssistLogger
+# from ConvAssist.context_tracker import ContextTracker
+from ConvAssist.predictor.utilities.predictor_names import PredictorNames
+from ConvAssist.utilities.logging import ConvAssistLogger
 
 class PredictorRegistry(list):
     """
@@ -28,6 +29,7 @@ class PredictorRegistry(list):
         super().__init__()
 
         self.config: ConfigParser = config
+        self._context_tracker = None
         self.set_predictors()
         if logger:
             self.logger = logger
@@ -35,9 +37,9 @@ class PredictorRegistry(list):
             self.logger = ConvAssistLogger(__name__, level="DEBUG")
 
     @property
-    def context_tracker(self):
-        """The context_tracker property."""
-        return self._context_tracker
+    def context_tracker(self) -> Any:
+            """The context_tracker property."""
+            return self._context_tracker
 
     @context_tracker.setter
     def context_tracker(self, value):
@@ -57,10 +59,10 @@ class PredictorRegistry(list):
                 self.add_predictor(predictor)
 
     def add_predictor(self, predictor_name):
-        from src.predictor.canned_phrases_predictor import CannedPhrasesPredictor
-        from src.predictor.sentence_completion_predictor import SentenceCompletionPredictor
-        from src.predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
-        from src.predictor.spell_correct_predictor import SpellCorrectPredictor
+        from ConvAssist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
+        from ConvAssist.predictor.sentence_completion_predictor import SentenceCompletionPredictor
+        from ConvAssist.predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
+        from ConvAssist.predictor.spell_correct_predictor import SpellCorrectPredictor
 
         predictor: Any = None
         

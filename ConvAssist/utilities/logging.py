@@ -45,6 +45,7 @@ class ConvAssistLogger:
         """Close all handlers associated with the logger."""
         handlers = self.logger.handlers[:]
         for handler in handlers:
+            self.logger.debug("Closing handler: ", handler)
             handler.close()
             self.logger.removeHandler(handler)
 

@@ -1,4 +1,4 @@
-from src.predictor.utilities.prediction import MAX_PROBABILITY, MIN_PROBABILITY
+from ConvAssist.predictor.utilities.prediction import MAX_PROBABILITY, MIN_PROBABILITY
 
 class SuggestionException(Exception):
     pass

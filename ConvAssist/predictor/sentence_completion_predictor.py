@@ -17,12 +17,12 @@ from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline, Pipeline
 
-from src.predictor.predictor import Predictor
-from src.utilities.suggestion import Suggestion
-from src.utilities.nlp import NLP
-from src.predictor.utilities.prediction import Prediction
+from ConvAssist.predictor import Predictor
+from ConvAssist.utilities.suggestion import Suggestion
+from ConvAssist.utilities.nlp import NLP
+from ConvAssist.predictor.utilities.prediction import Prediction
 
-from src.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
+from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
 class SentenceCompletionPredictor(Predictor):
     """

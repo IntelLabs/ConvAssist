@@ -6,9 +6,9 @@ import os
 from collections import Counter
 from pathlib import Path
 
-from src.predictor.predictor import Predictor
-from src.utilities.suggestion import Suggestion
-from src.predictor.utilities.prediction import Prediction
+from ConvAssist.predictor import Predictor
+from ConvAssist.utilities.suggestion import Suggestion
+from ConvAssist.predictor.utilities.prediction import Prediction
 
 
 class SpellCorrectPredictor(Predictor):

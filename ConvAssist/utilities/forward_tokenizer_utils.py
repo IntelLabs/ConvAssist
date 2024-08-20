@@ -1,7 +1,7 @@
 import re
 import typing
-from src.utilities.ngram_map import NgramMap
-from src.tokenizer.forward_tokenizer import ForwardTokenizer
+from ConvAssist.utilities.ngram_map import NgramMap
+from ConvAssist.tokenizer.forward_tokenizer import ForwardTokenizer
 
 def preprocess(text):
     re_wordbeg = re.compile(r"(?<=\s)[-']")

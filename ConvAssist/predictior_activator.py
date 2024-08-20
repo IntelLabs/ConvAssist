@@ -4,9 +4,9 @@ from configparser import ConfigParser
 import os
 from pathlib import Path
 
-from src.predictor.utilities.prediction import UnknownCombinerException
-from src.predictor.utilities.predictor_names import PredictorNames
-from src.combiner.meritocrity_combiner import MeritocracyCombiner
+from ConvAssist.predictor.utilities.prediction import UnknownCombinerException
+from ConvAssist.predictor.utilities.predictor_names import PredictorNames
+from ConvAssist.combiner.meritocrity_combiner import MeritocracyCombiner
 
 class PredictorActivator(object):
     """

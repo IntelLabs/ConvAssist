@@ -4,7 +4,7 @@
 Combiner classes to merge results from several predictors.
 """
 import abc
-from src.predictor.utilities.prediction import Prediction, MAX_PROBABILITY
+from ConvAssist.predictor.utilities.prediction import Prediction, MAX_PROBABILITY
 
 class Combiner(metaclass=abc.ABCMeta):
     """

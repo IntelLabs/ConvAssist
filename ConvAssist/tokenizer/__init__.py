@@ -3,8 +3,8 @@
 
 import abc
 
-from src.utilities.ngram_map import NgramMap
-import src.utilities.character
+from ConvAssist.utilities.ngram_map import NgramMap
+from ConvAssist.utilities.character import blankspaces, separators
 from abc import ABCMeta, abstractmethod
 
 class Tokenizer(metaclass=ABCMeta):
@@ -38,8 +38,8 @@ class Tokenizer(metaclass=ABCMeta):
     def __init__(
         self,
         text,
-        blankspaces=src.utilities.character.blankspaces,
-        separators=src.utilities.character.separators,
+        blankspaces=blankspaces,
+        separators=separators,
     ):
         """
         Constructor of the Tokenizer base class.

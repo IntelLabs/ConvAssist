@@ -1,8 +1,8 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-from src.tokenizer import Tokenizer
-from src.utilities.character import blankspaces, separators
+from ConvAssist.tokenizer import Tokenizer
+from ConvAssist.utilities.character import blankspaces, separators
 
 class ForwardTokenizer(Tokenizer):
     def __init__(

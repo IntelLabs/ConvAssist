@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional, Tuple
 
-from src.utilities.logging import ConvAssistLogger
+from ConvAssist.utilities.logging import ConvAssistLogger
 
 class DatabaseError(Exception):
     """Base class for database-related errors."""
@@ -40,14 +40,14 @@ class DatabaseConnector(ABC):
         pass # pragma: no cover
 
     @abstractmethod
-    def fetch_one(self, query: str, params: Optional[Tuple[Any, ...]] = None) -> Optional[Tuple[Any, ...]]:
+    def fetch_one(self, query: str, params: Optional[Tuple[Any, ...]] = None) -> Optional[Tuple[Any, ...]] | None:
         """
         Execute a query and return a single result.
         """
         pass # pragma: no cover
 
     @abstractmethod
-    def fetch_all(self, query: str, params: Optional[Tuple[Any, ...]] = None) -> List[Tuple[Any, ...]]:
+    def fetch_all(self, query: str, params: Optional[Tuple[Any, ...]] = None) -> List[Tuple[Any, ...]] | None:
         """
         Execute a query and return all results.
         """

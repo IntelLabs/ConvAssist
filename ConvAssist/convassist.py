@@ -4,10 +4,10 @@
 from configparser import ConfigParser
 from typing import Any
 from nltk import sent_tokenize
-from src.context_tracker import ContextTracker
-from src.predictor_registry import PredictorRegistry
-from src.predictior_activator import PredictorActivator
-from src.utilities.logging import ConvAssistLogger
+from ConvAssist.context_tracker import ContextTracker
+from ConvAssist.predictor_registry import PredictorRegistry
+from ConvAssist.predictior_activator import PredictorActivator
+from ConvAssist.utilities.logging import ConvAssistLogger
 
 class ConvAssist:
     """
@@ -31,11 +31,25 @@ class ConvAssist:
         check_model(self): Checks if the models associated with a predictor are loaded.
         close_database(self): Closes the database for ConvAssist.
     """
-    def __init__(self, callback, config:ConfigParser):
+    def __init__(self, callback, config:ConfigParser | None, log_location:str | None, log_level:str | None):
+        if not config: 
+            # config = ConfigParser()
+            #TODO: Define a default config file
+            raise ValueError("Config file is not provided") 
+
         self.config = config
         self.callback = callback
-        self.log_location = self.config.get("Logging", "log_location") # default to no log file
-        self.log_level = self.config.get("Logging", "log_level") # default to info level logging
+
+        if log_level:
+            self.log_level = log_level
+        else:
+            self.log_level = self.config.get("Logging", "log_level", fallback="DEBUG") # default to info level logging
+
+        if log_location:
+            self.log_location = log_location
+        else:
+            self.log_location = self.config.get("Logging", "log_location", fallback="") # default to no log file
+
         self.logger = ConvAssistLogger(self.log_location, self.log_level)
         
         self.predictor_registry = PredictorRegistry(

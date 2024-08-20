@@ -10,11 +10,11 @@ from nltk.stem import PorterStemmer
 import numpy
 import pandas as pd
 from sentence_transformers import SentenceTransformer
-from src.context_tracker import ContextTracker
-from src.predictor.utilities.prediction import Prediction
-from src.predictor.predictor import Predictor
-from src.utilities.suggestion import Suggestion
-from src.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
+from ConvAssist.context_tracker import ContextTracker
+from ConvAssist.predictor.utilities.prediction import Prediction
+from ConvAssist.predictor import Predictor
+from ConvAssist.utilities.suggestion import Suggestion
+from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
 class CannedPhrasesPredictor(Predictor):
     """

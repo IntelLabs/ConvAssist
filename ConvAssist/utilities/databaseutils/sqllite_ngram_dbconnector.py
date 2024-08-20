@@ -3,7 +3,7 @@
 
 import sqlite3
 from typing import Any, Optional, Tuple, List
-from src.utilities.databaseutils.ngram_dbconnector import NGramDatabaseConnector, DatabaseError
+from ConvAssist.utilities.databaseutils.ngram_dbconnector import NGramDatabaseConnector, DatabaseError
 
 class SQLiteNgramDatabaseConnector(NGramDatabaseConnector):
     def __init__(self, dbname: str, cardinality=1, logger=None):
