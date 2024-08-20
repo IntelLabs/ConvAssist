@@ -2,9 +2,9 @@ import unittest
 from unittest.mock import mock_open, patch
 import configparser
 
-from src.predictor_registry import PredictorRegistry
-from src.context_tracker import ContextTracker
-from src.utilities.callback import Callback
+from ConvAssist.predictor_registry import PredictorRegistry
+from ConvAssist.context_tracker import ContextTracker
+from ConvAssist.utilities.callback import Callback
 
 class TestPredictorRegistry(unittest.TestCase):
     def setUp(self):

@@ -5,8 +5,8 @@ import os
 import unittest
 from pathlib import Path
 
-from  src.tokenizer.forward_tokenizer import ForwardTokenizer
-from src.tokenizer.reverse_tokenizer import ReverseTokenizer
+from ConvAssist.tokenizer.forward_tokenizer import ForwardTokenizer
+from ConvAssist.tokenizer.reverse_tokenizer import ReverseTokenizer
 
 
 class TestForwardTokenizer(unittest.TestCase):

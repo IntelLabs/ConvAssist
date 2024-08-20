@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
-from src.predictor.predictor import Predictor
+from ConvAssist.predictor import Predictor
 from tests.utils import safe_delete_file, safe_check_folder
 
 class TestPredictor(unittest.TestCase):

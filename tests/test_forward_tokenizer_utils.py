@@ -1,7 +1,7 @@
 import unittest
-from src.utilities.ngram_map import NgramMap
-from src.tokenizer.forward_tokenizer import ForwardTokenizer
-from src.utilities.forward_tokenizer_utils import forward_tokenize_file
+from ConvAssist.utilities.ngram_map import NgramMap
+from ConvAssist.tokenizer.forward_tokenizer import ForwardTokenizer
+from ConvAssist.utilities.forward_tokenizer_utils import forward_tokenize_file
 import os
 
 class TestForwardTokenizerUtils(unittest.TestCase):
