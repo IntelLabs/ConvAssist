@@ -7,15 +7,7 @@ sys.setrecursionlimit(5000)
 
 # Define the data files to be included
 datas = [
-    ('Assets', '.'),
-    ('Assets/icon_tray.png', 'Assets'),
-    ('Assets/button_back.png', 'Assets'),
-    ('Assets/button_clear.png', 'Assets'),
-    ('Assets/button_exit.png', 'Assets'),
-    ('Assets/button_license.png', 'Assets'),
-    ('Assets/frame.png', 'Assets'),
-    ('scipy.libs', '.'),
-    ('scipy.libs/libopenblas-802f9ed1179cb9c9b03d67ff79f48187.dll', 'scipy.libs')
+    ('ConvAssistCPApp/Assets', 'Assets'),
 ]
 
 # Collect additional data files
@@ -33,34 +25,27 @@ datas += collect_data_files("en_core_web_sm")
 # datas += copy_metadata('transformers')
 # datas += copy_metadata('huggingface-hub')
 # datas += copy_metadata('pyyaml')
+# datas += copy_metadata('blis')
+# datas += copy_metadata('certifi')
+# datas += copy_metadata('charset_normalizer')
+# datas += copy_metadata('cymem')
+# datas += copy_metadata('langcodes')
+# datas += copy_metadata('markupsafe')
+# datas += copy_metadata('murmurhash')
+
 
 # Define the PyInstaller spec
-a = Analysis(
-    ['ConvAssistCPApp.py'],  # Replace with your main script
-    pathex=['.'],
+a = Analysis( # type: ignore
+    ['ConvAssistCPApp/ConvAssistCPApp.py'],  # Replace with your main script
+    pathex=['../'],
     binaries=[],
     datas=datas,
-    # hiddenimports=[],
-    hiddenimports=['en_core_web_sm', 
-                   'huggingface_hub.hf_api',
-                   'huggingface_hub.repository', 
-                   'torch', 
-                   'tqdm', 
-                   'scipy.datasets', 
-                   'scipy.fftpack', 
-                   'scipy.misc', 
-                   'scipy.odr', 
-                   'scipy.signal', 
-                   'sklearn.utils._typedefs', 
-                   'sklearn.metrics._pairwise_distances_reduction._datasets_pair',
-                   'sklearn.metrics._pairwise_distances_reduction._middle_term_computer', 
-                   'sklearn.utils._heap', 
-                   'sklearn.utils._sorting',
-                   'sklearn.utils._vector_sentinel'
-                ],
+    hiddenimports=[
+        'en_core_web_sm', 
+    ],
     hookspath=[],
     runtime_hooks=[],
-    excludes=[],
+    excludes=['mypy', 'pytest', 'pytest-cov', 'pytest-runner', 'pytest-xdist', 'pytest-forked', 'pytest-asyncio', 'pytest-astropy', 'pytest-doctestplus', 'pytest-openfiles', 'pytest-remotedata', 'pytest-doctestplus'],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=None,
@@ -69,28 +54,55 @@ a = Analysis(
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 
+# new_datas = []
+# for d in a.datas:
+#     if '_C.cp310-win_amd64.pyd' not in d[0]:
+#         new_datas.append(d)
+# a.datas = new_datas
+
+# new_datas = []
+# for d in a.datas:
+#     if '_C_flatbuffer.cp310-win_amd64.pyd' not in d[0]:
+#         new_datas.append(d)
+# a.datas = new_datas
+
+new_datas = []
+for d in a.datas:
+    if 'dist-info' not in d[0]:
+        new_datas.append(d)
+
+a.datas = new_datas
+
 exe = EXE(
     pyz,
     a.scripts,
-    [],
-    exclude_binaries=True,
-    name='ConvAssistCPApp',  # Replace with your executable name
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+	[('W ignore', None, 'OPTION')],
+    name='ConvAssistApp',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True  # Set to False if you want to create a windowed application
+    console=True,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon='ConvAssistCPApp/Assets/icon_tray.ico',
 )
 
-coll = COLLECT(
-    exe,
+coll = COLLECT(exe,
     a.binaries,
     a.zipfiles,
     a.datas,
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='ConvAssistCPApp'  # Replace with your executable name
+    name='ConvAssist-Dependencies'
 )
+               

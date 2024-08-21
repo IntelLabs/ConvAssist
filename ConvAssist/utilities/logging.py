@@ -23,7 +23,18 @@ class ConvAssistLogger:
     }
 
     def __init__(self, name='ConvAssistLogger', level="DEBUG", log_file=None):
+        """
+        Initializes the ConvAssistLogger object.
+
+        Args:
+            name (str, optional): The name of the logger. Defaults to 'ConvAssistLogger'.
+            level (str, optional): The log level. Defaults to "DEBUG".
+            log_file (str, optional): The path to the log file. Defaults to None.
+        """
         self.logger = logging.getLogger(name)
+        self.configure_logging(level, log_file)
+
+    def configure_logging(self, level, log_file):
         loglevel = self._nameToLevel.get(level, logging.DEBUG)
         self.logger.setLevel(loglevel)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s %(message)s')

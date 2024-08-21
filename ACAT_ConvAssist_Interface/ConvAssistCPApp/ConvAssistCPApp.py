@@ -579,38 +579,31 @@ def setPipeClient(PipeServerName, retries):
     """
 
     addTextToWindow("      - Establishing connection.")
-    if sys.platform == 'win32':
-        pipeName = f'\\\\\\\\.\\pipe\\{PipeServerName}'
-        
-        logger:ConvAssistLogger = conv_assist_vars.logger
-        clientConnected = False
-        try:
-            handle = win32file.CreateFile(
-                pipeName,
-                win32file.GENERIC_READ | win32file.GENERIC_WRITE,
-                0,
-                None,
-                win32file.OPEN_EXISTING,
-                0,
-                None
-            )
-            thread = threading.Thread(target=threaded_function, args=(handle, retries))
-            thread.start()
-            thread.join()
-        except Exception as e:
-            addTextToWindow(f"  An error occurred, no connection established .")
-            if conv_assist_vars.breakMainLoop:
-                logger.info("Closing .exe")
-                sys.exit()
+    # pipeName = f'\\\\\\\\.\\pipe\\{PipeServerName}'
+    pipeName = fr'\\.\pipe\{PipeServerName}'
+    
+    clientConnected = False
+    try:
+        handle = win32file.CreateFile(
+            pipeName,
+            win32file.GENERIC_READ | win32file.GENERIC_WRITE,
+            0,
+            None,
+            win32file.OPEN_EXISTING,
+            0,
+            None
+        )
         thread = threading.Thread(target=threaded_function, args=(handle, retries))
         thread.start()
         thread.join()
-
-    elif sys.platform == 'darwin':
-        addTextToWindow("  MacOS is not supported  ")
-        logger.info("Closing until MacOS is Supported")
-        sys.exit()
-        
+    except Exception as e:
+        addTextToWindow(f"  An error occurred, no connection established .")
+        if conv_assist_vars.breakMainLoop:
+            conv_assist_vars.logger.info("Closing .exe")
+            sys.exit()
+    thread = threading.Thread(target=threaded_function, args=(handle, retries))
+    thread.start()
+    thread.join()
 
 
 def InitPredict():
