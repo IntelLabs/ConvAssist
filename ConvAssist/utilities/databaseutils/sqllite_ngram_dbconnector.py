@@ -10,13 +10,11 @@ class SQLiteNgramDatabaseConnector(NGramDatabaseConnector):
         super().__init__(dbname=dbname, cardinality=cardinality, logger=logger)
 
     def connect(self, **kwargs) -> None:
-        self.log.debug(f"Connecting to SQLite database {self.dbname}")
         self.connection:sqlite3.Connection = sqlite3.connect(self.dbname)
 
     def close(self) -> None:
         if self.connection:
             self.connection.close()
-            # self.connection = None
 
     def execute_query(self, query: str, params: Optional[Tuple[Any, ...]] = None) -> None:
         if not self.connection:

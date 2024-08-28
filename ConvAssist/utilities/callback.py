@@ -32,7 +32,8 @@ class Callback:
             self.stream += character
         return self.stream
 
-class BufferedCallback:
+class BufferedCallback(Callback):
+
     def __init__(self, buffer):
         super().__init__()
         self.buffer = buffer
@@ -43,5 +44,8 @@ class BufferedCallback:
     def future_stream(self):
         return ""
     
-    def update(self, text):
-        self.buffer = text
+    def update(self, character):
+        if character == "\b" and len(self.buffer) > 0:
+            self.buffer[:-1]
+        else:
+            self.buffer += character

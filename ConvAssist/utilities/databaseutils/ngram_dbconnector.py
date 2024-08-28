@@ -24,9 +24,9 @@ class NGramDatabaseConnector(DatabaseConnector):
         self.connection = None
         
         if logger:
-            self.log = logger
+            self.logger = logger
         else:
-            self.log = ConvAssistLogger(name="DatabaseConnector", 
+            self.logger = ConvAssistLogger(name="DatabaseConnector", 
                                         level="DEBUG")
 
     @abstractmethod
@@ -280,10 +280,10 @@ class NGramDatabaseConnector(DatabaseConnector):
             try:
                 self.execute_query(query_insert)
             except Exception as e:
-                print(f"Exception while processing this sql query: {query_insert}")
-                raise e
+                self.logger.critical(f"Exception while processing this sql query: {query_insert}")
+                raise  e
         else:
-            print(f"Word '{ngram[0]}' already exists in the database.")
+            self.logger.info(f"Word '{ngram[0]}' already exists in the database.")
             pass
 
     def update_ngram(self, ngram, count):
@@ -366,7 +366,7 @@ class NGramDatabaseConnector(DatabaseConnector):
 
     def _extract_first_integer(self, table):
         count = 0
-        if len(table) > 0:
+        if table and len(table) > 0:
             if len(table[0]) > 0:
                 count = int(table[0][0])
 

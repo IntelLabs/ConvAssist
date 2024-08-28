@@ -1,5 +1,7 @@
 import logging
+import os
 import sys
+from datetime import datetime
 from logging.handlers import RotatingFileHandler
 
 class ConvAssistLogger:
@@ -22,19 +24,27 @@ class ConvAssistLogger:
         'NOTSET': NOTSET
     }
 
-    def __init__(self, name='ConvAssistLogger', level="DEBUG", log_file=None):
+    @staticmethod
+    def getFileName(name):
+        now = datetime.now()
+        date_time = now.strftime("%m-%d-%Y___%H-%M-%S")
+        return f"ConvAssist_Log{date_time}_{name}.log"
+    
+    def __init__(self, name, level="DEBUG", log_location=None):
         """
         Initializes the ConvAssistLogger object.
 
         Args:
-            name (str, optional): The name of the logger. Defaults to 'ConvAssistLogger'.
+            name (str, required): The name of the logger.
             level (str, optional): The log level. Defaults to "DEBUG".
-            log_file (str, optional): The path to the log file. Defaults to None.
+            log_location (str, optional): The path for the log file. Defaults to None.
         """
-        self.logger = logging.getLogger(name)
-        self.configure_logging(level, log_file)
 
-    def configure_logging(self, level, log_file):
+        self.logger = logging.getLogger(f"ConvAssist_{name}")
+        self.logger.propagate = False
+        self.configure_logging(level, log_location)
+
+    def configure_logging(self, level, log_location):
         loglevel = self._nameToLevel.get(level, logging.DEBUG)
         self.logger.setLevel(loglevel)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s %(message)s')
@@ -43,15 +53,21 @@ class ConvAssistLogger:
             for handler in self.logger.handlers[:]:
                 self.logger.removeHandler(handler)
 
-        if log_file:
+        # add a file handler if log_location is provided
+        if log_location:
+            log_file = os.path.join(log_location, self.getFileName(self.logger.name))
             file_handler = RotatingFileHandler(log_file, maxBytes=1024*1024*5, backupCount=2)
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)
 
+        # add a stream handler
         stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.setFormatter(formatter)
         self.logger.addHandler(stream_handler)
 
+    def addHandler(self, handler):
+        self.logger.addHandler(handler)
+        
     def close(self):
         """Close all handlers associated with the logger."""
         handlers = self.logger.handlers[:]
@@ -60,8 +76,11 @@ class ConvAssistLogger:
             handler.close()
             self.logger.removeHandler(handler)
 
-    def debug(self, msg):
-        self.logger.debug(msg)
+    def debug(self, msg, exception=None):
+        if exception:
+            self.logger.debug(msg, exc_info=exception)
+        else:
+            self.logger.debug(msg)
 
     def info(self, msg):
         self.logger.info(msg)
@@ -72,5 +91,8 @@ class ConvAssistLogger:
     def error(self, msg):
         self.logger.error(msg)
 
-    def critical(self, msg):
-        self.logger.critical(msg)
+    def critical(self, msg, exception=None):
+        if exception:
+            self.logger.critical(msg, exc_info=exception)
+        else:
+            self.logger.critical(msg)

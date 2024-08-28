@@ -8,7 +8,7 @@ Class for context tracker.
 from ConvAssist.utilities.character import *
 from ConvAssist.tokenizer.forward_tokenizer import ForwardTokenizer
 from ConvAssist.tokenizer.reverse_tokenizer import ReverseTokenizer
-from ConvAssist.predictor_registry import PredictorRegistry
+from ConvAssist.utilities.callback import BufferedCallback
 
 DEFAULT_SLIDING_WINDOW_SIZE = 80
 
@@ -88,18 +88,13 @@ class ContextTracker(object):
     Tracks the current context.
     """
 
-    def __init__(self, config, predictor_registry, callback):
+    def __init__(self, config, callback: BufferedCallback):
         self.config = config
         self.lowercase = self.config.getboolean("ContextTracker", "lowercase_mode", fallback=True)
 
-        self.registry: PredictorRegistry = predictor_registry
-        if callback:
-            self.callback = callback
-        else:
-            raise InvalidCallbackException
+        self.callback = callback
 
         self.context_change_detector = ContextChangeDetector(self.lowercase)
-        self.registry.context_tracker = self
 
         self.sliding_windows_size = DEFAULT_SLIDING_WINDOW_SIZE
 
@@ -120,9 +115,10 @@ class ContextTracker(object):
             # remove prefix (partially entered token or empty token)
             change_tokens.pop()
 
-        for predictor in self.registry:
-            if change_tokens:
-                predictor.learn(change_tokens)
+        # TODO: Figure out how to implement this
+        # for predictor in self.registry:
+        #     if change_tokens:
+        #         predictor.learn(change_tokens)
 
         self.context_change_detector.update_sliding_window(self.past_stream())
 
@@ -160,4 +156,5 @@ class ContextTracker(object):
         return False
 
     def __repr__(self):
-        return self.callback.past_stream + "<|>" + self.callback.future_stream + "\n"
+        return f"{self.callback.past_stream} <|> {self.callback.future_stream}\n"
+        # return self.callback.past_stream + "<|>" + self.callback.future_stream + "\n"

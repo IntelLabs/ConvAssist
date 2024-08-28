@@ -29,14 +29,12 @@ class SpellCorrectPredictor(Predictor):
             
             logger=None
     ):
-        Predictor.__init__(
-            self, 
+        super().__init__(
             config, 
             context_tracker, 
             predictor_name, 
             short_desc, 
             long_desc,
-            
             logger
         )
         self.db = None
@@ -114,5 +112,5 @@ class SpellCorrectPredictor(Predictor):
         pass
 
     def _read_config(self):
-        self.static_resources_path = Path(self.config.get(self.name, "static_resources_path"))
+        self.static_resources_path = Path(self.config.get(self.name, "static_resources_path")).as_posix()
         self.spellingDatabase = os.path.join(self.static_resources_path, self.config.get(self.name, "spellingDatabase"))

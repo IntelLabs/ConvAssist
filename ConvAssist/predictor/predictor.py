@@ -19,7 +19,7 @@ class Predictor(metaclass=PredictorSingleton):
             predictor_name, 
             short_desc=None, 
             long_desc=None,
-                        logger=None
+            logger=None
     ):
         self.config = config
         self.context_tracker = context_tracker
@@ -27,12 +27,11 @@ class Predictor(metaclass=PredictorSingleton):
         self.short_description = short_desc
         self.long_description = long_desc
         
-            
         #configure a logger
         if logger:
-            self.log = logger
+            self.logger = logger
         else:
-            self.log = ConvAssistLogger(name=self.predictor_name, 
+            self.logger = ConvAssistLogger(name=self.predictor_name, 
                                         level="DEBUG")
     
     def get_name(self):
@@ -52,6 +51,14 @@ class Predictor(metaclass=PredictorSingleton):
     
     def _read_config(self):
         raise NotImplementedError("Subclasses must implement this method")
+    
+    def load_model(*args, **kwargs):
+        # Not all predictors need this, but define it here for those that do
+        pass
+
+    def read_personalized_toxic_words(self, *args, **kwargs):
+        # Not all predictors need this, but define it here for those that do
+        pass
         
     def createTable(self, dbname, tablename, columns):
         try:

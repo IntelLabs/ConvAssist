@@ -20,10 +20,10 @@ class PredictorActivator(object):
 
     """
 
-    def __init__(self, config, registry, context_tracker):
+    def __init__(self, config, registry, context_tracker=None):
         self.config:ConfigParser = config
         self.registry = registry
-        self.context_tracker = context_tracker
+        # self.context_tracker = context_tracker
         self.predictions = []
         self.word_predictions = []
         self.sent_predictions = []
@@ -60,7 +60,7 @@ class PredictorActivator(object):
         word_nextLetterProbs = []
         spell_word_result = []
         spell_word_nextLetterProbs = []
-        context = self.context_tracker.token(0)
+        context = "" #self.context_tracker.token(0)
         for predictor in self.registry:
 
             if(predictor.name == PredictorNames.SentenceComp.value):
@@ -96,7 +96,7 @@ class PredictorActivator(object):
     def recreate_canned_phrasesDB(self):
         for predictor in self.registry:
             if(predictor.name == PredictorNames.CannedPhrases.value or predictor.name == PredictorNames.CannedWord.value):
-                personalized_resources_path = Path(self.config.get(predictor.name, "personalized_resources_path"))
+                personalized_resources_path = Path(self.config.get(predictor.name, "personalized_resources_path")).as_posix()
                 personalized_cannedphrases = os.path.join(personalized_resources_path, self.config.get(predictor.name, "personalized_cannedphrases"))
                 pers_cannedphrasesLines = open(personalized_cannedphrases, "r").readlines()
                 pers_cannedphrasesLines = [s.strip() for s in pers_cannedphrasesLines]

@@ -59,7 +59,7 @@ class SmoothedNgramPredictor(Predictor):
             self.stopwords.append(s.strip())
 
         if(self.name == PredictorNames.GeneralWord.value ):
-            self.log.info("INSIDE init "+PredictorNames.GeneralWord.value)
+            self.logger.info("INSIDE init "+PredictorNames.GeneralWord.value)
             ##### Store the set of most frequent starting words based on an AAC dataset
             ##### These will be displayed during empty context
             if(not os.path.isfile(self.startwords)):
@@ -124,7 +124,7 @@ class SmoothedNgramPredictor(Predictor):
             self.db.create_ngram_table(cardinality=2)
             self.db.create_ngram_table(cardinality=3)
         except Exception as e:
-            self.log.error(f"exception in creating personalized db : {e}")
+            self.logger.error(f"exception in creating personalized db : {e}")
 
         # STEP 2: Update personalized_corups if it is not None
         if personalized_corpus:
@@ -135,12 +135,13 @@ class SmoothedNgramPredictor(Predictor):
                 # CHECK FOR PHRASES TO ADD AND PHRASES TO DELETE FROM THE DATABASES
                 sent_db_dict = {}
                 res = sentence_db.fetch_all("SELECT * FROM sentences")
-                for r in res:
-                    sent_db_dict[r[0]]= r[1]
+                if res:
+                    for r in res:
+                        sent_db_dict[r[0]]= r[1]
                 phrases_toRemove = list(set(sent_db_dict.keys())-set(personalized_corpus))
                 phrases_toAdd = list(set(personalized_corpus)-set(sent_db_dict.keys()))
-                self.log.info("PHRASES TO ADD = " + str(phrases_toAdd))
-                self.log.info("PHRASES TO REMOVE = "+ str(phrases_toRemove))
+                self.logger.info("PHRASES TO ADD = " + str(phrases_toAdd))
+                self.logger.info("PHRASES TO REMOVE = "+ str(phrases_toRemove))
 
                 # Add phrases_toAdd to the database and ngram
                 for phrase in phrases_toAdd:
@@ -170,7 +171,7 @@ class SmoothedNgramPredictor(Predictor):
                 ##### Remove phrases_toRemove from the database
                     query = 'DELETE FROM sentences WHERE sentence=?'
                     sentence_db.execute_query(query, (phrase,))
-                    self.log.info(f"Phrase {phrase} deleted from sentence_db.")
+                    self.logger.info(f"Phrase {phrase} deleted from sentence_db.")
                     phraseFreq = sent_db_dict[phrase]
                     ### Remove phrase to ngram
                     for curr_card in range(self.cardinality):
@@ -189,10 +190,10 @@ class SmoothedNgramPredictor(Predictor):
                                 self.db.remove_ngram(ngram)
                                 self.db.commit()
                             elif old_count < countToDelete:
-                                self.log.info("SmoothedNgramPredictor RecreateDB Delete function: Count in DB < count to Delete")
+                                self.logger.info("SmoothedNgramPredictor RecreateDB Delete function: Count in DB < count to Delete")
 
             except Exception as e:
-                self.log.error(f"= {e}")
+                self.logger.error(f"= {e}")
             finally:
                 sentence_db.close()
 
@@ -275,7 +276,7 @@ class SmoothedNgramPredictor(Predictor):
         ):
             self.db = SQLiteNgramDatabaseConnector(self.database, 
                                               self.cardinality,
-                                              self.log
+                                              self.logger
                 )
             self.db.connect()
 
@@ -312,7 +313,7 @@ class SmoothedNgramPredictor(Predictor):
                         max_partial_prediction_size - len(prefix_completion_candidates),
                     )
                 else:
-                    self.log.debug(f"TODO: Implement filter in SmoothedNgramPredictor")
+                    self.logger.debug(f"TODO: Implement filter in SmoothedNgramPredictor")
                     # partial = self.db.ngram_like_table_filtered(
                     #     prefix_ngram,
                     #     filter,
@@ -343,14 +344,13 @@ class SmoothedNgramPredictor(Predictor):
                     probability += self.deltas[k] * frequency
                 if probability > 0:
                     if all(char in string.punctuation for char in tokens[self.cardinality - 1]):
-                        print(tokens[self.cardinality - 1]+ " contains punctuations ")
-                        self.log.debug(tokens[self.cardinality - 1]+ " contains punctuations ")
+                        self.logger.debug(tokens[self.cardinality - 1]+ " contains punctuations ")
                     else:
                         prediction.add_suggestion(
                             Suggestion(tokens[self.cardinality - 1], probability, self.name)
                         )
         except Exception as e:
-            self.log.debug(f"Exception in SmoothedNgramPredictor predict function: {e}")
+            self.logger.debug(f"Exception in SmoothedNgramPredictor predict function: {e}")
 
         return prediction
 
@@ -359,8 +359,8 @@ class SmoothedNgramPredictor(Predictor):
 
     def _read_config(self):
         self.deltas = self.config.get(self.name, "deltas").split()
-        self.static_resources_path = Path(self.config.get(self.name, "static_resources_path"))
-        self.personalized_resources_path = Path(self.config.get(self.name, "personalized_resources_path"))
+        self.static_resources_path = Path(self.config.get(self.name, "static_resources_path")).as_posix()
+        self.personalized_resources_path = Path(self.config.get(self.name, "personalized_resources_path")).as_posix()
         self.learn_mode = self.config.get(self.name, "learn")
         self.stopwordsFile = os.path.join(self.static_resources_path, self.config.get(self.name, "stopwords"))
         if(self.name == PredictorNames.CannedWord.value ):
@@ -368,7 +368,7 @@ class SmoothedNgramPredictor(Predictor):
             self.database = os.path.join(self.personalized_resources_path, self.config.get(self.name, "database"))
         if(self.name== PredictorNames.GeneralWord.value ):
             self.aac_dataset = os.path.join(self.static_resources_path, self.config.get(self.name, "aac_dataset"))
-            self.log.debug("self.aac_dataset path = "+self.aac_dataset)
+            self.logger.debug("self.aac_dataset path = "+self.aac_dataset)
             self.database = os.path.join(self.static_resources_path, self.config.get(self.name, "database"))
             self.startwords = os.path.join(self.personalized_resources_path, self.config.get(self.name, "startwords"))
         if(self.name== PredictorNames.PersonalizedWord.value or self.name== PredictorNames.ShortHand.value):
@@ -388,9 +388,9 @@ class SmoothedNgramPredictor(Predictor):
         # i.e. learn all ngrams and counts in memory
         if self.learn_mode == "True":
             try:
-                self.log.debug("learning ..."+ str(change_tokens))
+                self.logger.debug("learning ..."+ str(change_tokens))
                 change_tokens = change_tokens.lower().translate(str.maketrans('', '', string.punctuation))
-                self.log.debug("after removing punctuations, change_tokens = "+change_tokens)
+                self.logger.debug("after removing punctuations, change_tokens = "+change_tokens)
                 if(self.name == PredictorNames.CannedWord.value):
                     change_tokens = self.extract_svo(change_tokens)
                 change_tokens = change_tokens.split()
@@ -417,5 +417,5 @@ class SmoothedNgramPredictor(Predictor):
                             self.db.insert_ngram(ngram, count)
                             self.db.commit()
             except Exception as e:
-                self.log.error(f"SmoothedNgramPredictor learn function: {e}")
+                self.logger.error(f"SmoothedNgramPredictor learn function: {e}")
         pass

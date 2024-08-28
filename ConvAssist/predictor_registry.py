@@ -8,6 +8,12 @@ from configparser import ConfigParser
 from ConvAssist.predictor.utilities.predictor_names import PredictorNames
 from ConvAssist.utilities.logging import ConvAssistLogger
 
+from ConvAssist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
+from ConvAssist.predictor.sentence_completion_predictor import SentenceCompletionPredictor
+from ConvAssist.predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
+from ConvAssist.predictor.spell_correct_predictor import SpellCorrectPredictor
+
+
 class PredictorRegistry(list):
     """
     Manages instantiation and iteration through predictors and aids in
@@ -25,63 +31,57 @@ class PredictorRegistry(list):
 
     """
 
-    def __init__(self, config, logger=None):
+    def __init__(self, config, logger=None, context_tracker=None):
         super().__init__()
 
         self.config: ConfigParser = config
         self._context_tracker = None
-        self.set_predictors()
         if logger:
             self.logger = logger
         else:
-            self.logger = ConvAssistLogger(__name__, level="DEBUG")
+            self.logger = ConvAssistLogger("predictor_registry", level="DEBUG")
 
-    @property
-    def context_tracker(self) -> Any:
-            """The context_tracker property."""
-            return self._context_tracker
+        self.set_predictors(context_tracker)
 
-    @context_tracker.setter
-    def context_tracker(self, value):
-        if self._context_tracker is not value:
-            self._context_tracker = value
-            self[:] = []
-            self.set_predictors()
+    # @property
+    # def context_tracker(self) -> Any:
+    #         """The context_tracker property."""
+    #         return self._context_tracker
 
-    @context_tracker.deleter
-    def context_tracker(self):
-        del self._context_tracker
+    # @context_tracker.setter
+    # def context_tracker(self, value):
+    #     if self._context_tracker is not value:
+    #         self._context_tracker = value
+    #         self[:] = []
+    #         self.set_predictors()
 
-    def set_predictors(self):
-        if self.context_tracker:
-            self[:] = []
-            for predictor in self.config.get("PredictorRegistry", "predictors", fallback="").split():
-                self.add_predictor(predictor)
+    # @context_tracker.deleter
+    # def context_tracker(self):
+    #     del self._context_tracker
 
-    def add_predictor(self, predictor_name):
-        from ConvAssist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
-        from ConvAssist.predictor.sentence_completion_predictor import SentenceCompletionPredictor
-        from ConvAssist.predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
-        from ConvAssist.predictor.spell_correct_predictor import SpellCorrectPredictor
+    def set_predictors(self, context_tracker=None):
+        # if self.context_tracker:
+        self[:] = []
+        for predictor in self.config.get("PredictorRegistry", "predictors", fallback="").split():
+            self.add_predictor(predictor, context_tracker)
 
+    def add_predictor(self, predictor_name, context_tracker=None):
         predictor: Any = None
         
         if (self.config.get(predictor_name, "predictor_class") == "SmoothedNgramPredictor"
         ):
             predictor = SmoothedNgramPredictor(
                 self.config,
-                self.context_tracker,
+                context_tracker,
                 predictor_name,
-                
                 logger=self.logger
             )
         if (self.config.get(predictor_name, "predictor_class") == "SpellCorrectPredictor"
         ):
             predictor = SpellCorrectPredictor(
                 self.config,
-                self.context_tracker,
+                context_tracker,
                 predictor_name,
-                
                 logger=self.logger
             )
 
@@ -89,7 +89,7 @@ class PredictorRegistry(list):
         ):
             predictor = SentenceCompletionPredictor(
                 self.config, 
-                self.context_tracker, 
+                context_tracker, 
                 predictor_name, "gpt2",
                 "gpt-2 model predictions", 
                 logger=self.logger
@@ -100,7 +100,7 @@ class PredictorRegistry(list):
         ):
             predictor = CannedPhrasesPredictor(
                 self.config, 
-                self.context_tracker, 
+                context_tracker, 
                 predictor_name, "gpt2",
                 "gpt-2 model predictions", 
                 logger=self.logger

@@ -28,7 +28,7 @@ class CannedPhrasesPredictor(Predictor):
             predictor_name, 
             short_desc=None, 
             long_desc=None, 
-                        logger=None
+            logger=None
         ):
         super().__init__(
             config, 
@@ -36,7 +36,6 @@ class CannedPhrasesPredictor(Predictor):
             predictor_name, 
             short_desc, 
             long_desc,
-            
             logger
         )
         self.sentences_db: SQLiteDatabaseConnector
@@ -57,9 +56,9 @@ class CannedPhrasesPredictor(Predictor):
         self.pers_cannedphrasesLines = open(self.personalized_cannedphrases, "r").readlines()
         self.pers_cannedphrasesLines = [s.strip() for s in self.pers_cannedphrasesLines]
 
-        self.log.info("Logging inside canned phrases init!!!")
+        self.logger.info("Logging inside canned phrases init!!!")
         if(not os.path.isfile(self.sentences_db_path)):
-            self.log.debug(f"{self.sentences_db_path} does not exist, creating.")
+            self.logger.debug(f"{self.sentences_db_path} does not exist, creating.")
             columns = ['sentence TEXT UNIQUE', 'count INTEGER']
             self.createTable(self.sentences_db_path, "sentences", columns)
 
@@ -76,16 +75,16 @@ class CannedPhrasesPredictor(Predictor):
             self.corpus_embeddings = cache_data['embeddings']
 
         self.n_clusters = 20     ### clusters for hnswlib index
-        self.embedding_size = self.corpus_embeddings[0].shape[1]
+        self.embedding_size = self.corpus_embeddings[0].shape[0]
         self.index = hnswlib.Index(space = 'cosine', dim = self.embedding_size)
 
         ####### CHECK IF INDEX IS PRESENT
         if os.path.exists(self.index_path):
-            self.log.info("Loading index at ..."+ self.index_path)
+            self.logger.info("Loading index at ..."+ self.index_path)
             self.index.load_index(self.index_path)
         else:
             ### Create the HNSWLIB index
-            self.log.info("Start creating HNSWLIB index")
+            self.logger.info("Start creating HNSWLIB index")
             self.index.init_index(max_elements = 10000, ef_construction = 400, M = 64)
             self.index = self.create_index(self.index)
         self.index.set_ef(50)
@@ -94,7 +93,7 @@ class CannedPhrasesPredictor(Predictor):
 
     def create_index(self, ind):
         ind.add_items(self.corpus_embeddings, list(range(len(self.corpus_embeddings))))
-        self.log.info("Saving index to:"+ self.index_path)
+        self.logger.info("Saving index to:"+ self.index_path)
         ind.save_index(self.index_path)
         return ind
 
@@ -102,7 +101,7 @@ class CannedPhrasesPredictor(Predictor):
         return self.MODEL_LOADED
 
     def recreate_canned_db(self, personalized_corpus):
-        self.log.info("inside CannedPhrasesPredictor recreate_canned_db")
+        self.logger.info("inside CannedPhrasesPredictor recreate_canned_db")
 
         self.corpus_sentences = []
         self.pers_cannedphrasesLines = open(self.personalized_cannedphrases, "r").readlines()
@@ -122,16 +121,16 @@ class CannedPhrasesPredictor(Predictor):
                 self.corpus_sentences = cache_data['sentences']
                 self.corpus_embeddings = cache_data['embeddings']
             else:
-                self.log.info("In Recreate_DB of cannedPhrasesPredictor, EMBEDDINGS FILE DOES NOT EXIST!!! ")
+                self.logger.info("In Recreate_DB of cannedPhrasesPredictor, EMBEDDINGS FILE DOES NOT EXIST!!! ")
 
 
             # check if cannedPhrases file has been modified!!! 
             if(set(self.corpus_sentences) != set(self.pers_cannedphrasesLines) ):
-                self.log.debug("Canned Phrases has been modified externally.. Recreating embeddings and indices")
+                self.logger.debug("Canned Phrases has been modified externally.. Recreating embeddings and indices")
                 phrasesToAdd = set(self.pers_cannedphrasesLines) - set(self.corpus_sentences)
                 phrasesToRemove = set(self.corpus_sentences) - set(self.pers_cannedphrasesLines)
-                self.log.debug(f"phrases to add Recreate_DB of cannedPhrasesPredictor = {str(phrasesToAdd)}")
-                self.log.debug(f"phrases to phrasesToRemove Recreate_DB of cannedPhrasesPredictor = {str(phrasesToRemove)}")
+                self.logger.debug(f"phrases to add Recreate_DB of cannedPhrasesPredictor = {str(phrasesToAdd)}")
+                self.logger.debug(f"phrases to phrasesToRemove Recreate_DB of cannedPhrasesPredictor = {str(phrasesToRemove)}")
 
                 # update embeddings
                 self.corpus_embeddings = self.embedder.encode(self.pers_cannedphrasesLines, show_progress_bar=True, convert_to_numpy=True)
@@ -140,10 +139,10 @@ class CannedPhrasesPredictor(Predictor):
                 # update index:
                 self.index = self.create_index(self.index)
             else:
-                self.log.info("Recreate_DB of cannedPhrasesPredictor: NO modifications to cannedPhrases")
+                self.logger.info("Recreate_DB of cannedPhrasesPredictor: NO modifications to cannedPhrases")
 
         except Exception as e:
-            self.log.error("CannedPhrasePredictor recreateDB: {e}")
+            self.logger.error("CannedPhrasePredictor recreateDB: {e}")
 
     def find_semantic_matches(self,context, sent_prediction, cannedph):
         try:
@@ -159,7 +158,7 @@ class CannedPhrasesPredictor(Predictor):
                 if ret_sent.strip() not in direct_matchedSentences:
                     sent_prediction.add_suggestion(Suggestion(ret_sent.strip(), hits[i]["score"], self.name))
         except Exception as e:
-            self.log.error(f"Exception in CannedPhrasePredictor find_semantic_matches {e}")
+            self.logger.error(f"Exception in CannedPhrasePredictor find_semantic_matches {e}")
             raise e
 
         return sent_prediction
@@ -184,7 +183,7 @@ class CannedPhrasesPredictor(Predictor):
                 if(row["matches"]>0):
                     sent_prediction.add_suggestion(Suggestion(row['sentence'], row["matches"]+row["probability"], self.name))
         except Exception as e:
-            self.log.error(f"CannedPhrasePredictor find_direct_matches {e}")
+            self.logger.error(f"CannedPhrasePredictor find_direct_matches {e}")
 
         return sent_prediction
 
@@ -223,10 +222,10 @@ class CannedPhrasesPredictor(Predictor):
 
             ###### Get semantic matches based on both databases: 
             sent_prediction = self.find_semantic_matches(context, sent_prediction, self.cannedPhrases_counts)
-            #self.log.debug("sent_prediction = "+str(sent_prediction))
+            #self.logger.debug("sent_prediction = "+str(sent_prediction))
 
         except Exception as e:
-            self.log.error("Exception in cannedPhrases Predict: {e} ")
+            self.logger.error("Exception in cannedPhrases Predict: {e} ")
 
         return sent_prediction, word_prediction
 
@@ -275,7 +274,7 @@ class CannedPhrasesPredictor(Predictor):
                     self.cannedPhrases_counts[change_tokens] = count +1
                 self.sentences_db.commit()
             except Exception as e:
-                self.log.error("Exception in LEARN CANNED PHRASES SENTENCES  = {e}")
+                self.logger.error("Exception in LEARN CANNED PHRASES SENTENCES  = {e}")
 
     def _read_config(self):
         self.static_resources_path = self.config.get(self.name, "static_resources_path")
