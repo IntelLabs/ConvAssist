@@ -53,7 +53,7 @@ ca_cannedphrases_id = "CANNED"
 
 class ConvAssistVariables:
     def __init__(self):
-        self.retries = 15
+        self.retries = 5
         self.pipeName = "ACATConvAssistPipe"
 
         self.logger = ConvAssistLogger(
@@ -200,6 +200,11 @@ def handle_incoming_messages(Pipehandle):
                 message_json = Win32PipeHandler.get_incoming_message(Pipehandle)
                 messageReceived = ConvAssistMessage.jsonDeserialize(message_json)
                 ca_vars.logger.debug(f"Message received: {messageReceived} ")
+
+            except TimeoutError as e:
+                ca_vars.logger.debug(f"Timeout Error waiting for named pipe.  Try again.")
+                continue
+            
             except BrokenPipeError as e:
                 # If the pipe is broken, exit the loop
                 ca_vars.logger.critical(f"Broken Pipe Error: {e}.", e)
@@ -404,7 +409,7 @@ def initialize_or_configure_convassists(ca_vars: ConvAssistVariables):
             ca_vars.logger.info(f"convassist {convassist.id} updated.")
         else:
             try:
-                config = ConfigUtility.createPredictorConfig(ca_vars, f"{convassist.ini_file}")
+                config = createPredictorConfig(ca_vars, f"{convassist.ini_file}")
                 if config:
                     convassist.initialize(config, ca_vars.ConvAssist_callback, ca_vars.pathlog, ca_vars.loglevel)
                 
@@ -422,6 +427,7 @@ def initialize_or_configure_convassists(ca_vars: ConvAssistVariables):
 def ConnectToACAT() -> tuple[bool, Any]:
 
     success = False
+    handle = None
     # Try to connect to ACAT server.  Give up after #retries
     ca_vars.logger.info("Trying to connect to ACAT server.")
     try:
