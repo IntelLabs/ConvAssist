@@ -55,7 +55,11 @@ class ConvAssistLogger:
 
         # add a file handler if log_location is provided
         if log_location:
+            if not os.path.exists(log_location):
+                os.makedirs(log_location)
+            
             log_file = os.path.join(log_location, self.getFileName(self.logger.name))
+
             file_handler = RotatingFileHandler(log_file, maxBytes=1024*1024*5, backupCount=2)
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)

@@ -4,7 +4,7 @@ import configparser
 
 from ConvAssist.predictor_registry import PredictorRegistry
 from ConvAssist.context_tracker import ContextTracker
-from ConvAssist.utilities.callback import Callback
+from ConvAssist.utilities.callback import BufferedCallback
 
 class TestPredictorRegistry(unittest.TestCase):
     def setUp(self):
@@ -22,9 +22,9 @@ class TestPredictorRegistry(unittest.TestCase):
             'predictors': ''
         }
         
-        self.callback = Callback()
+        self.callback = BufferedCallback("")
         self.predictor_registry = PredictorRegistry(self.config)
-        self.context_tracker = ContextTracker(self.config, self.predictor_registry, self.callback)
+        self.context_tracker = ContextTracker(self.config, self.callback)
 
     def test_set_predictors(self):
         self.predictor_registry.set_predictors()
