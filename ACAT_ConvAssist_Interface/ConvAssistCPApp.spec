@@ -66,12 +66,12 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 #         new_datas.append(d)
 # a.datas = new_datas
 
-new_datas = []
-for d in a.datas:
-    if 'dist-info' not in d[0]:
-        new_datas.append(d)
+# new_datas = []
+# for d in a.datas:
+#     if 'dist-info' not in d[0]:
+#         new_datas.append(d)
 
-a.datas = new_datas
+# a.datas = new_datas
 
 exe = EXE(
     pyz,
