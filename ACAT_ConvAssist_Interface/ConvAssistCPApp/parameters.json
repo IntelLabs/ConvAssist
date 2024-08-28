@@ -1,8 +1,0 @@
-{
-  "Parameters": [
-    {
-      "PipeName": "BCIPipe",
-      "Retries": 10
-    }
-  ]
-}
