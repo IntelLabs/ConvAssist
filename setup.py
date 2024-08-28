@@ -24,13 +24,13 @@ except FileNotFoundError:
 about: Dict[str, str] = {}
 # project_slug = NAME.lower().replace("-", "_").replace(" ", "_")
 if not VERSION:
-    with open(os.path.join(here, "convassist", "__version__.py")) as f:
+    with open(os.path.join(here, "ConvAssist", "__version__.py")) as f:
         exec(f.read(), about)
 else:
     about["__version__"] = VERSION
 
 # Debug: Print found packages
-found_packages = find_packages(where="convassist", exclude=["tests*", "tests.*"])
+found_packages = find_packages(where="./", exclude=["tests*", "tests.*"])
 print("Found packages:", found_packages)
 
 # Setup function
@@ -44,7 +44,7 @@ setup(
     author_email=EMAIL,
     url=URL,
     packages=found_packages,
-    package_dir={"": "convassist"},
+    package_dir={"": "./"},
     include_package_data=True,
     python_requires=REQUIRES_PYTHON,
     install_requires=[

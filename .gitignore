@@ -12,3 +12,5 @@ dist/
 results/
 .mypy_cache/
 .pytest_cache/
+*.log
+logs/
