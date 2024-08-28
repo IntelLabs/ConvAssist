@@ -14,7 +14,7 @@ current_path = os.path.dirname(os.path.realpath(__file__))
 if current_path not in sys.path:
     sys.path.append(current_path)
 
-from ACAT_ConvAssist_Interface.ConvAssistCPApp.convassist_messages import ConvAssistSetParam, ParameterType, ConvAssistMessage, ConvAssistMessageTypes, ConvAssistPredictionTypes
+from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATMessageTypes import ConvAssistSetParam, ParameterType, ConvAssistMessage, ConvAssistMessageTypes, ConvAssistPredictionTypes
 
 
 set_path_param = ConvAssistSetParam(ParameterType.PATH, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources")
