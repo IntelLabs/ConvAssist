@@ -51,9 +51,8 @@ class ConvAssist:
         # TODO: MAKE PASSING LOGGER IN THE INITIALIZATION OPTIONAL
         self.logger = ConvAssistLogger(name=self.id, level=self.log_level, log_location=self.log_location)
             
-        self.context_tracker = ContextTracker(
-                self.config, callback
-            )
+        lowercase_mode = self.config.getboolean("ContextTracker", "lowercase_mode", fallback=False)
+        self.context_tracker = ContextTracker(lowercase_mode, callback)
 
         self.predictor_registry = PredictorRegistry(
                 self.config, self.logger, self.context_tracker

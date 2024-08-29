@@ -88,15 +88,11 @@ class ContextTracker(object):
     Tracks the current context.
     """
 
-    def __init__(self, config, callback: BufferedCallback):
-        self.config = config
-        self.lowercase = self.config.getboolean("ContextTracker", "lowercase_mode", fallback=True)
-
+    def __init__(self, lowercase_mode, callback: BufferedCallback):
+        self.lowercase = lowercase_mode
         self.callback = callback
-
         self.context_change_detector = ContextChangeDetector(self.lowercase)
-
-        self.sliding_windows_size = DEFAULT_SLIDING_WINDOW_SIZE
+        self.sliding_window_size = DEFAULT_SLIDING_WINDOW_SIZE
 
     def context_change(self):
         return self.context_change_detector.context_change(self.past_stream())
