@@ -302,8 +302,8 @@ def next_word_prediction(PredictionResponse, messageReceived):
                 if ca_vars.conv_shorthand.context_tracker.callback is not None:
                     ca_vars.conv_shorthand.context_tracker.callback.update(messageReceived.Data)
 
-                # conv_assist_vars.conv_shorthand.context_tracker.prefix()
-                # conv_assist_vars.conv_shorthand.context_tracker.past_stream()
+                ca_vars.conv_shorthand.context_tracker.prefix()
+                ca_vars.conv_shorthand.context_tracker.past_stream()
 
                 (next_Letter_Probs,
                 word_prediction,
@@ -317,8 +317,8 @@ def next_word_prediction(PredictionResponse, messageReceived):
                 if ca_vars.conv_canned_phrases.context_tracker.callback is not None:
                     ca_vars.conv_canned_phrases.context_tracker.callback.update(messageReceived.Data)
 
-                # conv_assist_vars.conv_canned_phrases.context_tracker.prefix()
-                # conv_assist_vars.conv_canned_phrases.context_tracker.past_stream()
+                ca_vars.conv_canned_phrases.context_tracker.prefix()
+                ca_vars.conv_canned_phrases.context_tracker.past_stream()
 
                 (next_Letter_Probs,
                  word_prediction,
