@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, List, Optional
 
 from ConvAssist.predictor import Predictor
+from ConvAssist.utilities.singleton import PredictorSingleton
 from ConvAssist.predictor.utilities.predictor_names import PredictorNames
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 from ConvAssist.utilities.ngram_map import NgramMap
@@ -281,15 +282,17 @@ class SmoothedNgramPredictor(Predictor):
             self.db.connect()
 
     def predict(self, max_partial_prediction_size, filter):
-
+        self.logger.debug("Start predicting ...")
         tokens = [""] * self.cardinality
         prediction = Prediction()
         try:
             ### For empty context, display the most frequent startwords 
             if(self.context_tracker.token(0)=="" and self.context_tracker.token(1)==""
                 and self.context_tracker.token(2)=="" and self.name== PredictorNames.GeneralWord.value):
-                f = open(self.startwords)
-                self.precomputed_sentenceStart = json.load(f)
+                
+                with open(self.startwords) as f:
+                    self.precomputed_sentenceStart = json.load(f)
+
                 for w, prob in self.precomputed_sentenceStart.items():
                     prediction.add_suggestion(
                             Suggestion(w, prob, self.name)
@@ -352,6 +355,7 @@ class SmoothedNgramPredictor(Predictor):
         except Exception as e:
             self.logger.debug(f"Exception in SmoothedNgramPredictor predict function: {e}")
 
+        self.logger.debug(f"End prediction. got {len(prediction)} suggestions")
         return prediction
 
     def close_database(self):

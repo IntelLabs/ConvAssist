@@ -6,7 +6,7 @@ from ConvAssist.utilities.singleton import PredictorSingleton
 from ConvAssist.predictor.utilities.prediction import Prediction
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
-class Predictor(metaclass=PredictorSingleton):
+class Predictor():
     """
     Base class for predictors.
 

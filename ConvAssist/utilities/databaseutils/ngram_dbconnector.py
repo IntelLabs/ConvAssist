@@ -271,7 +271,7 @@ class NGramDatabaseConnector(DatabaseConnector):
         """
         values = self._build_values_clause(ngram, count)
         query_check = f"SELECT * from _{len(ngram)}_gram where word = '{ngram[0]}';"
-        query_insert = f"INSERT INTO _{len(ngram)}_gram {values});"
+        query_insert = f"INSERT INTO _{len(ngram)}_gram {values};"
         
         # query = "INSERT INTO _{0}_gram {1};".format(
         #     len(ngram), self._build_values_clause(ngram, count)
@@ -280,7 +280,7 @@ class NGramDatabaseConnector(DatabaseConnector):
             try:
                 self.execute_query(query_insert)
             except Exception as e:
-                self.logger.critical(f"Exception while processing this sql query: {query_insert}")
+                self.logger.critical(f"Exception while processing this sql query: {query_insert}", e)
                 raise  e
         else:
             self.logger.info(f"Word '{ngram[0]}' already exists in the database.")
@@ -325,9 +325,7 @@ class NGramDatabaseConnector(DatabaseConnector):
         for n in ngram:
             ngram_escaped.append(re_escape_singlequote.sub("''", n))
 
-        values_clause = "VALUES('"
-        values_clause += "', '".join(ngram_escaped)
-        values_clause += "', {0})".format(count)
+        values_clause = "VALUES('{0}', {1})".format("', '".join(ngram_escaped), count)
         return values_clause
 
     def _build_where_clause(self, ngram):
@@ -361,7 +359,7 @@ class NGramDatabaseConnector(DatabaseConnector):
                     len(escaped_ngram) - i - 1, item
                 )
             else:
-                where_clause += " word LIKE '{0}%'".format(item)
+                where_clause += " word LIKE '{0}%' ESCAPE '\\'".format(item)
         return where_clause
 
     def _extract_first_integer(self, table):

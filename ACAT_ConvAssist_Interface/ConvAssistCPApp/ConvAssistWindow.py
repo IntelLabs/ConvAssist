@@ -28,6 +28,7 @@ class TextHandler(logging.Handler):
         self.text_widget.configure(state='disabled')
         # Autoscroll to the bottom
         self.text_widget.yview(END)
+        self.text_widget.update_idletasks()
 
 class ConvAssistWindow(Tk):
     def __init__(self, logger, **kwargs):
@@ -57,6 +58,8 @@ class ConvAssistWindow(Tk):
 
         self.create_buttons()
 
+        self.withdraw()
+
     def create_buttons(self):
         button_frame = Frame(self, bg='grey', pady=10)
 
@@ -67,9 +70,7 @@ class ConvAssistWindow(Tk):
 
         clear_button = ttk.Button(button_frame, image=self.clear_image, command=self.clear_action, style='TButton')
         license_button = ttk.Button(button_frame, image=self.license_image, command=self.license_action, style='TButton')
-        close_button = ttk.Button(button_frame, image=self.close_image, command=self.close_action, style='TButton')
-
-        # close_button = ttk.Button(button_frame, text="Close", command=self.close_action, style='warning.Outline.TButton')
+        close_button = ttk.Button(button_frame, image=self.close_image, command=self.deiconify, style='TButton')
 
          # Pack the buttons into the frame
         clear_button.pack(side='left', fill='both', expand=True)
@@ -83,12 +84,12 @@ class ConvAssistWindow(Tk):
     def license_action(self):
         messagebox.showinfo("License", license_text_string)
 
-    def close_action(self):
-        self.withdraw()
-        # self.destroy()
+    # def close_action(self):
+    #     self.withdraw()
+    #     # self.destroy()
 
-    def show_action(self):
-        self.deiconify()
+    # def show_action(self):
+    #     self.deiconify()
 
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)

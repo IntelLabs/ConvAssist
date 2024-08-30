@@ -15,7 +15,7 @@ if current_path not in sys.path:
     sys.path.append(current_path)
 
 from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATMessageTypes import ConvAssistSetParam, ParameterType, ConvAssistMessage, ConvAssistMessageTypes, ConvAssistPredictionTypes
-
+from ACAT_ConvAssist_Interface.ConvAssistCPApp.Win32PipeHandler import get_incoming_message
 
 set_path_param = ConvAssistSetParam(ParameterType.PATH, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources")
 set_static_path_param = ConvAssistSetParam(ParameterType.PATHSTATIC, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/static_resources") 
@@ -64,7 +64,7 @@ def send_message_to_pipe(pipe_handle, message):
 def wait_for_message_from_pipe(pipe_handle):
     """Wait for a message from the named pipe."""
     try:
-        message = win32file.ReadFile(pipe_handle, 4096)
+        message = get_incoming_message(pipe_handle)
         print(f"Received message from pipe: {message}")
         return True
     except pywintypes.error as e:
@@ -79,13 +79,21 @@ def cli_prompt(pipe_handle):
         msgs = []
         # Get input from the user
         message = input("Message> ")
+        
 
         if message.lower() == 'exit':
             msgs.append(ConvAssistMessage(ConvAssistMessageTypes.FORCEQUITAPP, ConvAssistPredictionTypes.NONE, "").jsonSerialize())
             breakloop = True
-        else:    
+        else:
+            message += ' '
             msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTWORDPREDICTION, ConvAssistPredictionTypes.NORMAL, message).jsonSerialize())
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTSENTENCEPREDICTION, ConvAssistPredictionTypes.NONE, message).jsonSerialize())
+            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTWORDPREDICTION, ConvAssistPredictionTypes.SHORTHANDMODE, message).jsonSerialize())
+            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTWORDPREDICTION, ConvAssistPredictionTypes.CANNEDPHRASESMODE, message).jsonSerialize())
+            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTSENTENCEPREDICTION, ConvAssistPredictionTypes.SENTENCES, message).jsonSerialize())
+            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNWORDS, ConvAssistPredictionTypes.NONE, message).jsonSerialize())
+            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNCANNED, ConvAssistPredictionTypes.NONE, message).jsonSerialize())
+            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNSENTENCES, ConvAssistPredictionTypes.NONE, message).jsonSerialize())
+            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNSHORTHAND, ConvAssistPredictionTypes.NONE, message).jsonSerialize())
 
         for msg in msgs:
             send_message_to_pipe(pipe_handle, msg)

@@ -47,6 +47,7 @@ def get_incoming_message(Pipehandle) -> Any:
 
             # Create an event for the OVERLAPPED structure
             overlapped.hEvent = win32event.CreateEvent(None, True, False, None)
+            
             # Start the overlapped read operation
             err_code, _ = win32file.ReadFile(Pipehandle.handle, read_buffer, overlapped)
 
@@ -152,4 +153,5 @@ def DisconnectNamedPipe(handle) -> None:
         win32file.FlushFileBuffers(handle)
         win32file.CloseHandle(handle)
     except pywintypes.error as e:
-        raise Exception(f"Error disconnecting named pipe: {e}") from e
+        # raise Exception(f"Error disconnecting named pipe: {e}") from e
+        pass

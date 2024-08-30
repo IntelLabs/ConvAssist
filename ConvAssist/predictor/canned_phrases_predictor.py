@@ -14,9 +14,10 @@ from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.utilities.prediction import Prediction
 from ConvAssist.predictor import Predictor
 from ConvAssist.utilities.suggestion import Suggestion
+from ConvAssist.utilities.singleton import PredictorSingleton
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
-class CannedPhrasesPredictor(Predictor):
+class CannedPhrasesPredictor(Predictor, metaclass=PredictorSingleton):
     """
     Searches the canned phrase database for matching next words and sentences
     """

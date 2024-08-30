@@ -50,6 +50,7 @@ ca_sentence_id = "SENTENCE"
 ca_cannedphrases_ini = "cannedPhrasesMode.ini"
 ca_cannedphrases_id = "CANNED"
 
+app_quit_event = threading.Event()
 
 class ConvAssistVariables:
     def __init__(self):
@@ -61,10 +62,8 @@ class ConvAssistVariables:
             "MAIN", "DEBUG", f"{tempfile.gettempdir()}"
         )
         self.ConvAssist_callback = BufferedCallback("")
-        self.breakMainLoop: bool = False
         self.clientConnected: bool = False
-
-        self.convAssistCPWindow:ConvAssistWindow | None = None
+        # self.convAssistCPWindow:ConvAssistWindow | None = None
 
         # Parameters that ACAT will send to ConvAssist
         self.path: str = ""
@@ -106,7 +105,6 @@ class ConvAssistVariables:
     @pathlog.deleter
     def pathlog(self):
         del self._pathlog
-ca_vars: ConvAssistVariables = ConvAssistVariables()
 
 def createPredictorConfig(ca_vars:ConvAssistVariables, config_file_name) -> ConfigParser | None:
     # check if all required params are set
@@ -181,18 +179,12 @@ def handle_incoming_messages(Pipehandle):
     Main Thread, called when a server was found: Receives and send messages, Event message terminate App
 
     :param Pipehandle: Handle of the pipe
-    :param retries:
     :return: none
     """
-    sentences_count = 0
-    # prediction_type = ConvAssistPredictionTypes.NORMAL
-    # word_prediction: List[Any] = []
-    # next_Letter_Probs: List[Any] = []
-    # sentence_nextLetterProbs: List[Any] = []
-    # sentence_predictions: List[Any] = []
-    # string_resultSentence = ""
+    while not app_quit_event.is_set():
+        ca_vars.logger.info("Handle incoming message start.")
+        send_response = True
 
-    while not ca_vars.breakMainLoop:
         try:
             PredictionResponse = WordAndCharacterPredictionResponse()
 
@@ -207,13 +199,17 @@ def handle_incoming_messages(Pipehandle):
             
             except BrokenPipeError as e:
                 # If the pipe is broken, exit the loop
-                ca_vars.logger.critical(f"Broken Pipe Error: {e}.", e)
-                ca_vars.breakMainLoop = True
-                break
+                ca_vars.logger.critical(f"Broken Pipe Error. Bailing. {e}.", e)
+                send_response = False
+                app_quit_event.set()
+                continue
 
             except Exception as e:
-                ca_vars.logger.critical(f"Handle incomming message: {e}.", e)
-                messageReceived = ConvAssistMessage(ConvAssistMessageTypes.NONE, ConvAssistPredictionTypes.NONE, "")
+                ca_vars.logger.critical(f"Catastrophic Error.  Bailing. {e}.", e)
+                # messageReceived = ConvAssistMessage(ConvAssistMessageTypes.NONE, ConvAssistPredictionTypes.NONE, "")
+                send_response = False
+                app_quit_event.set()
+                continue
 
             match messageReceived.MessageType:
                 case ConvAssistMessageTypes.SETPARAM:
@@ -249,20 +245,22 @@ def handle_incoming_messages(Pipehandle):
                     PredictionResponse.MessageType = ConvAssistMessageTypes.LEARNSHORTHAND
                                 
                 case ConvAssistMessageTypes.FORCEQUITAPP:
-                    Win32PipeHandler.DisconnectNamedPipe(Pipehandle)
                     ca_vars.logger.info("Force Quit App message received.")
-                    break
+                    Win32PipeHandler.DisconnectNamedPipe(Pipehandle)
+                    send_response = False
+                    app_quit_event.set()
 
                 case _:
-                    pass
+                    send_response = False
 
-            ca_vars.logger.info(f"Sending message: {PredictionResponse}.")
-            Win32PipeHandler.send_message(Pipehandle, PredictionResponse.jsonSerialize())
+            if send_response:
+                ca_vars.logger.info(f"Sending message: {PredictionResponse}.")
+                Win32PipeHandler.send_message(Pipehandle, PredictionResponse.jsonSerialize())
 
         except Exception as e:
-            ca_vars.logger.critical(f"Handle Incoming Message: {e}.", e)
+            ca_vars.logger.critical(f"Critical Error in Handle incoming message. Bailing {e}.", e)
             Win32PipeHandler.DisconnectNamedPipe(Pipehandle)
-            break
+            app_quit_event.set()
         
         ca_vars.logger.info("Handle incoming message finished.")
 
@@ -446,22 +444,6 @@ def ConnectToACAT() -> tuple[bool, Any]:
     finally:
         return success, handle
 
-def quitapp():
-    """
-    Force to quit and exit the App
-    """
-
-    ca_vars.breakMainLoop = True
-    # join all threads and wait for them to end
-    for thread in threads:
-        thread.join()
-
-    if ca_vars.convAssistCPWindow:
-        ca_vars.convAssistCPWindow.destroy()
-            
-    if convAssistCPIcon:
-        convAssistCPIcon.stop()
-
 def findProcessIdByName(process_name):
     """
     Get a list of all the PIDs of all the running process whose name contains
@@ -533,35 +515,74 @@ if not sys.warnoptions:
 
 warnings.simplefilter("ignore")
 
-def show_main_window():
-    if not ca_vars.convAssistCPWindow:
-        ca_vars.convAssistCPWindow = ConvAssistWindow(ca_vars.logger)
-        ca_vars.convAssistCPWindow.mainloop()
-    else:
-        ca_vars.convAssistCPWindow.show_action()
+# def show_main_window():
+#     if not ca_vars.convAssistCPWindow:
+#         ca_vars.convAssistCPWindow = ConvAssistWindow(ca_vars.logger)
+#         ca_vars.convAssistCPWindow.mainloop()
+#     else:
+#         ca_vars.convAssistCPWindow.show_action()
+
+# def show_window(icon, window = None):
+#     icon.stop()
+#     if window: window.deiconify()
+
+# def hide_window(icon, window = None):
+#     if window: window.withdraw()
+#     icon.run()
+
+# def quit_application(icon, window:ConvAssistWindow):
+#     app_quit_event.set()
+#     if icon:
+#         icon.stop()
+#     if window:
+#         # window.quit
+#         window.destroy()
+
+# def setup_window():
+#     window = ConvAssistWindow(ca_vars.logger)
+#     window.protocol("WM_DELETE_WINDOW", lambda: hide_window(convAssistCPIcon, convAssistCPWindow))
+
+#     return window
+
+# def setup_tray_icon(window = None):
+#     # SysTray Icon
+#     menu = (item("More Info...", lambda: show_window(icon, window)), item('Exit', lambda: quit_application(convAssistCPIcon, convAssistCPWindow)))
+#     image = PIL.Image.open(os.path.join(current_path, "Assets", "icon_tray.png"))
+#     icon = pystray.Icon("test_icon", image, "ConvAssist", menu)
+#     return icon
+
+ca_vars: ConvAssistVariables = ConvAssistVariables()
+
+def main():
+
+    if findProcessIdByName("ConvAssist.exe"):
+        sys.exit()
+
+    success, handle = ConnectToACAT()
+    if not success:
+        sys.exit()
+
+    message_thread = threading.Thread(target=handle_incoming_messages, args=(handle,))
+    message_thread.start()
+
+# convAssistCPWindow = setup_window()
+# convAssistCPIcon = setup_tray_icon(None)
+
+
+# icon_thread = threading.Thread(target=convAssistCPIcon.run)
+# # icon_thread.daemon = True
+# icon_thread.start()
+
+# convAssistCPWindow.mainloop()
+
+# icon_thread.join()
+
+# if icon_thread.is_alive():
+#     convAssistCPIcon.stop()
+#     icon_thread.join()
 
 if __name__ == "__main__":
-
-    if findProcessIdByName("ConvAssistCPApp.exe"):
-        sys.exit()
-
-    convAssistCPIcon = None
-    threads = []
-
-    conn_success, conn_handle = ConnectToACAT()
-
-    if conn_handle and conn_handle:
-        threads.append(threading.Thread(target=handle_incoming_messages, args=(conn_handle,)))
-        threads[-1].start()
-        # handle_incoming_messages(conn_handle)
-
-    else:
-        sys.exit()
-
-    # SysTray Icon
-    menu = (item("More Info...", show_main_window), item('Exit', quitapp))
-    image = PIL.Image.open(os.path.join(current_path, "Assets", "icon_tray.png"))
-    convAssistCPIcon = pystray.Icon("test_icon", image, "ConvAssist", menu)
-    convAssistCPIcon.run()
-
-
+    deleteOldPyinstallerFolders()
+    main()
+    app_quit_event.wait()
+    sys.exit()

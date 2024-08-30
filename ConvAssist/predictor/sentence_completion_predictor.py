@@ -22,10 +22,11 @@ from ConvAssist.predictor import Predictor
 from ConvAssist.utilities.suggestion import Suggestion
 from ConvAssist.utilities.nlp import NLP
 from ConvAssist.predictor.utilities.prediction import Prediction
+from ConvAssist.utilities.singleton import PredictorSingleton
 
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
-class SentenceCompletionPredictor(Predictor):
+class SentenceCompletionPredictor(Predictor, metaclass=PredictorSingleton):
     """
     Calculates prediction from n-gram model using gpt-2.
     """

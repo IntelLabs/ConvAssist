@@ -62,7 +62,8 @@ class PredictorRegistry(list):
     def set_predictors(self, context_tracker=None):
         # if self.context_tracker:
         self[:] = []
-        for predictor in self.config.get("PredictorRegistry", "predictors", fallback="").split():
+        predictors = self.config.get("PredictorRegistry", "predictors", fallback="").split()
+        for predictor in predictors:
             self.add_predictor(predictor, context_tracker)
 
     def add_predictor(self, predictor_name, context_tracker=None):
