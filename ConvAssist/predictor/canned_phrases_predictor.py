@@ -57,7 +57,7 @@ class CannedPhrasesPredictor(Predictor, metaclass=PredictorSingleton):
         self.pers_cannedphrasesLines = open(self.personalized_cannedphrases, "r").readlines()
         self.pers_cannedphrasesLines = [s.strip() for s in self.pers_cannedphrasesLines]
 
-        self.logger.info("Logging inside canned phrases init!!!")
+        self.logger.info(f"Start Initialization")
         if(not os.path.isfile(self.sentences_db_path)):
             self.logger.debug(f"{self.sentences_db_path} does not exist, creating.")
             columns = ['sentence TEXT UNIQUE', 'count INTEGER']
@@ -91,6 +91,7 @@ class CannedPhrasesPredictor(Predictor, metaclass=PredictorSingleton):
         self.index.set_ef(50)
 
         self.MODEL_LOADED = True
+        self.logger.debug(f"cannedPhrases counts: {self.cannedPhrases_counts}")
 
     def create_index(self, ind):
         ind.add_items(self.corpus_embeddings, list(range(len(self.corpus_embeddings))))
@@ -114,8 +115,9 @@ class CannedPhrasesPredictor(Predictor, metaclass=PredictorSingleton):
             self.sentences_db.connect()
             res_all = self.sentences_db.fetch_all("SELECT * FROM sentences")
 
-            for r in res_all:
-                self.cannedPhrases_counts[r[0]] = r[1]
+            if res_all:
+                for r in res_all:
+                    self.cannedPhrases_counts[r[0]] = r[1]
 
             if(os.path.isfile(self.embedding_cache_path)):
                 cache_data = joblib.load(self.embedding_cache_path)

@@ -23,7 +23,7 @@ class PredictorActivator(object):
     def __init__(self, config, registry, context_tracker=None):
         self.config:ConfigParser = config
         self.registry = registry
-        # self.context_tracker = context_tracker
+        self.context_tracker = context_tracker
         self.predictions = []
         self.word_predictions = []
         self.sent_predictions = []
@@ -60,7 +60,7 @@ class PredictorActivator(object):
         word_nextLetterProbs = []
         spell_word_result = []
         spell_word_nextLetterProbs = []
-        context = "" #self.context_tracker.token(0)
+        context = self.context_tracker.token(0)
         for predictor in self.registry:
 
             if(predictor.name == PredictorNames.SentenceComp.value):
@@ -87,9 +87,11 @@ class PredictorActivator(object):
                 )
                 word_nextLetterProbs, word_result = self.combiner.combine(self.word_predictions, context)
 
-        if(word_result==[]):
-            word_result = spell_word_result
-            word_nextLetterProbs = spell_word_nextLetterProbs
+            #TODO - CHECK WITH SHACHI ON THIS!!!
+            if(predictor.name == PredictorNames.Spell.value and word_result==[]):
+                word_result = spell_word_result
+                word_nextLetterProbs = spell_word_nextLetterProbs
+
         result = (word_nextLetterProbs, word_result, sent_nextLetterProbs, sent_result)
         return result
 

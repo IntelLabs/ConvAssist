@@ -270,21 +270,21 @@ class NGramDatabaseConnector(DatabaseConnector):
 
         """
         values = self._build_values_clause(ngram, count)
-        query_check = f"SELECT * from _{len(ngram)}_gram where word = '{ngram[0]}';"
+        query_check = f"SELECT * from _{len(ngram)}_gram where word = '{re_escape_singlequote.sub("''", ngram[0])}';"
         query_insert = f"INSERT INTO _{len(ngram)}_gram {values};"
         
         # query = "INSERT INTO _{0}_gram {1};".format(
         #     len(ngram), self._build_values_clause(ngram, count)
         # )
-        if self.execute_query(query_check) is None:
-            try:
+        try:
+            if self.fetch_all(query_check) is None:
                 self.execute_query(query_insert)
-            except Exception as e:
-                self.logger.critical(f"Exception while processing this sql query: {query_insert}", e)
-                raise  e
-        else:
-            self.logger.info(f"Word '{ngram[0]}' already exists in the database.")
-            pass
+            else:
+                self.logger.info(f"Word '{ngram[0]}' already exists in the database.")
+                pass
+        except Exception as e:
+            self.logger.critical(f"Exception while processing this sql query: {query_insert}", e)
+            raise  e
 
     def update_ngram(self, ngram, count):
         """

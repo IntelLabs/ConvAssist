@@ -327,6 +327,8 @@ def next_word_prediction(PredictionResponse, messageReceived):
     word_prediction = sort_List(word_prediction, 10)
     sentence_nextLetterProbs = sort_List(sentence_nextLetterProbs, 0)
     sentence_predictions = sort_List(sentence_predictions, sentences_count)
+
+    #TODO - Check if this should be json.dumps instead?
     result_Letters = str(next_Letter_Probs)
     result_Words = str(word_prediction)
     result_Letters_Sentence = str(sentence_nextLetterProbs)
@@ -411,9 +413,9 @@ def initialize_or_configure_convassists(ca_vars: ConvAssistVariables):
                 if config:
                     convassist.initialize(config, ca_vars.ConvAssist_callback, ca_vars.pathlog, ca_vars.loglevel)
                 
-                    if convassist.id == ca_sentence_ini:
+                    if convassist.id == ca_sentence_id:
                         convassist.read_updated_toxicWords()
-                    if convassist.id == ca_cannedphrases_ini:
+                    if convassist.id == ca_cannedphrases_id:
                         ca_vars.conv_canned_phrases.cannedPhrase_recreateDB()
 
                     ca_vars.logger.info(f"convassist {convassist.id} initialized and configured.")
