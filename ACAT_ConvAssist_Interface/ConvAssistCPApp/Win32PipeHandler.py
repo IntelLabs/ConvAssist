@@ -53,7 +53,7 @@ def get_incoming_message(Pipehandle) -> Any:
 
             # If the operation is pending, wait for it to complete
             if err_code == winerror.ERROR_IO_PENDING:
-                timeout = 5000  # 5 seconds
+                timeout = 100 # milliseconds
                 win32event.WaitForSingleObject(overlapped.hEvent, timeout)
                 
                 # Get the result of the overlapped operation

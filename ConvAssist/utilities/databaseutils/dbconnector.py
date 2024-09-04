@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+import logging
 from typing import Any, List, Optional, Tuple
 
-from ConvAssist.utilities.logging import ConvAssistLogger
+from ConvAssist.utilities.logging_utility import LoggingUtility
 
 class DatabaseError(Exception):
     """Base class for database-related errors."""
@@ -13,11 +14,9 @@ class DatabaseConnector(ABC):
     """
     def __init__(self, logger=None):
         if logger:
-            self.log = logger
+            self.logger = logger
         else:
-            self.log = ConvAssistLogger(name="DatabaseConnector", 
-                                        level="DEBUG")
-
+            self.logger = LoggingUtility.get_logger("DatabaseConnector", log_level=logging.DEBUG)
     @abstractmethod
     def connect(self, **kwargs) -> Any:
         """

@@ -1,12 +1,13 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
+import logging
 from typing import Any
 from configparser import ConfigParser
 
 # from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.utilities.predictor_names import PredictorNames
-from ConvAssist.utilities.logging import ConvAssistLogger
+from ConvAssist.utilities.logging_utility import LoggingUtility
 
 from ConvAssist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
 from ConvAssist.predictor.sentence_completion_predictor import SentenceCompletionPredictor
@@ -39,7 +40,7 @@ class PredictorRegistry(list):
         if logger:
             self.logger = logger
         else:
-            self.logger = ConvAssistLogger("predictor_registry", level="DEBUG")
+            self.logger = LoggingUtility.get_logger("predictor_registry", log_level=logging.DEBUG)
 
         self.set_predictors(context_tracker)
 

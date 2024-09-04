@@ -12,7 +12,7 @@ class SQLiteDatabaseConnector(DatabaseConnector):
         self.conn:sqlite3.Connection | None = None
 
     def connect(self, **kwargs) -> sqlite3.Connection:
-        self.log.debug(f"Connecting to SQLite database {self.dbname}")
+        self.logger.debug(f"Connecting to SQLite database {self.dbname}")
         self.conn = sqlite3.connect(self.dbname)
         return self.conn
 

@@ -8,7 +8,8 @@ from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor_registry import PredictorRegistry
 from ConvAssist.predictior_activator import PredictorActivator
 from ConvAssist.utilities.callback import BufferedCallback
-from ConvAssist.utilities.logging import ConvAssistLogger
+import logging
+from ConvAssist.utilities.logging_utility import LoggingUtility
 
 class ConvAssist:
     """
@@ -18,7 +19,7 @@ class ConvAssist:
                  config:ConfigParser | None = None, 
                  callback:BufferedCallback | None = None,  
                  log_location:str | None = None, 
-                 log_level:str | None = None):
+                 log_level:int | None = None):
  
         self.config = config
         self.callback = callback
@@ -31,7 +32,7 @@ class ConvAssist:
         if self.config and self.callback:
             self.initialize(self.config, self.callback, self.log_location, self.log_level)
 
-    def initialize(self, config:ConfigParser, callback:BufferedCallback, log_location:str|None = None, log_level:str|None = None):
+    def initialize(self, config:ConfigParser, callback:BufferedCallback, log_location:str|None = None, log_level:int|None = None):
         if not config:
             raise AttributeError("Config not provided.")
         
@@ -41,7 +42,7 @@ class ConvAssist:
         if log_level:
             self.log_level = log_level
         else:
-            self.log_level = self.config.get("Logging", "log_level", fallback="DEBUG") # default to info level logging
+            self.log_level = logging.getLevelName(self.config.get("Logging", "log_level", fallback="DEBUG")) # default to info level logging
 
         if log_location:
             self.log_location = log_location
@@ -49,7 +50,8 @@ class ConvAssist:
             self.log_location = self.config.get("Logging", "log_location", fallback="") # default to no log file
 
         # TODO: MAKE PASSING LOGGER IN THE INITIALIZATION OPTIONAL
-        self.logger = ConvAssistLogger(name=self.id, level=self.log_level, log_location=self.log_location)
+        self.logger = LoggingUtility.get_logger(self.id, self.log_level, self.log_location)
+
             
         lowercase_mode = self.config.getboolean("ContextTracker", "lowercase_mode", fallback=False)
         self.context_tracker = ContextTracker(lowercase_mode, callback)

@@ -26,10 +26,9 @@ class SmoothedNgramPredictor(Predictor):
             config,
             context_tracker,
             predictor_name,
-            short_desc=None,
-            long_desc=None,
-            
-            logger=None
+            short_desc = None,
+            long_desc = None,
+            logger = None
     ):
         super().__init__(
             config, context_tracker, 
@@ -283,13 +282,20 @@ class SmoothedNgramPredictor(Predictor):
 
     def predict(self, max_partial_prediction_size, filter):
         self.logger.debug("Start predicting ...")
-        tokens = [""] * self.cardinality
+        # tokens = [""] * self.cardinality
         prediction = Prediction()
-        try:
-            ### For empty context, display the most frequent startwords 
-            if(self.context_tracker.token(0)=="" and self.context_tracker.token(1)==""
-                and self.context_tracker.token(2)=="" and self.name== PredictorNames.GeneralWord.value):
-                
+
+        # get self.cardinality tokens from the context tracker
+        actual_tokens, tokens = self.context_tracker.get_tokens(self.cardinality)
+
+        if actual_tokens < self.cardinality:
+            self.logger.warning("Not enough tokens in the context tracker")
+
+            #expand the tokens to the right with empty strings
+            tokens = [""] * (self.cardinality - actual_tokens) + tokens
+
+            #If using GeneralWord predictor, get the most frequent startwords
+            if self.name == PredictorNames.GeneralWord.value:
                 with open(self.startwords) as f:
                     self.precomputed_sentenceStart = json.load(f)
 
@@ -298,30 +304,28 @@ class SmoothedNgramPredictor(Predictor):
                             Suggestion(w, prob, self.name)
                         )
 
-            for i in range(self.cardinality):
-                # if self.context_tracker.token(i) != "":
-                # tokens[self.cardinality - 1 - i] = json.dumps(self.context_tracker.token(i))
-                tok = self.context_tracker.token(i)
-                tokens[self.cardinality - 1 - i] = tok
-                
+        # Get the rest of the prefix completion candidates
+        try:
             prefix_completion_candidates: List[str] = []
             for k in reversed(range(self.cardinality)):
                 if len(prefix_completion_candidates) >= max_partial_prediction_size:
                     break
                 prefix_ngram = tokens[(len(tokens) - k - 1):]
                 partial: List[tuple[Any, Any]] = []
-                if not filter:
-                    partial = self.db.ngram_like_table(
-                        prefix_ngram,
-                        max_partial_prediction_size - len(prefix_completion_candidates),
-                    )
-                else:
-                    self.logger.debug(f"TODO: Implement filter in SmoothedNgramPredictor")
-                    # partial = self.db.ngram_like_table_filtered(
-                    #     prefix_ngram,
-                    #     filter,
-                    #     max_partial_prediction_size - len(prefix_completion_candidates),
-                    # )
+
+                if prefix_ngram:
+                    if not filter:
+                        partial = self.db.ngram_like_table(
+                            prefix_ngram,
+                            max_partial_prediction_size - len(prefix_completion_candidates),
+                        )
+                    else:
+                        self.logger.debug(f"TODO: Implement filter in SmoothedNgramPredictor")
+                        # partial = self.db.ngram_like_table_filtered(
+                        #     prefix_ngram,
+                        #     filter,
+                        #     max_partial_prediction_size - len(prefix_completion_candidates),
+                        # )
 
                 for p in partial:
                     if len(prefix_completion_candidates) > max_partial_prediction_size:

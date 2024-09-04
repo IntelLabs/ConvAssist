@@ -1,0 +1,467 @@
+# Copyright (C) 2023 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+"""
+   Systray application for ConvAssist to be used with ACAT
+"""
+
+import logging
+import os
+import queue
+import sys
+import threading
+import sys
+import tempfile
+
+from configparser import ConfigParser
+import time
+from typing import Any
+
+current_path = os.path.dirname(os.path.realpath(__file__))
+if current_path not in sys.path:
+    sys.path.append(current_path)
+
+import ACAT_ConvAssist_Interface.ConvAssistCPApp.Win32PipeHandler as Win32PipeHandler
+from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATMessageTypes import ConvAssistMessage, ConvAssistSetParam, WordAndCharacterPredictionResponse, \
+    ConvAssistMessageTypes, ConvAssistPredictionTypes, ParameterType
+
+from ConvAssist import ConvAssist
+from ConvAssist.utilities.logging_utility import LoggingUtility
+
+from ConvAssist.utilities.callback import BufferedCallback
+
+ca_main_id = "MAIN"
+ca_normal_ini = "wordPredMode.ini"
+ca_normal_id = "NORMAL"
+ca_shorthand_ini = "shortHandMode.ini"
+ca_shorthand_id = "SHORTHAND"
+ca_sentence_ini = "sentenceMode.ini"
+ca_sentence_id = "SENTENCE"
+ca_cannedphrases_ini = "cannedPhrasesMode.ini"
+ca_cannedphrases_id = "CANNED"
+
+class ACATConvAssistInterface(threading.Thread):
+    '''Class to handle the ConvAssist Interface with ACAT'''
+
+    def __init__(self, app_quit_event: threading.Event, queue_handler):
+        super().__init__()
+
+        self.logger = LoggingUtility.get_logger(ca_main_id, logging.DEBUG, queue_handler=queue_handler)
+
+        self.app_quit_event = app_quit_event
+        self.daemon = True
+
+        self.retries = 5
+        self.pipeName = "ACATConvAssistPipe"
+
+        self.ConvAssist_callback = BufferedCallback("")
+        self.clientConnected: bool = False
+
+        # Parameters that ACAT will send to ConvAssist
+        self.path: str = ""
+        self.suggestions:int = 10
+        self.testgensentencepred:bool = False
+        self.retrieveaac:bool = False
+        self.pathstatic:str = ""
+        self.pathpersonalized:str = ""
+        self.enablelogs:bool = False
+        self.loglevel:int = logging.DEBUG
+        self._pathlog = ""
+
+        # Variables for the configuration of the predictors
+        self.word_config: ConfigParser = ConfigParser()
+        self.sh_config: ConfigParser = ConfigParser()
+        self.sent_config: ConfigParser = ConfigParser()
+        self.canned_config: ConfigParser = ConfigParser()
+
+        self.sent_config_change: bool = False
+        self.enable_logs: bool = True
+
+        # Variables for the predictors
+        self.conv_normal: ConvAssist = ConvAssist(ca_normal_id, ca_normal_ini)
+        self.conv_shorthand: ConvAssist = ConvAssist(ca_shorthand_id, ca_shorthand_ini)
+        self.conv_sentence: ConvAssist = ConvAssist(ca_sentence_id, ca_sentence_ini)
+        self.conv_canned_phrases: ConvAssist = ConvAssist(ca_cannedphrases_id, ca_cannedphrases_ini)
+
+    @property
+    def pathlog(self):
+        return self._pathlog
+    
+    @pathlog.setter
+    def pathlog(self, value):
+        self.logger.debug(f"Setting log location to {value}.")
+        self._pathlog = value
+        LoggingUtility.add_file_handler(self.logger, self._pathlog )
+    
+    @pathlog.deleter
+    def pathlog(self):
+        del self._pathlog
+
+
+    @staticmethod
+    def sort_List(prediction_list, amount_predictions):
+        """
+        Gets a specific amount of predictions in descending order
+
+        :param prediction_list: original predictions list
+        :param amount_predictions: amount of predictions requested
+        :return: Sorted predictions list
+        """
+        new_ConvAssist_list = []
+        try:
+            temp_ConvAssist_list = sorted(
+                prediction_list, key=lambda x: (x[1]), reverse=True
+            )
+            for x in range(amount_predictions):
+                if x >= len(prediction_list):
+                    break
+                element_list = temp_ConvAssist_list[x]
+                new_ConvAssist_list.append(element_list)
+        except Exception:
+            new_ConvAssist_list = []
+        return new_ConvAssist_list
+
+    def createPredictorConfig(self, config_file_name) -> ConfigParser | None:
+        # check if all required params are set
+        if not self.path or not self.pathstatic or not self.pathpersonalized:
+            self.logger.debug("Path not set")
+            return None
+        
+        # Check if config file exists
+        config_file = os.path.join(self.path, config_file_name)
+        if not os.path.exists(config_file):
+            self.logger.debug("Config file not found")
+            return None
+        
+        # Create a ConfigParser object and read the config file
+        config_parser = ConfigParser()
+        config_parser.read(config_file)
+
+        # Check if the config file is read successfully
+        if not config_parser:
+            self.logger.debug("Config file not read successfully")
+            return None
+        
+        # make additional customizations to the ConfigParser object
+        for section in config_parser.sections():
+            for key in config_parser[section]:
+                if key == "static_resources_path":
+                    config_parser[section][key] = self.pathstatic
+                elif key == "personalized_resources_path":
+                    config_parser[section][key] = self.pathpersonalized
+                elif key == "suggestions":
+                    config_parser[section][key] = str(self.suggestions)
+                elif key == "test_generalSentencePrediction":
+                    config_parser[section][key] = str(self.testgensentencepred)
+                elif key == "retrieveAAC":
+                    config_parser[section][key] = str(self.retrieveaac)
+                elif key == "log_location":
+                    config_parser[section][key] = self.pathlog
+                elif key == "log_level":
+                    config_parser[section][key] = logging.getLevelName(self.loglevel)
+
+        # Write the config file
+        with open(config_file, 'w') as configfile:
+            config_parser.write(configfile)
+
+        #return the ConfigParser object
+        return config_parser
+
+    def handle_incoming_messages(self, Pipehandle):
+        """
+        Main Thread, called when a server was found: Receives and send messages, Event message terminate App
+
+        :param Pipehandle: Handle of the pipe
+        :return: none
+        """
+        while not self.app_quit_event.is_set():
+            self.logger.info("Handle incoming message start.")
+            send_response = True
+
+            try:
+                PredictionResponse = WordAndCharacterPredictionResponse()
+
+                try:
+                    message_json = Win32PipeHandler.get_incoming_message(Pipehandle)
+                    messageReceived = ConvAssistMessage.jsonDeserialize(message_json)
+                    self.logger.debug(f"Message received: {messageReceived} ")
+
+                except TimeoutError as e:
+                    self.logger.debug(f"Timeout Error waiting for named pipe.  Try again.")
+                    continue
+                
+                except BrokenPipeError as e:
+                    # If the pipe is broken, exit the loop
+                    self.logger.critical(f"Broken Pipe Error. Bailing. {e}.", e)
+                    send_response = False
+                    self.app_quit_event.set()
+                    continue
+
+                except Exception as e:
+                    self.logger.critical(f"Catastrophic Error.  Bailing. {e}.", e)
+                    # messageReceived = ConvAssistMessage(ConvAssistMessageTypes.NONE, ConvAssistPredictionTypes.NONE, "")
+                    send_response = False
+                    self.app_quit_event.set()
+                    continue
+
+                match messageReceived.MessageType:
+                    case ConvAssistMessageTypes.SETPARAM:
+                        config_changed = self.handle_parameter_change(messageReceived)
+
+                        if config_changed:
+                            try:
+                                self.initialize_or_configure_convassists()
+                            except AttributeError as e:
+                                self.logger.warning(f"Initializing predictors - Config not ready: {e}.")
+                                pass
+                    
+                    case ConvAssistMessageTypes.NEXTWORDPREDICTION:
+                        self.next_word_prediction(PredictionResponse, messageReceived)
+
+                    case ConvAssistMessageTypes.NEXTSENTENCEPREDICTION:
+                        self.next_sentence_prediction(PredictionResponse, messageReceived)
+                    
+                    case ConvAssistMessageTypes.LEARNWORDS:
+                        self.handle_learn(self.conv_sentence, messageReceived, "WORDS")
+                        PredictionResponse.MessageType = ConvAssistMessageTypes.LEARNWORDS
+                    
+                    case ConvAssistMessageTypes.LEARNSENTENCES:
+                        self.handle_learn(self.conv_sentence, messageReceived, "SENTENCES")
+                        PredictionResponse.MessageType = ConvAssistMessageTypes.LEARNSENTENCES
+
+                    case ConvAssistMessageTypes.LEARNCANNED:    
+                        self.handle_learn(self.conv_canned_phrases, messageReceived, "CANNEDPHRASESMODE")
+                        PredictionResponse.MessageType = ConvAssistMessageTypes.LEARNCANNED
+                    
+                    case ConvAssistMessageTypes.LEARNSHORTHAND:
+                        self.handle_learn(self.conv_shorthand, messageReceived, "SHORTHANDMODE")
+                        PredictionResponse.MessageType = ConvAssistMessageTypes.LEARNSHORTHAND
+                                    
+                    case ConvAssistMessageTypes.FORCEQUITAPP:
+                        self.logger.info("Force Quit App message received.")
+                        Win32PipeHandler.DisconnectNamedPipe(Pipehandle)
+                        send_response = False
+                        self.app_quit_event.set()
+
+                    case _:
+                        send_response = False
+
+                if send_response:
+                    self.logger.info(f"Sending message: {PredictionResponse}.")
+                    Win32PipeHandler.send_message(Pipehandle, PredictionResponse.jsonSerialize())
+
+            except Exception as e:
+                self.logger.critical(f"Critical Error in Handle incoming message. Bailing {e}.", e)
+                Win32PipeHandler.DisconnectNamedPipe(Pipehandle)
+                self.app_quit_event.set()
+            
+            self.logger.info("Handle incoming message finished.")
+
+    def next_word_prediction(self, PredictionResponse, messageReceived):
+        self.logger.info(f"Prediction requested type: {messageReceived.PredictionType} Prediction Message: {messageReceived.Data}.")
+        word_prediction = []
+        next_Letter_Probs = []
+        sentence_nextLetterProbs = []
+        sentence_predictions = []
+        sentences_count = 0
+        prediction_type = ConvAssistPredictionTypes.NONE
+
+        match messageReceived.PredictionType:
+            case ConvAssistPredictionTypes.NORMAL:
+                prediction_type = ConvAssistPredictionTypes.NORMAL
+                if self.conv_normal.initialized:
+                    count = len(messageReceived.Data)
+                    if (count == 1 and messageReceived.Data.isspace()):
+                        if self.conv_normal.context_tracker.callback is not None:
+                            self.conv_normal.context_tracker.callback.update("")
+                    else:
+                        if self.conv_normal.context_tracker.callback is not None:
+                            self.conv_normal.context_tracker.callback.update(messageReceived.Data)
+                        
+                    self.conv_normal.context_tracker.prefix()
+                    self.conv_normal.context_tracker.past_stream()
+
+                    (next_Letter_Probs,
+                    word_prediction,
+                    sentence_nextLetterProbs,
+                    sentence_predictions) = self.conv_normal.predict()
+
+            case ConvAssistPredictionTypes.SHORTHANDMODE:
+                prediction_type = ConvAssistPredictionTypes.SHORTHANDMODE
+                if self.conv_shorthand.initialized:
+                    sentences_count = 0
+                    if self.conv_shorthand.context_tracker.callback is not None:
+                        self.conv_shorthand.context_tracker.callback.update(messageReceived.Data)
+
+                    self.conv_shorthand.context_tracker.prefix()
+                    self.conv_shorthand.context_tracker.past_stream()
+
+                    (next_Letter_Probs,
+                    word_prediction,
+                    sentence_nextLetterProbs,
+                    sentence_predictions) = self.conv_shorthand.predict()
+
+            case ConvAssistPredictionTypes.CANNEDPHRASESMODE:
+                prediction_type = ConvAssistPredictionTypes.CANNEDPHRASESMODE
+                if self.conv_canned_phrases.initialized:
+                    sentences_count = 6
+                    if self.conv_canned_phrases.context_tracker.callback is not None:
+                        self.conv_canned_phrases.context_tracker.callback.update(messageReceived.Data)
+
+                    self.conv_canned_phrases.context_tracker.prefix()
+                    self.conv_canned_phrases.context_tracker.past_stream()
+
+                    (next_Letter_Probs,
+                    word_prediction,
+                    sentence_nextLetterProbs,
+                    sentence_predictions) = self.conv_canned_phrases.predict()
+
+        next_Letter_Probs = ACATConvAssistInterface.sort_List(next_Letter_Probs, 20)
+        word_prediction = ACATConvAssistInterface.sort_List(word_prediction, 10)
+        sentence_nextLetterProbs = ACATConvAssistInterface.sort_List(sentence_nextLetterProbs, 0)
+        sentence_predictions = ACATConvAssistInterface.sort_List(sentence_predictions, sentences_count)
+
+        #TODO - Check if this should be json.dumps instead?
+        result_Letters = str(next_Letter_Probs)
+        result_Words = str(word_prediction)
+        result_Letters_Sentence = str(sentence_nextLetterProbs)
+        result_Sentences = str(sentence_predictions)
+
+        PredictionResponse.MessageType = ConvAssistMessageTypes.NEXTWORDPREDICTIONRESPONSE
+        PredictionResponse.PredictionType = prediction_type
+        PredictionResponse.PredictedWords = result_Words
+        PredictionResponse.NextCharacters = result_Letters
+        PredictionResponse.NextCharactersSentence = result_Letters_Sentence
+        PredictionResponse.PredictedSentence = result_Sentences
+
+    def next_sentence_prediction(self, PredictionResponse, messageReceived):
+        self.logger.debug(f"Prediction requested type: {messageReceived.MessageType} Prediction Message: {messageReceived.Data}.")
+        word_prediction = []
+        next_Letter_Probs = []
+        sentence_nextLetterProbs = []
+        sentence_predictions = []
+        sentences_count = 0
+        prediction_type = ConvAssistPredictionTypes.SENTENCES
+        
+        if self.conv_sentence.initialized and self.conv_sentence.check_model() == 1:
+            if self.conv_sentence.context_tracker.callback is not None:
+                self.conv_sentence.context_tracker.callback.update(messageReceived.Data)
+            self.conv_sentence.context_tracker.prefix()
+            self.conv_sentence.context_tracker.past_stream()
+            next_Letter_Probs, word_prediction, sentence_nextLetterProbs, sentence_predictions = self.conv_sentence.predict()
+
+        next_Letter_Probs = ACATConvAssistInterface.sort_List(next_Letter_Probs, 0)
+        word_prediction = ACATConvAssistInterface.sort_List(word_prediction, 0)
+        sentence_nextLetterProbs = ACATConvAssistInterface.sort_List(sentence_nextLetterProbs, 0)
+        sentence_predictions = ACATConvAssistInterface.sort_List(sentence_predictions, 6)
+        result_Letters = str(next_Letter_Probs)
+        result_Words = str(word_prediction)
+        result_Letters_Sentence = str(sentence_nextLetterProbs)
+        result_Sentences = str(sentence_predictions)
+
+        PredictionResponse.MessageType = ConvAssistMessageTypes.NEXTSENTENCEPREDICTIONRESPONSE
+        PredictionResponse.PredictionType = prediction_type
+        PredictionResponse.PredictedWords = result_Words
+        PredictionResponse.NextCharacters = result_Letters
+        PredictionResponse.NextCharactersSentence = result_Letters_Sentence
+        PredictionResponse.PredictedSentence = result_Sentences
+
+    def handle_learn(self, conv_assist: ConvAssist, messageReceived: ConvAssistMessage, mode: str):
+        self.logger.debug(f"Calling Learn_db for {conv_assist.id} with mode {mode}.")
+        conv_assist.learn_db(messageReceived.Data)
+        self.logger.debug("Finished Learn_db for {conv_assist.id}.")
+
+    def handle_parameter_change(self, messageReceived: ConvAssistMessage):
+        changed = False
+
+        try:
+            param = ConvAssistSetParam.jsonDeserialize(messageReceived.Data)
+            self.logger.debug(f"Parameter change requested: {param}.")
+
+            attr_name = ParameterType(param.Parameter).name.lower()
+            self.logger.debug(f"Parameter {attr_name} with value {param.Value}.")
+            old_value = getattr(self, attr_name, None)
+
+            if old_value != param.Value:
+                changed = True
+                setattr(self, attr_name, param.Value)
+
+        except Exception as e:
+            self.logger.error(f"handle_parameters exception: {e}.")
+            
+        self.logger.info("Parameters message answered.")
+        return changed
+
+    def initialize_or_configure_convassists(self):
+        convassists = [self.conv_normal, self.conv_shorthand, self.conv_sentence, self.conv_canned_phrases]
+
+        for convassist in convassists:
+            if convassist.initialized:
+                convassist.update_params(str(self.testgensentencepred), str(self.retrieveaac))
+                convassist.read_updated_toxicWords()
+                self.logger.info(f"convassist {convassist.id} updated.")
+            else:
+                try:
+                    config = self.createPredictorConfig(f"{convassist.ini_file}")
+                    if config:
+                        convassist.initialize(config, self.ConvAssist_callback, self.pathlog, self.loglevel)
+                    
+                        if convassist.id == ca_sentence_id:
+                            convassist.read_updated_toxicWords()
+                        if convassist.id == ca_cannedphrases_id:
+                            self.conv_canned_phrases.cannedPhrase_recreateDB()
+
+                        self.logger.info(f"convassist {convassist.id} initialized and configured.")
+
+                except Exception as e:
+                    self.logger.critical(f"Error initializing convassist {convassist.id}: {e}.")
+                    raise e
+        
+    def ConnectToACAT(self) -> tuple[bool, Any]:
+
+        success = False
+        handle = None
+        # Try to connect to ACAT server.  Give up after #retries
+        self.logger.info("Trying to connect to ACAT server.")
+        try:
+            success, handle = Win32PipeHandler.ConnectToNamedPipe(self.pipeName, self.retries, self.logger)
+
+            if not success:
+                self.logger.info("Failed to connect to ACAT server.")
+
+            else:
+                self.logger.info("Connected to ACAT server.")
+                self.clientConnected = True
+
+        except Exception as e:
+            self.logger.error(f"Error connecting to named pipe: {e}")
+
+        finally:
+            return success, handle
+
+    def DisconnectFromACAT(self):
+        if self.clientConnected:
+            Win32PipeHandler.DisconnectNamedPipe(self.pipeName)
+            self.clientConnected
+
+    def run(self):
+        """
+        Main function to start the application
+        """
+        self.logger=LoggingUtility.get_logger(ca_main_id, logging.DEBUG)
+        # self.logger.configure_logging(level=logging.DEBUG, log_location=os.path.join(tempfile.gettempdir(), "Logs")) # type: ignore
+        
+        self.logger.info("Starting ACATConvAssistInterface.")
+        success, handle = self.ConnectToACAT()
+
+        if not success:
+            self.logger.info("Failed to connect to ACAT server. Exiting.")
+            return
+
+        # self.initialize_or_configure_convassists()
+        self.handle_incoming_messages(handle)
+        
+        self.logger.info("Disconnecting from ACAT.")
+        self.DisconnectFromACAT()
+
+        self.logger.info("ACATConvAssistInterface finished.")

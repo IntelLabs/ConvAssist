@@ -6,7 +6,6 @@
 import re
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional, Tuple
-from ConvAssist.utilities.logging import ConvAssistLogger
 from ConvAssist.utilities.databaseutils.dbconnector import DatabaseConnector, DatabaseError
 
 re_escape_singlequote = re.compile("'")
@@ -17,18 +16,13 @@ class NGramDatabaseConnector(DatabaseConnector):
     Abstract base class for database interactions.
     """
     def __init__(self, dbname: str, cardinality=1, logger=None):
+        super().__init__(logger)
         self.cardinality = cardinality
         self.dbname = dbname
         self.lowercase = False
         self.normalize = False
         self.connection = None
         
-        if logger:
-            self.logger = logger
-        else:
-            self.logger = ConvAssistLogger(name="DatabaseConnector", 
-                                        level="DEBUG")
-
     @abstractmethod
     def connect(self, **kwargs) -> None:
         """
@@ -239,17 +233,22 @@ class NGramDatabaseConnector(DatabaseConnector):
         return self._extract_first_integer(result)
 
     def ngram_like_table(self, ngram, limit=-1):
-        query = "SELECT {0} FROM _{1}_gram {2} ORDER BY count DESC".format(
-            self._build_select_like_clause(len(ngram)),
-            len(ngram),
-            self._build_where_like_clause(ngram),
-        )
-        if limit < 0:
-            query += ";"
-        else:
-            query += " LIMIT {0};".format(limit)
+        try:
+            query = "SELECT {0} FROM _{1}_gram {2} ORDER BY count DESC".format(
+                self._build_select_like_clause(len(ngram)),
+                len(ngram),
+                self._build_where_like_clause(ngram),
+            )
+            if limit < 0:
+                query += ";"
+            else:
+                query += " LIMIT {0};".format(limit)
 
-        return self.fetch_all(query)
+            result = self.fetch_all(query)
+        except DatabaseError as e:
+            self.logger.critical(f"Error while ngram_like_table this query: {query}", e)
+            raise e
+        return result
 
     def ngram_like_table_filtered(self, ngram, filter, limit=-1):
         pass

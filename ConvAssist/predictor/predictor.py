@@ -1,8 +1,10 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-from ConvAssist.utilities.logging import ConvAssistLogger
-from ConvAssist.utilities.singleton import PredictorSingleton
+import logging
+from configparser import ConfigParser
+from ConvAssist.utilities.logging_utility import LoggingUtility
+from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.utilities.prediction import Prediction
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
@@ -14,26 +16,25 @@ class Predictor():
 
     def __init__(
             self, 
-            config, 
-            context_tracker, 
-            predictor_name, 
-            short_desc=None, 
-            long_desc=None,
-            logger=None
+            config: ConfigParser, 
+            context_tracker: ContextTracker, 
+            predictor_name: str, 
+            short_desc: str | None = None, 
+            long_des: str | None = None,
+            logger: logging.Logger | None = None
     ):
         self.config = config
         self.context_tracker = context_tracker
         self.predictor_name = predictor_name
         self.short_description = short_desc
-        self.long_description = long_desc
+        self.long_description = long_des
         
         #configure a logger
         if logger:
             self.logger = logger
         else:
-            self.logger = ConvAssistLogger(name=self.predictor_name, 
-                                        level="DEBUG")
-    
+            self.logger = logging.getLogger(self.predictor_name)
+            self.logger.configure_logging(level="DEBUG") #type: ignore
     def get_name(self):
         return self.predictor_name
     
@@ -71,6 +72,5 @@ class Predictor():
             ''')
             conn.close()
         except Exception as e:
-            self.log.critical(f"Unable to create table {tablename} in {dbname}:  {e}")
-            raise e
+            raise Exception(f"Unable to create table {tablename} in {dbname}.", e)
 

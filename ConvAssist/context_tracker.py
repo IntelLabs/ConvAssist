@@ -5,6 +5,7 @@
 Class for context tracker.
 
 """
+from typing import List
 from ConvAssist.utilities.character import *
 from ConvAssist.tokenizer.forward_tokenizer import ForwardTokenizer
 from ConvAssist.tokenizer.reverse_tokenizer import ReverseTokenizer
@@ -124,7 +125,7 @@ class ContextTracker(object):
 
     def token(self, index):
         past_string_stream = self.past_stream()
-        past_string_stream = past_string_stream.lstrip()
+        past_string_stream = past_string_stream.lstrip().rstrip()
         tok = ReverseTokenizer(past_string_stream)
         tok.lowercase = self.lowercase
         i = 0
@@ -135,6 +136,20 @@ class ContextTracker(object):
             token = ""
 
         return token
+    
+    def get_tokens(self, count = 3) -> tuple[int, List] :
+        tokens = []
+        actual = 0
+
+        while True and actual < count:
+            result = self.token(actual)
+            if result == "":
+                break
+            tokens.insert(0, result)
+            actual += 1
+
+        return actual, tokens
+
 
     def extra_token_to_learn(self, index, change):
         return self.token(index + len(change))

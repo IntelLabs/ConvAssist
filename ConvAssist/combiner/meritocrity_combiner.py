@@ -31,7 +31,7 @@ class MeritocracyCombiner(Combiner):
                     if(word_predicted!=""):
                         # if context is not empty, split the 
                         # word_predicted to compute the next letter
-                        if(context!="" and context!=" "):
+                        if(context!="" and context!=" ") and (len(context) <= len(word_predicted)):
                             if(word_predicted != context):
                                 nextLetter = word_predicted[len(context):][0]
                         else:

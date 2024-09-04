@@ -26,7 +26,6 @@ class SpellCorrectPredictor(Predictor):
             predictor_name,
             short_desc=None,
             long_desc=None,
-            
             logger=None
     ):
         super().__init__(

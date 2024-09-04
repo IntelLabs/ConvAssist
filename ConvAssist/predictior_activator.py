@@ -60,40 +60,54 @@ class PredictorActivator(object):
         word_nextLetterProbs = []
         spell_word_result = []
         spell_word_nextLetterProbs = []
+        result = (word_nextLetterProbs, word_result, sent_nextLetterProbs, sent_result)
+
         context = self.context_tracker.token(0)
-        for predictor in self.registry:
+        # if self.context_tracker:
+        #     context = self.context_tracker.past_stream()
+        # else:
+        #     context = ""
 
-            if(predictor.name == PredictorNames.SentenceComp.value):
-                sentences = predictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter)
-                self.sent_predictions.append(sentences)
-                sent_nextLetterProbs, sent_result = self.combiner.combine(self.sent_predictions, context)
+        try:
+            for predictor in self.registry:
+                
+                if(predictor.name == PredictorNames.SentenceComp.value):
+                    sentences = predictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter)
+                    self.sent_predictions.append(sentences)
+                    sent_nextLetterProbs, sent_result = self.combiner.combine(self.sent_predictions, context)
 
-            elif(predictor.name == PredictorNames.CannedPhrases.value):
-                sentences, words = predictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter)
-                sent_result = sentences
-                if(words!=[]):
-                    for w in words:
-                        self.word_predictions.append(w)
+                elif(predictor.name == PredictorNames.CannedPhrases.value):
+                    sentences, words = predictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter)
+                    sent_result = sentences
+                    if(words!=[]):
+                        for w in words:
+                            self.word_predictions.append(w)
 
-            ### If the predictor is spell predictor, use the predictions only if the other predictors return empty lists
-            elif(predictor.name == PredictorNames.Spell.value):
-                self.spell_word_predictions.append(predictor.predict(
-                    self.max_partial_prediction_size * multiplier, prediction_filter)
-                )
-                spell_word_nextLetterProbs, spell_word_result = self.combiner.combine(self.spell_word_predictions, context)
-            else:
-                self.word_predictions.append(predictor.predict(
-                    self.max_partial_prediction_size * multiplier, prediction_filter)
-                )
-                word_nextLetterProbs, word_result = self.combiner.combine(self.word_predictions, context)
+                ### If the predictor is spell predictor, use the predictions only if the other predictors return empty lists
+                elif(predictor.name == PredictorNames.Spell.value):
+                    self.spell_word_predictions.append(predictor.predict(
+                        self.max_partial_prediction_size * multiplier, prediction_filter)
+                    )
+                    spell_word_nextLetterProbs, spell_word_result = self.combiner.combine(self.spell_word_predictions, context)
+                else:
+                    self.word_predictions.append(predictor.predict(
+                        self.max_partial_prediction_size * multiplier, prediction_filter)
+                    )
+                    word_nextLetterProbs, word_result = self.combiner.combine(self.word_predictions, context)
 
             #TODO - CHECK WITH SHACHI ON THIS!!!
             if(predictor.name == PredictorNames.Spell.value and word_result==[]):
                 word_result = spell_word_result
                 word_nextLetterProbs = spell_word_nextLetterProbs
 
-        result = (word_nextLetterProbs, word_result, sent_nextLetterProbs, sent_result)
-        return result
+            result = (word_nextLetterProbs, word_result, sent_nextLetterProbs, sent_result)
+
+        except Exception as e:
+            predictor.logger.error(f"Error in PredictorActivator: {e}")
+            pass
+
+        finally:
+            return result
 
     def recreate_canned_phrasesDB(self):
         for predictor in self.registry:

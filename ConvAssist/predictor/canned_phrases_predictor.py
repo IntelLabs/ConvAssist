@@ -253,7 +253,7 @@ class CannedPhrasesPredictor(Predictor, metaclass=PredictorSingleton):
                 #### CHECK IF SENTENCE EXISITS IN THE DATABASE
                 res = self.sentences_db.fetch_all("SELECT count FROM sentences WHERE sentence = ?", (change_tokens,))
                 
-                if len(res) > 0:
+                if res and  len(res) > 0:
                     if len(res[0]) > 0:
                         count = int(res[0][0])
 
