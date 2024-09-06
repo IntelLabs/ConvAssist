@@ -40,7 +40,7 @@ class PredictorRegistry(list):
         if logger:
             self.logger = logger
         else:
-            self.logger = LoggingUtility.get_logger("predictor_registry", log_level=logging.DEBUG)
+            self.logger = LoggingUtility().get_logger("predictor_registry", log_level=logging.DEBUG)
 
         self.set_predictors(context_tracker)
 

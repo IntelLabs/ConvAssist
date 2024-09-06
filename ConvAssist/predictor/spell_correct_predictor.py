@@ -96,16 +96,18 @@ class SpellCorrectPredictor(Predictor):
 
     def predict(self, max_partial_prediction_size, filter):
         token = self.context_tracker.token(0)
-        prediction = Prediction()
+        setence_prediction = Prediction()
+        word_prediction = Prediction()
+
         prefix_completion_candidates = self.candidates(token)
 
         for j, candidate in enumerate(prefix_completion_candidates):
             probability = self.P(candidate)
             if probability > 0.0001:
-                prediction.add_suggestion(
+                word_prediction.add_suggestion(
                     Suggestion(candidate, probability, self.name)
                 )
-        return prediction
+        return setence_prediction, word_prediction
 
     def learn(self, text):
         pass

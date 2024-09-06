@@ -26,7 +26,7 @@ from ConvAssist.utilities.singleton import PredictorSingleton
 
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
-class SentenceCompletionPredictor(Predictor, metaclass=PredictorSingleton):
+class SentenceCompletionPredictor(Predictor):
     """
     Calculates prediction from n-gram model using gpt-2.
     """
@@ -192,6 +192,7 @@ class SentenceCompletionPredictor(Predictor, metaclass=PredictorSingleton):
         try:
             self.generator = pipeline('text-generation', model=self.modelname, 
                                       tokenizer=self.tokenizer,
+                                      cleanup_tokenization_spaces=True,
                                       device=self.device)
             self.MODEL_LOADED = True
         except Exception as e:
@@ -412,8 +413,10 @@ class SentenceCompletionPredictor(Predictor, metaclass=PredictorSingleton):
         return predi
 
     def predict(self, max_partial_prediction_size, filter):
+        sentence_prediction = Prediction()
+        word_prediction = Prediction()   # not used in this predictor
+
         tokens = [""] * self.cardinality
-        prediction = Prediction()
         context = self.context_tracker.past_stream().lstrip()
         if(context == "" or context==" "):
             self.logger.debug(f"context is empty, loading top sentences from {self.startsents}")
@@ -423,14 +426,14 @@ class SentenceCompletionPredictor(Predictor, metaclass=PredictorSingleton):
             ##### retrieve top5 from startsentFile 
             data = open(self.startsents,"r").readlines()
             for k in data:
-                prediction.add_suggestion(Suggestion(k.strip(), float(1/len(data)), self.name))
-            return prediction
+                sentence_prediction.add_suggestion(Suggestion(k.strip(), float(1/len(data)), self.name))
+            return sentence_prediction, word_prediction
         start = time.perf_counter()
         self.logger.debug("context inside predictor predict = {context}")
 
         #### If we are testing generation models
         if (self.test_generalSentencePrediction == "True"):
-            prediction = self.generate("<bos> "+context.strip(),5, prediction)
+            sentence_prediction = self.generate("<bos> "+context.strip(),5, sentence_prediction)
 
         #### if we want to Only retrieve from AAC dataset
         elif(self.retrieve=="True"):
@@ -440,18 +443,20 @@ class SentenceCompletionPredictor(Predictor, metaclass=PredictorSingleton):
         #### Hybrid retrieve mode  elif(self.retrieve=="hybrid"):
         elif(self.retrieve=="False"):
             self.logger.debug("Hybrid retrieval - AAC dataset + model generation")
-            prediction = self.retrieve_fromDataset(context)
-            self.logger.debug(f"retrieved {len(prediction)} sentences in {str(prediction)}")
+            sentence_prediction = self.retrieve_fromDataset(context)
+            self.logger.debug(f"retrieved {len(sentence_prediction)} sentences in {str(sentence_prediction)}")
             
             ##### ONLY IF THE GENERATION MODEL IS LOADED, GENERATE MODEL BASED PREDICTIONS
-            if(len(prediction)<5 and self.MODEL_LOADED):
-                self.logger.debug(f"generating {5-len(prediction)} more predictions")
-                prediction = self.generate("<bos> "+context.strip(),5-len(prediction), prediction)
+            if(len(sentence_prediction)<5 and self.MODEL_LOADED):
+                self.logger.debug(f"generating {5-len(sentence_prediction)} more predictions")
+                sentence_prediction = self.generate("<bos> "+context.strip(),5-len(sentence_prediction), sentence_prediction)
 
         latency = time.perf_counter() - start 
         self.logger.debug(f"latency = {latency}")
-        self.logger.debug(f"prediction = {prediction}")
-        return prediction
+        self.logger.debug(f"prediction = {sentence_prediction}")
+        
+        return sentence_prediction, word_prediction
+
 
     def close_database(self):
         if self.db:

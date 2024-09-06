@@ -1,6 +1,7 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import Any, Dict
 from ConvAssist.combiner import Combiner
 from ConvAssist.predictor.utilities.prediction import Prediction
 from ConvAssist.predictor.utilities.predictor_names import PredictorNames
@@ -15,28 +16,30 @@ class MeritocracyCombiner(Combiner):
     """
     Computes probabilities for the next letter - for BCI 
     """
-    def computeLetterProbs(self, result, context):
+    def computeLetterProbs(self, result:Prediction, context:str) -> list[tuple[str, float]]:
         #### compute letter probability
         totalWords = len(result)
-        nextLetterProbs = {}
+        nextLetterProbs: Dict[str, float] = {}
+
         for each in result:
             word_predicted = each.word.lower().strip()
+
             nextLetter = " "
             if(each.predictor_name !=PredictorNames.Spell.value):
                 if(each.predictor_name == PredictorNames.SentenceComp.value):
                     if(word_predicted!=""):     
                         nextLetter = word_predicted.strip().split()[0][0]
+
                 else:
                     ####### check to ensure there is some word_prediction         
                     if(word_predicted!=""):
-                        # if context is not empty, split the 
-                        # word_predicted to compute the next letter
-                        if(context!="" and context!=" ") and (len(context) <= len(word_predicted)):
+                        ####### if context is not empty, split the word_predicted to compute the next letter
+                        if(context!="" and context!=" "):
                             if(word_predicted != context):
                                 nextLetter = word_predicted[len(context):][0]
+                                # print("word_pred = ", word_predicted, " nextLetter = ", nextLetter)
                         else:
-                            # if context is empty, pick the first letter of 
-                            # the word_predicted as the next letter
+                            ####### if context is empty, pick the first letter of the word_predicted as the next letter
                             nextLetter = word_predicted[0]
 
             if (nextLetter in nextLetterProbs):
@@ -46,6 +49,7 @@ class MeritocracyCombiner(Combiner):
         nextLetterProbsList = []
         for k, v in nextLetterProbs.items():
             nextLetterProbsList.append((k,v / totalWords))
+
         return nextLetterProbsList
 
     def combine(self, predictions, context):

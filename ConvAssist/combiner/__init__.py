@@ -14,7 +14,7 @@ class Combiner(metaclass=abc.ABCMeta):
     def __init__(self):
         pass
 
-    def filter(self, prediction):
+    def filter(self, prediction:Prediction) -> Prediction:
         seen_tokens = set()
         result = Prediction()
         for i, suggestion in enumerate(prediction):

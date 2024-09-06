@@ -13,11 +13,10 @@ from sentence_transformers import SentenceTransformer
 from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.utilities.prediction import Prediction
 from ConvAssist.predictor import Predictor
-from ConvAssist.utilities.suggestion import Suggestion
-from ConvAssist.utilities.singleton import PredictorSingleton
+from ConvAssist.utilities.suggestion import Suggestion, SuggestionException
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
-class CannedPhrasesPredictor(Predictor, metaclass=PredictorSingleton):
+class CannedPhrasesPredictor(Predictor):
     """
     Searches the canned phrase database for matching next words and sentences
     """
@@ -102,13 +101,11 @@ class CannedPhrasesPredictor(Predictor, metaclass=PredictorSingleton):
     def is_model_loaded(self):
         return self.MODEL_LOADED
 
-    def recreate_canned_db(self, personalized_corpus):
-        self.logger.info("inside CannedPhrasesPredictor recreate_canned_db")
+    def recreate_canned_db(self, personalized_corpus=None):
 
-        self.corpus_sentences = []
-        self.pers_cannedphrasesLines = open(self.personalized_cannedphrases, "r").readlines()
-        self.pers_cannedphrasesLines = [s.strip() for s in self.pers_cannedphrasesLines]
-
+        if personalized_corpus:
+            self.pers_cannedphrasesLines = personalized_corpus
+        
         try:
             #### RETRIEVE ALL SENTENCES FROM THE DATABASE
             self.sentences_db = SQLiteDatabaseConnector(self.sentences_db_path)
@@ -147,7 +144,7 @@ class CannedPhrasesPredictor(Predictor, metaclass=PredictorSingleton):
         except Exception as e:
             self.logger.error("CannedPhrasePredictor recreateDB: {e}")
 
-    def find_semantic_matches(self,context, sent_prediction, cannedph):
+    def find_semantic_matches(self,context, sent_prediction:Prediction, cannedph) -> Prediction:
         try:
             direct_matchedSentences = [s.word for s in sent_prediction]
             question_embedding = self.embedder.encode(context)
@@ -166,29 +163,44 @@ class CannedPhrasesPredictor(Predictor, metaclass=PredictorSingleton):
 
         return sent_prediction
 
-    def find_direct_matches(self,context, lines, sent_prediction, cannedph):
+    # LOGIC
+    # 1. For each sentence in cannedphrases, find the number of words that match with the context
+    # 2. Sort the sentences based on the number of matches and probability
+    # 3. Add the top 5 sentences to the sent_prediction
+    # 4. If the number of matches is 0, add the sentence to the sent_prediction
+    # Make sure the probability is not greater than 1
+
+    def find_direct_matches(self, context, lines, sent_prediction:Prediction, cannedph:dict):
         try:
             total_sent = sum(cannedph.values())
             context_StemmedWords = [self.stemmer.stem(w) for w in context.split()]
-            num_contextWords = len(context_StemmedWords)
             rows = []
-            for k,v in cannedph.items():
+
+            for phrase, _ in cannedph.items():
                 matchfound = 0
-                sentence_StemmedWords = [self.stemmer.stem(w) for w in word_tokenize(k)]
-                for c in context_StemmedWords:
-                    if c in sentence_StemmedWords:
-                        matchfound = matchfound+1
-                new_row = {'sentence':k, 'matches':matchfound, 'probability':float(cannedph[k]/total_sent)}
+                sentence_StemmedWords = [self.stemmer.stem(w) for w in word_tokenize(phrase)]
+                for context in context_StemmedWords:
+                    if context in sentence_StemmedWords:
+                        matchfound += 1
+                new_row = {'sentence':phrase, 'matches':matchfound, 'probability':float(cannedph[phrase]/total_sent)}
                 rows.append(new_row)
+
             scores = pd.DataFrame.from_records(rows)
             sorted_df = scores.sort_values(by = ['matches', 'probability'], ascending = [False, False])
-            for index, row in sorted_df.iterrows():
-                if(row["matches"]>0):
-                    sent_prediction.add_suggestion(Suggestion(row['sentence'], row["matches"]+row["probability"], self.name))
-        except Exception as e:
-            self.logger.error(f"CannedPhrasePredictor find_direct_matches {e}")
 
-        return sent_prediction
+            for _, row in sorted_df.iterrows():
+                if(row["matches"]>0):
+                    try:
+                        # TODO: Check if 
+                        sent_prediction.add_suggestion(Suggestion(row['sentence'], row["probability"], self.name))
+                    except SuggestionException as e:
+                        self.logger.error(f"{row['sentence']} Error - {e}")
+                        continue
+        except Exception as e:
+            self.logger.error(f"CannedPhrasePredictor find_direct_matches Error {e}")
+            raise e
+        finally:
+            return sent_prediction
 
     def getTop5InitialPhrases(self, cannedph, sent_prediction):
         total_sent = sum(cannedph.values())
@@ -205,9 +217,8 @@ class CannedPhrasesPredictor(Predictor, metaclass=PredictorSingleton):
             count = count+1
         return sent_prediction
 
-    def predict(self, max_partial_prediction_size, filter):
 
-        tokens = [""] * self.cardinality
+    def predict(self, max_partial_prediction_size, filter):
         sent_prediction = Prediction()
         word_prediction = Prediction()
         try:
@@ -220,7 +231,6 @@ class CannedPhrasesPredictor(Predictor, metaclass=PredictorSingleton):
 
             ###### get matching sentences 
             ###### First get direct matches based on both databases: 
-
             sent_prediction = self.find_direct_matches(context, self.pers_cannedphrasesLines, sent_prediction, self.cannedPhrases_counts)
 
             ###### Get semantic matches based on both databases: 

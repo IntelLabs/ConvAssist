@@ -50,7 +50,7 @@ class ConvAssist:
             self.log_location = self.config.get("Logging", "log_location", fallback="") # default to no log file
 
         # TODO: MAKE PASSING LOGGER IN THE INITIALIZATION OPTIONAL
-        self.logger = LoggingUtility.get_logger(self.id, self.log_level, self.log_location)
+        self.logger = LoggingUtility().get_logger(self.id, self.log_level, self.log_location, True)
 
             
         lowercase_mode = self.config.getboolean("ContextTracker", "lowercase_mode", fallback=False)

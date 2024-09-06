@@ -228,7 +228,7 @@ class NGramDatabaseConnector(DatabaseConnector):
         query = "SELECT count FROM _{0}_gram".format(len(ngram))
         query += self._build_where_clause(ngram)
         query += ";"
-        result = self.execute_query(query)
+        result = self.fetch_all(query)
 
         return self._extract_first_integer(result)
 
@@ -246,7 +246,7 @@ class NGramDatabaseConnector(DatabaseConnector):
 
             result = self.fetch_all(query)
         except DatabaseError as e:
-            self.logger.critical(f"Error while ngram_like_table this query: {query}", e)
+            self.logger.critical(f"Error while ngram_like_table this query: {query}")
             raise e
         return result
 
@@ -282,7 +282,7 @@ class NGramDatabaseConnector(DatabaseConnector):
                 self.logger.info(f"Word '{ngram[0]}' already exists in the database.")
                 pass
         except Exception as e:
-            self.logger.critical(f"Exception while processing this sql query: {query_insert}", e)
+            self.logger.critical(f"Exception while processing this sql query: {query_insert}")
             raise  e
 
     def update_ngram(self, ngram, count):

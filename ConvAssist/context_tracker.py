@@ -1,16 +1,14 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
+
 """
 Class for context tracker.
 
 """
-from typing import List
-from ConvAssist.utilities.character import *
+import ConvAssist.utilities.character as character
 from ConvAssist.tokenizer.forward_tokenizer import ForwardTokenizer
 from ConvAssist.tokenizer.reverse_tokenizer import ReverseTokenizer
-from ConvAssist.utilities.callback import BufferedCallback
-
 DEFAULT_SLIDING_WINDOW_SIZE = 80
 
 
@@ -46,12 +44,12 @@ class ContextChangeDetector(object):
             return True
 
         remainder = curr_context[ctx_idx + len(prev_context) :]
-        idx = last_word_character(remainder)
+        idx = character.last_word_character(remainder)
         if idx == -1:
             if len(remainder) == 0:
                 return False
             last_char = curr_context[ctx_idx + len(prev_context) - 1]
-            if is_word_character(last_char):
+            if character.is_word_character(last_char):
                 return False
             else:
                 return True
@@ -87,37 +85,49 @@ class ContextChangeDetector(object):
 class ContextTracker(object):
     """
     Tracks the current context.
+
     """
 
-    def __init__(self, lowercase_mode, callback: BufferedCallback):
+    # def __init__(self, config, predictor_registry, callback):
+    def __init__(self, lowercase_mode, callback):
+        # self.config = config
+        # self.lowercase = self.config.get("ContextTracker", "lowercase_mode")
         self.lowercase = lowercase_mode
-        self.callback = callback
+
+        # self.registry = predictor_registry
+
+        if callback:
+            self.callback = callback
+        else:
+            raise InvalidCallbackException
+
         self.context_change_detector = ContextChangeDetector(self.lowercase)
-        self.sliding_window_size = DEFAULT_SLIDING_WINDOW_SIZE
+        # self.registry.context_tracker = self
+
+        self.sliding_windows_size = DEFAULT_SLIDING_WINDOW_SIZE
 
     def context_change(self):
         return self.context_change_detector.context_change(self.past_stream())
 
-    def update_context(self):
-        change = self.context_change_detector.change(self.past_stream())
-        tok = ForwardTokenizer(change)
-        tok.lowercase = self.lowercase
+    # def update_context(self):
+    #     change = self.context_change_detector.change(self.past_stream())
+    #     tok = ForwardTokenizer(change)
+    #     tok.lowercase = self.lowercase
 
-        change_tokens = []
-        while tok.has_more_tokens():
-            token = tok.next_token()
-            change_tokens.append(token)
+    #     change_tokens = []
+    #     while tok.has_more_tokens():
+    #         token = tok.next_token()
+    #         change_tokens.append(token)
 
-        if len(change_tokens) != 0:
-            # remove prefix (partially entered token or empty token)
-            change_tokens.pop()
+    #     if len(change_tokens) != 0:
+    #         # remove prefix (partially entered token or empty token)
+    #         change_tokens.pop()
 
-        # TODO: Figure out how to implement this
-        # for predictor in self.registry:
-        #     if change_tokens:
-        #         predictor.learn(change_tokens)
+    #     for predictor in self.registry:
+    #         if change_tokens:
+    #             predictor.learn(change_tokens)
 
-        self.context_change_detector.update_sliding_window(self.past_stream())
+    #     self.context_change_detector.update_sliding_window(self.past_stream())
 
 
     def prefix(self):
@@ -125,7 +135,7 @@ class ContextTracker(object):
 
     def token(self, index):
         past_string_stream = self.past_stream()
-        past_string_stream = past_string_stream.lstrip().rstrip()
+        past_string_stream = past_string_stream.lstrip()
         tok = ReverseTokenizer(past_string_stream)
         tok.lowercase = self.lowercase
         i = 0
@@ -136,23 +146,21 @@ class ContextTracker(object):
             token = ""
 
         return token
-    
-    def get_tokens(self, count = 3) -> tuple[int, List] :
-        tokens = []
-        actual = 0
 
-        while True and actual < count:
-            result = self.token(actual)
-            if result == "":
-                break
-            tokens.insert(0, result)
-            actual += 1
+    def get_tokens(self, tokens: list):
+        actual_tokens = 0
+        for i in range(len(tokens)):
+            tok = self.token(i)
+            if tok:
+                actual_tokens += 1
+            tokens[i] = tok
 
-        return actual, tokens
+        #reverse the list of tokens
+        tokens[:] = tokens[::-1]
+        return actual_tokens
 
-
-    def extra_token_to_learn(self, index, change):
-        return self.token(index + len(change))
+    # def extra_token_to_learn(self, index, change):
+    #     return self.token(index + len(change))
 
     def future_stream(self):
         return self.callback.future_stream()
@@ -162,10 +170,9 @@ class ContextTracker(object):
 
     def is_completion_valid(self, completion):
         prefix = self.prefix().lower()
-        if prefix and prefix in completion:
+        if prefix in completion:
             return True
         return False
 
     def __repr__(self):
-        return f"{self.callback.past_stream} <|> {self.callback.future_stream}\n"
-        # return self.callback.past_stream + "<|>" + self.callback.future_stream + "\n"
+        return self.callback.past_stream + "<|>" + self.callback.future_stream + "\n"

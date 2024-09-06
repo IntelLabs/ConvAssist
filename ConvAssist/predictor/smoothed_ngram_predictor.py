@@ -280,29 +280,30 @@ class SmoothedNgramPredictor(Predictor):
                 )
             self.db.connect()
 
-    def predict(self, max_partial_prediction_size, filter):
-        self.logger.debug("Start predicting ...")
-        # tokens = [""] * self.cardinality
-        prediction = Prediction()
+    def predict(self, max_partial_prediction_size: int, filter):
+        sentence_prediction = Prediction()
+        word_prediction = Prediction()
+
+        tokens = [""] * self.cardinality
+        word_prediction = Prediction()
 
         # get self.cardinality tokens from the context tracker
-        actual_tokens, tokens = self.context_tracker.get_tokens(self.cardinality)
+        actual_tokens = self.context_tracker.get_tokens(tokens)
 
-        if actual_tokens < self.cardinality:
-            self.logger.warning("Not enough tokens in the context tracker")
+        if actual_tokens == 0 and self.name == PredictorNames.GeneralWord.value:
+            self.logger.warning(f"No tokens in the context tracker.  Getting most frequent start words...")
 
-            #expand the tokens to the right with empty strings
-            tokens = [""] * (self.cardinality - actual_tokens) + tokens
+            with open(self.startwords) as f:
+                self.precomputed_sentenceStart = json.load(f)
 
-            #If using GeneralWord predictor, get the most frequent startwords
-            if self.name == PredictorNames.GeneralWord.value:
-                with open(self.startwords) as f:
-                    self.precomputed_sentenceStart = json.load(f)
-
-                for w, prob in self.precomputed_sentenceStart.items():
-                    prediction.add_suggestion(
-                            Suggestion(w, prob, self.name)
-                        )
+            for w, prob in self.precomputed_sentenceStart.items():
+                word_prediction.add_suggestion(
+                        Suggestion(w, prob, self.name)
+                    )
+                
+            # nothing else to do since there are no tokens
+            #TODO #early-returns-are-evil 
+            return sentence_prediction, word_prediction
 
         # Get the rest of the prefix completion candidates
         try:
@@ -353,14 +354,15 @@ class SmoothedNgramPredictor(Predictor):
                     if all(char in string.punctuation for char in tokens[self.cardinality - 1]):
                         self.logger.debug(tokens[self.cardinality - 1]+ " contains punctuations ")
                     else:
-                        prediction.add_suggestion(
+                        word_prediction.add_suggestion(
                             Suggestion(tokens[self.cardinality - 1], probability, self.name)
                         )
         except Exception as e:
             self.logger.debug(f"Exception in SmoothedNgramPredictor predict function: {e}")
 
-        self.logger.debug(f"End prediction. got {len(prediction)} suggestions")
-        return prediction
+        self.logger.debug(f"End prediction. got {len(word_prediction)} suggestions")
+        
+        return sentence_prediction, word_prediction
 
     def close_database(self):
         self.db.close()

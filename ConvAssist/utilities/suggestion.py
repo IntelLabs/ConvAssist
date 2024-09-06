@@ -10,10 +10,10 @@ class Suggestion(object):
 
     """
 
-    def __init__(self, word, probability, predictor_name):
-        self.word = word
-        self.probability = probability
-        self.predictor_name = predictor_name
+    def __init__(self, word:str, probability:float, predictor_name:str):
+        self._word = word
+        self._probability = probability
+        self._predictor_name = predictor_name
 
     def __eq__(self, other):
         if self.word == other.word and self.probability == other.probability:
@@ -29,6 +29,14 @@ class Suggestion(object):
 
     def __repr__(self):
         return "Word: {0} - Probability: {1}".format(self.word, self.probability)
+
+    @property
+    def word(self):
+        return self._word
+    
+    @property
+    def predictor_name(self):
+        return self._predictor_name
 
     @property
     def probability(self):

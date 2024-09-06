@@ -4,6 +4,8 @@
 MIN_PROBABILITY = 0.0
 MAX_PROBABILITY = 1.0
 
+from ConvAssist.utilities.suggestion import Suggestion
+
 class UnknownCombinerException(Exception):
     pass
 
@@ -31,12 +33,6 @@ class Prediction(list):
             if s.word == token:
                 return s
 
-    def add_suggestion(self, suggestion):
-        if len(self) == 0:
-            self.append(suggestion)
-        else:
-            i = 0
-            while i < len(self) and suggestion < self[i]:
-                i += 1
-
-            self.insert(i, suggestion)
+    def add_suggestion(self, suggestion:Suggestion):
+        self.append(suggestion)
+        self.sort(key=lambda x: x.probability, reverse=True)
