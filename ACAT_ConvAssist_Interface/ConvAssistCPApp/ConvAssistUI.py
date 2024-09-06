@@ -38,43 +38,6 @@ license_text_string += "project, which is licensed under the GPL 3.0 license.\n"
 
 working_dir = os.path.dirname(os.path.realpath(__file__))
 
-app_quit_event = threading.Event()
-
-central_log_queue = queue.Queue()
-
-class QueueHandler(logging.Handler):
-    def __init__(self, log_queue):
-        super().__init__()
-        self.log_queue = log_queue
-
-    def emit(self, record):
-        self.log_queue.put(self.format(record))
-
-queue_handler = QueueHandler(central_log_queue)
-formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-queue_handler.setFormatter(formatter)
-
-
-#TODO: Remove this
-class WorkerThread(threading.Thread):
-    def __init__(self, queue_handler):
-        super().__init__()
-        self.queue_handler = queue_handler
-        self.logger = logging.getLogger("WORKER")
-        self.logger.addHandler(self.queue_handler)
-        self.logger.setLevel(logging.INFO)
-        self.daemon = True
-
-    def run(self):
-        
-        self.logger.info("Worker started")
-
-        for i in range(10):
-            self.logger.info(f"Worker is working... step {i + 1}")
-            time.sleep(1)
-
-        self.logger.info("Worker finished")
-
 def findProcessIdByName(process_name):
     """
     Get a list of all the PIDs of all the running process whose name contains
@@ -128,18 +91,50 @@ def deleteOldPyinstallerFolders(time_threshold=100):
 class ConvAssistWindow(tk.Tk):
     """Main application window."""
 
-    def __init__(self, queue_handler):
+    def __init__(self):
         super().__init__()
+
+        self._tray_icon:SysTrayIcon
 
         self.title("ConvAssist")
         self.iconbitmap(os.path.join(working_dir, "Assets", "icon_tray.ico"))
-        self.queue_handler = queue_handler
 
         # Set up logging
-        self.logger = LoggingUtility.get_logger("MAIN", log_level=logging.DEBUG, queue_handler=queue_handler)
+        self.logger = LoggingUtility().get_logger(name="CONVASSISTUI", log_level=logging.DEBUG, queue_handler=True)
         self.logger.info("Application started")
 
         # Set up the GUI components
+        self.configure()
+
+    @property
+    def tray_icon(self):     
+        return self._tray_icon
+    
+    @tray_icon.setter
+    def tray_icon(self, value):
+        self._tray_icon = value 
+        self._tray_icon.run_detached()
+
+    @tray_icon.deleter
+    def tray_icon(self):
+        self._tray_icon.stop()
+        del self._tray_icon
+
+    def mainloop(self, n: int = 0) -> None:
+        # Start the log update loop
+        self.update_log_window()
+
+        # Start the exit check loop
+        self.app_quit_event = threading.Event()
+        self.check_for_exit()
+
+        # Start ACATConvAssistInterface
+        self.thread = ACATConvAssistInterface(self.app_quit_event, queue_handler=True)
+        self.thread.start()
+
+        return super().mainloop(n)
+
+    def configure(self):
         self.log_widget = ScrolledText(self, height=10)
         self.log_widget.pack(fill=BOTH, expand=True, pady=10, padx=10)
         
@@ -149,15 +144,6 @@ class ConvAssistWindow(tk.Tk):
 
         sv_ttk.set_theme('light')
 
-        # Start the log update loop
-        self.update_log_window()
-
-        # Start ACATConvAssistInterface
-        # acat_conv_assist_interface = ACATConvAssistInterface(app_quit_event, log_queue)
-        # acat_conv_assist_interface.start()
-        thread = ACATConvAssistInterface(app_quit_event, queue_handler)
-        # thread = WorkerThread(queue_handler)
-        thread.start()
 
     def create_buttons(self):
         button_frame = ttk.Frame(self, height=50)
@@ -170,7 +156,6 @@ class ConvAssistWindow(tk.Tk):
         # license_button = ttk.Button(button_frame, image=self.license_image, command=self.license_action)
         # close_button = ttk.Button(button_frame, image=self.close_image, command=self.close_action)
 
-        start_button = ttk.Button(button_frame, text="Start", command=self.start_worker_thread)
         clear_button = ttk.Button(button_frame, text="Clear", command=self.clear_action)
         license_button = ttk.Button(button_frame, text="About", command=self.about_action)
         close_button = ttk.Button(button_frame, text="Close", command=self.close_action)
@@ -179,7 +164,6 @@ class ConvAssistWindow(tk.Tk):
         clear_button.pack(side='right', expand=False, padx=5)
         license_button.pack(side='right', expand=False, padx=5)
         close_button.pack(side='right', expand=False, padx=5)
-        start_button.pack(side='right', expand=False, padx=5)
         button_frame.pack(side='bottom', fill='x', expand=False, padx=10, pady=10)
     
     def clear_action(self):
@@ -191,16 +175,11 @@ class ConvAssistWindow(tk.Tk):
     def close_action(self):
         self.withdraw()
 
-    def start_worker_thread(self):
-        """Start the worker thread."""
-        thread = WorkerThread(self.queue_handler)
-        thread.start()
-
     def update_log_window(self):
         """Check the log queue for new messages and update the log window."""
         try:
             while True:
-                message = central_log_queue.get_nowait()
+                message = LoggingUtility().central_log_queue.get_nowait()
                 self.log_widget.insert(tk.END, message + '\n')
                 self.log_widget.see(tk.END)  # Auto-scroll to the end
         except queue.Empty:
@@ -209,10 +188,22 @@ class ConvAssistWindow(tk.Tk):
         # Schedule the next check
         self.after(100, self.update_log_window)
 
+    def check_for_exit(self):
+        """Check if the application should exit."""
+        if self.app_quit_event.is_set():
+            self.on_closing()
+
+        self.after(100, self.check_for_exit)
+
     def destroy(self):
         """Handle window close event."""
         # Override default close behavior to hide the window instead
-        self.hide_window()
+        if not self.app_quit_event.is_set():
+            self.hide_window()
+        else:
+            if self.tray_icon:
+                del self.tray_icon
+            super().destroy()
 
     def hide_window(self):
         """Hide the Tkinter window."""
@@ -222,10 +213,16 @@ class ConvAssistWindow(tk.Tk):
         """Show the Tkinter window."""
         self.deiconify()
 
+    def on_closing(self):
+        """Handle the window closing event."""
+        self.app_quit_event.set()
+        self.thread.join()
+        self.destroy()
+
 class SysTrayIcon(pystray.Icon):
     """System tray icon."""
 
-    def __init__(self, tk_window, *args, **kwargs):
+    def __init__(self, tk_window: ConvAssistWindow, *args, **kwargs):
         self.tk_window = tk_window
         super().__init__(*args, **kwargs)
 
@@ -237,6 +234,13 @@ class SysTrayIcon(pystray.Icon):
             item("Quit", self.on_quit)
         )
 
+    def check_for_exit(self):
+        """Check if the application should exit."""
+        if self.tk_window.app_quit_event.is_set():
+            self.on_quit(self.icon, None)
+
+        self.tk_window.after(100, self.check_for_exit)
+
     @staticmethod
     def create_image():
         """Create an image for the systray icon."""
@@ -245,8 +249,7 @@ class SysTrayIcon(pystray.Icon):
 
     def on_quit(self, icon, item):
         """Quit the application."""
-        self.stop()
-        self.tk_window.quit()
+        self.tk_window.app_quit_event.set()
 
     def show_window(self, icon, item):
         """Show the Tkinter window."""
@@ -254,20 +257,24 @@ class SysTrayIcon(pystray.Icon):
 
     def about_message(self, icon, item):
         """Hide the Tkinter window."""
-        self.tk_window.about_message()
+        self.tk_window.about_action()
 
 def main():
 
     # Create the main window
-    tk_window = ConvAssistWindow(queue_handler)
+    tk_window = ConvAssistWindow()
 
     # Create the system tray icon
     systray_icon = SysTrayIcon(tk_window, "Tkinter App")
-    systray_icon.run_detached()
+
+    # Set the tray icon
+    tk_window.tray_icon = systray_icon
+
+    # Start the system tray icon
+    # systray_icon.run_detached()
 
     # Start the Tkinter main loop
     tk_window.mainloop()
-
 
 if __name__ == "__main__":
     main()

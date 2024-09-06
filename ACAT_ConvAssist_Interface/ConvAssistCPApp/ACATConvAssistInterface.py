@@ -43,10 +43,10 @@ ca_cannedphrases_id = "CANNED"
 class ACATConvAssistInterface(threading.Thread):
     '''Class to handle the ConvAssist Interface with ACAT'''
 
-    def __init__(self, app_quit_event: threading.Event, queue_handler):
+    def __init__(self, app_quit_event: threading.Event, queue_handler:bool = False):
         super().__init__()
 
-        self.logger = LoggingUtility.get_logger(ca_main_id, logging.DEBUG, queue_handler=queue_handler)
+        self.logger = LoggingUtility().get_logger(ca_main_id, logging.DEBUG, queue_handler=queue_handler)
 
         self.app_quit_event = app_quit_event
         self.daemon = True
@@ -91,7 +91,7 @@ class ACATConvAssistInterface(threading.Thread):
     def pathlog(self, value):
         self.logger.debug(f"Setting log location to {value}.")
         self._pathlog = value
-        LoggingUtility.add_file_handler(self.logger, self._pathlog )
+        # LoggingUtility.add_file_handler(self.logger, self._pathlog )
     
     @pathlog.deleter
     def pathlog(self):
@@ -192,13 +192,13 @@ class ACATConvAssistInterface(threading.Thread):
                 
                 except BrokenPipeError as e:
                     # If the pipe is broken, exit the loop
-                    self.logger.critical(f"Broken Pipe Error. Bailing. {e}.", e)
+                    self.logger.critical(f"Broken Pipe Error. Bailing. {e}.")
                     send_response = False
                     self.app_quit_event.set()
                     continue
 
                 except Exception as e:
-                    self.logger.critical(f"Catastrophic Error.  Bailing. {e}.", e)
+                    self.logger.critical(f"Catastrophic Error.  Bailing. {e}.")
                     # messageReceived = ConvAssistMessage(ConvAssistMessageTypes.NONE, ConvAssistPredictionTypes.NONE, "")
                     send_response = False
                     self.app_quit_event.set()
@@ -251,14 +251,13 @@ class ACATConvAssistInterface(threading.Thread):
                     Win32PipeHandler.send_message(Pipehandle, PredictionResponse.jsonSerialize())
 
             except Exception as e:
-                self.logger.critical(f"Critical Error in Handle incoming message. Bailing {e}.", e)
+                self.logger.critical(f"Critical Error in Handle incoming message. Bailing {e}.")
                 Win32PipeHandler.DisconnectNamedPipe(Pipehandle)
                 self.app_quit_event.set()
             
             self.logger.info("Handle incoming message finished.")
 
     def next_word_prediction(self, PredictionResponse, messageReceived):
-        self.logger.info(f"Prediction requested type: {messageReceived.PredictionType} Prediction Message: {messageReceived.Data}.")
         word_prediction = []
         next_Letter_Probs = []
         sentence_nextLetterProbs = []
@@ -335,7 +334,6 @@ class ACATConvAssistInterface(threading.Thread):
         PredictionResponse.PredictedSentence = result_Sentences
 
     def next_sentence_prediction(self, PredictionResponse, messageReceived):
-        self.logger.debug(f"Prediction requested type: {messageReceived.MessageType} Prediction Message: {messageReceived.Data}.")
         word_prediction = []
         next_Letter_Probs = []
         sentence_nextLetterProbs = []
@@ -417,7 +415,7 @@ class ACATConvAssistInterface(threading.Thread):
                     self.logger.critical(f"Error initializing convassist {convassist.id}: {e}.")
                     raise e
         
-    def ConnectToACAT(self) -> tuple[bool, Any]:
+    def ConnectToACAT(self, connection_type=None) -> tuple[bool, Any]:
 
         success = False
         handle = None
@@ -426,10 +424,7 @@ class ACATConvAssistInterface(threading.Thread):
         try:
             success, handle = Win32PipeHandler.ConnectToNamedPipe(self.pipeName, self.retries, self.logger)
 
-            if not success:
-                self.logger.info("Failed to connect to ACAT server.")
-
-            else:
+            if success:
                 self.logger.info("Connected to ACAT server.")
                 self.clientConnected = True
 
@@ -447,15 +442,13 @@ class ACATConvAssistInterface(threading.Thread):
     def run(self):
         """
         Main function to start the application
-        """
-        self.logger=LoggingUtility.get_logger(ca_main_id, logging.DEBUG)
-        # self.logger.configure_logging(level=logging.DEBUG, log_location=os.path.join(tempfile.gettempdir(), "Logs")) # type: ignore
-        
+        """        
         self.logger.info("Starting ACATConvAssistInterface.")
         success, handle = self.ConnectToACAT()
 
         if not success:
             self.logger.info("Failed to connect to ACAT server. Exiting.")
+            self.app_quit_event.set()
             return
 
         # self.initialize_or_configure_convassists()

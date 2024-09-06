@@ -152,6 +152,6 @@ def DisconnectNamedPipe(handle) -> None:
     try:
         win32file.FlushFileBuffers(handle)
         win32file.CloseHandle(handle)
-    except pywintypes.error as e:
+    except Exception as e:
         # raise Exception(f"Error disconnecting named pipe: {e}") from e
         pass
