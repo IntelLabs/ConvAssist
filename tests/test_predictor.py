@@ -29,34 +29,24 @@ class TestPredictor(unittest.TestCase):
         return super().tearDown()
 
     def test_get_name(self):
-        self.assertEqual(self.predictor.get_name(), "test_predictor")
+        self.assertEqual(self.predictor.predictor_name, "test_predictor")
 
-    def test_get_description(self):
-        self.assertEqual(self.predictor.get_description(), "Long description")
+    def test_get_short_description(self):
+        self.assertEqual(self.predictor.short_description, "Short description")
 
     def test_get_long_description(self):
-        self.assertEqual(self.predictor.get_long_description(), "Long description")
-
-    def test_predict(self):
-        with self.assertRaises(NotImplementedError):
-            self.predictor.predict()
-
-    def test_learn(self):
-        with self.assertRaises(NotImplementedError):
-            self.predictor.learn()
-
-    def test_read_config(self):
-        with self.assertRaises(NotImplementedError):
-            self.predictor._read_config()
+        self.assertEqual(self.predictor.long_description, "Long description")
 
     def test_create_table(self):
         tablename = "test_table"
         columns = ["column1", "column2"]
 
-        self.predictor.log = MagicMock()
-        self.predictor.createTable(self.db_path, tablename, columns)
+        try:
+            self.predictor.createTable(self.db_path, tablename, columns)
 
-        self.predictor.log.critical.assert_not_called()
+        except Exception as e:
+            self.fail(f"Failed to create table: {e}")
+        
 
 if __name__ == "__main__":
     unittest.main()

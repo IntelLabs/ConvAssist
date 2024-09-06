@@ -1,0 +1,38 @@
+import unittest
+from unittest.mock import MagicMock
+from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATConvAssistInterface import ACATConvAssistInterface
+
+class TestACATConvAssistInterface(unittest.TestCase):
+    def test_init(self):
+        app_quit_event = MagicMock()
+        interface = ACATConvAssistInterface(app_quit_event)
+
+        self.assertEqual(interface.app_quit_event, app_quit_event)
+        self.assertEqual(interface.retries, 5)
+        self.assertEqual(interface.pipeName, "ACATConvAssistPipe")
+        self.assertIsNotNone(interface.logger)
+        self.assertIsNotNone(interface.ConvAssist_callback)
+        self.assertFalse(interface.clientConnected)
+        self.assertEqual(interface.path, "")
+        self.assertEqual(interface.suggestions, 10)
+        self.assertFalse(interface.testgensentencepred)
+        self.assertFalse(interface.retrieveaac)
+        self.assertEqual(interface.pathstatic, "")
+        self.assertEqual(interface.pathpersonalized, "")
+        self.assertFalse(interface.enablelogs)
+        self.assertEqual(interface.loglevel, "DEBUG")
+        self.assertEqual(interface._pathlog, "")
+        self.assertIsNotNone(interface.word_config)
+        self.assertIsNotNone(interface.sh_config)
+        self.assertIsNotNone(interface.sent_config)
+        self.assertIsNotNone(interface.canned_config)
+        self.assertFalse(interface.sent_config_change)
+        self.assertTrue(interface.enable_logs)
+        self.assertIsNotNone(interface.conv_normal)
+        self.assertIsNotNone(interface.conv_shorthand)
+        self.assertIsNotNone(interface.conv_sentence)
+        self.assertIsNotNone(interface.conv_canned_phrases)
+
+
+if __name__ == "__main__":
+    unittest.main()

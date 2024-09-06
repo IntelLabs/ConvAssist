@@ -12,36 +12,24 @@ class TestContextTracker(unittest.TestCase):
             'sliding_window_size': '80',
             'lowercase_mode': 'True'
         }
-        # self.config['PredictorRegistry'] = {
-        #     'predictors': ''
-        # }
-
-        # self.predictor_registry = PredictorRegistry(self.config)
         self.my_callback = BufferedCallback("")
 
     def test_context_change(self):
         tracker = ContextTracker(self.config, self.my_callback)
         self.assertFalse(tracker.context_change())
 
-    # def test_update_context(self):
-    #     tracker = ContextTracker(self.config, self.my_callback)
-    #     tracker.update_context()
-    #     # Add assertions here
+    def test_prefix(self):
+        tracker = ContextTracker(self.config, self.my_callback)
+        self.my_callback.update("example prefix ")
 
-    # def test_prefix(self):
-    #     tracker = ContextTracker(self.config, self.my_callback)
-    #     prefix = tracker.prefix()
-    #     # Add assertions here
+        prefix = tracker.prefix()
+        self.assertEqual(prefix, "")
 
-    # def test_token(self):
-    #     tracker = ContextTracker(self.config, self.my_callback)
-    #     token = tracker.token(0)
-    #     # Add assertions here
-
-    # def test_extra_token_to_learn(self):
-    #     tracker = ContextTracker(self.config, self.my_callback)
-    #     extra_token = tracker.extra_token_to_learn(0, "change")
-    #     # Add assertions here
+    def test_token(self):
+        tracker = ContextTracker(self.config, self.my_callback)
+        self.my_callback.update("example token")
+        token = tracker.token(0)
+        self.assertEqual(token, "token")
 
     def test_future_stream(self):
         BufferedCallback.future_stream = MagicMock(return_value=(""))
@@ -57,10 +45,16 @@ class TestContextTracker(unittest.TestCase):
         assert past_stream == ""
         BufferedCallback.past_stream.assert_called_once()
 
-    def test_is_completion_valid(self):
+    def test_is_completion_valid_token_exists(self):
         tracker = ContextTracker(self.config, self.my_callback)
+        self.my_callback.update("example")
+        completion = "example completion"
+        self.assertTrue(tracker.is_completion_valid(completion))
+
+    def test_is_completion_valid_token_not_exists(self):
+        tracker = ContextTracker(self.config, self.my_callback)
+        self.my_callback.update("missing")
         completion = "example completion"
         self.assertFalse(tracker.is_completion_valid(completion))
-
 if __name__ == '__main__':
     unittest.main()

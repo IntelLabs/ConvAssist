@@ -1,98 +1,46 @@
 import unittest
-import os
-import shutil
-from unittest.mock import patch
 import logging
-from logging import handlers, CRITICAL, DEBUG, ERROR, INFO, WARNING
-from ConvAssist.utilities.logging import ConvAssistLogger
+import sys
+from io import StringIO
+from ConvAssist.utilities.logging_utility import QueueHandler
+from ConvAssist.utilities.logging_utility import LoggingUtility
 
-current_location = os.path.dirname(os.path.abspath(__file__))
+class TestLoggingUtility(unittest.TestCase):
 
-class TestConvAssistLogger(unittest.TestCase):
-    def setUp(self) -> None:
-        if os.path.exists(os.path.join(current_location, "logs")):
-            shutil.rmtree(os.path.join(current_location, "logs"))
+    def setUp(self):
+        self.logging_utility = LoggingUtility()
 
-        self.logger: ConvAssistLogger | None = None
-        
-        return super().setUp()
+    def test_get_logger_with_stream_handler(self):
+        logger_name = "test_logger"
+        log_level = logging.DEBUG
 
-    def tearDown(self) -> None:
-        if self.logger:
-            self.logger.close()
+        # Redirect stdout to capture log output
+        captured_output = StringIO()
+        sys.stdout = captured_output
 
-        if os.path.exists(os.path.join(current_location, "logs")):
-            shutil.rmtree(os.path.join(current_location, "logs"))
-        
-        return super().tearDown()
+        logger = self.logging_utility.get_logger(logger_name, log_level)
 
-    def test_configure_logging_with_log_location(self):
-        self.logger = ConvAssistLogger("test", level="DEBUG", log_location=os.path.join(current_location, "logs"))
-        self.assertEqual(len(self.logger.logger.handlers), 2)
-        self.assertIsInstance(self.logger.logger.handlers[0], handlers.RotatingFileHandler)
-        self.assertIsInstance(self.logger.logger.handlers[1], logging.StreamHandler)
+        # Test if logger has a stream handler
+        self.assertTrue(any(isinstance(handler, logging.StreamHandler) for handler in logger.handlers))
 
-    def test_configure_logging_without_log_location(self):
-        self.logger = ConvAssistLogger("test", level="DEBUG")
-        self.assertEqual(len(self.logger.logger.handlers), 1)
-        self.assertIsInstance(self.logger.logger.handlers[0], logging.StreamHandler)
+        # Test if logger logs at the correct level
+        logger.debug("This is a debug message")
+        sys.stdout = sys.__stdout__  # Reset redirect.
+        self.assertIn("This is a debug message", captured_output.getvalue())
 
-    def test_add_handler(self):
-        self.logger = ConvAssistLogger("test", level="DEBUG")
-        handler = logging.StreamHandler()
-        self.logger.addHandler(handler)
-        self.assertIn(handler, self.logger.logger.handlers)
+    def test_get_logger_with_queue_handler(self):
+        logger_name = "test_logger_queue"
+        log_level = logging.INFO
 
-    def test_close(self):
-        self.logger = ConvAssistLogger("test", level="DEBUG")
-        handler = logging.StreamHandler()
-        self.logger.addHandler(handler)
-        self.logger.close()
-        self.assertNotIn(handler, self.logger.logger.handlers)
+        logger = self.logging_utility.get_logger(logger_name, log_level, queue_handler=True)
 
-    def test_debug_without_exception(self):
-        self.logger = ConvAssistLogger("test", level="DEBUG")
-        with patch.object(self.logger.logger, "debug") as mock_debug:
-            self.logger.debug("Debug message")
-            mock_debug.assert_called_once_with("Debug message")
+        # Test if logger has a queue handler
+        self.assertTrue(any(isinstance(handler, QueueHandler) for handler in logger.handlers))
 
-    def test_debug_with_exception(self):
-        self.logger = ConvAssistLogger("test", level="DEBUG")
-        exception = Exception("Test exception")
-        with patch.object(self.logger.logger, "debug") as mock_debug:
-            self.logger.debug("Debug message", exception=exception)
-            mock_debug.assert_called_once_with("Debug message", exc_info=exception)
+        # Test if logger logs to the queue
+        logger.info("This is an info message")
+        log_record = self.logging_utility.central_log_queue.get()
+        self.assertIn("This is an info message", log_record)
 
-    def test_info(self):
-        self.logger = ConvAssistLogger("test", level="DEBUG")
-        with patch.object(self.logger.logger, "info") as mock_info:
-            self.logger.info("Info message")
-            mock_info.assert_called_once_with("Info message")
-
-    def test_warning(self):
-        self.logger = ConvAssistLogger("test", level="DEBUG")
-        with patch.object(self.logger.logger, "warning") as mock_warning:
-            self.logger.warning("Warning message")
-            mock_warning.assert_called_once_with("Warning message")
-
-    def test_error(self):
-        self.logger = ConvAssistLogger("test", level="DEBUG")
-        with patch.object(self.logger.logger, "error") as mock_error:
-            self.logger.error("Error message")
-            mock_error.assert_called_once_with("Error message")
-
-    def test_critical_without_exception(self):
-        self.logger = ConvAssistLogger("test", level="DEBUG")
-        with patch.object(self.logger.logger, "critical") as mock_critical:
-            self.logger.critical("Critical message")
-            mock_critical.assert_called_once_with("Critical message")
-
-    def test_critical_with_exception(self):
-        self.logger = ConvAssistLogger("test", level="DEBUG")
-        exception = Exception("Test exception")
-        with patch.object(self.logger.logger, "critical") as mock_critical:
-            self.logger.critical("Critical message", exception=exception)
-            mock_critical.assert_called_once_with("Critical message", exc_info=exception)
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
