@@ -18,7 +18,7 @@ from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline, Pipeline
 
-from ConvAssist.predictor import Predictor
+from ConvAssist.predictor.predictor import Predictor
 from ConvAssist.predictor.utilities.suggestion import Suggestion
 from ConvAssist.predictor.utilities.nlp import NLP
 from ConvAssist.predictor.utilities.prediction import Prediction
@@ -30,26 +30,16 @@ class SentenceCompletionPredictor(Predictor):
     Calculates prediction from n-gram model using gpt-2.
     """
 
-    def set_seed(self, seed):
-        numpy.random.seed(seed)
-        torch.manual_seed(seed)
-        if self.n_gpu > 0:
-            torch.cuda.manual_seed_all(seed)
-
     def __init__(self, 
                  config, 
                  context_tracker, 
                  predictor_name, 
-                 short_desc=None, 
-                 long_desc=None, 
                  logger=None):
 
         super().__init__( 
             config, 
             context_tracker, 
             predictor_name,
-            short_desc, 
-            long_desc,
             logger
         )
 
@@ -120,7 +110,7 @@ class SentenceCompletionPredictor(Predictor):
         self.blacklist_words = open(self.blacklist_file).readlines()
         self.blacklist_words = [s.strip() for s in self.blacklist_words]
 
-        self.personalized_allowed_toxicwords = self.read_personalized_toxic_words()
+        self.personalized_allowed_toxicwords = self._read_personalized_toxic_words()
 
         self.OBJECT_DEPS = {"dobj","pobj", "dative", "attr", "oprd", "npadvmod", "amod","acomp","advmod"}
         self.SUBJECT_DEPS = {"nsubj", "nsubjpass", "csubj", "agent", "expl"}
@@ -238,7 +228,14 @@ class SentenceCompletionPredictor(Predictor):
     def retrieve(self, value):
         self._retrieveaac = value
 
-    def read_personalized_toxic_words(self):
+    def _set_seed(self, seed):
+        numpy.random.seed(seed)
+        torch.manual_seed(seed)
+        if self.n_gpu > 0:
+            torch.cuda.manual_seed_all(seed)
+
+
+    def _read_personalized_toxic_words(self):
         path = Path(self.personalized_allowed_toxicwords_file)
         if not Path.exists(path):
             f = open(self.personalized_allowed_toxicwords_file, "w")
@@ -248,7 +245,7 @@ class SentenceCompletionPredictor(Predictor):
         self.logger.debug(f"UPDATED TOXIC WORDS = {self.personalized_allowed_toxicwords}")
         return self.personalized_allowed_toxicwords
 
-    def extract_svo(self, sent):
+    def _extract_svo(self, sent):
         doc = self.nlp(sent)
         sub = []
         at = []
@@ -272,31 +269,10 @@ class SentenceCompletionPredictor(Predictor):
                     imp_tokens.append(token.text.lower())
         return imp_tokens
 
-    def load_model(self, test_generalSentencePrediction, retrieve): 
-        self.logger.debug(f"SentenceCompletionPredictor LOAD MODEL: {str(os.path.exists(self.modelname))}")
-        
-        self.test_generalSentencePrediction = test_generalSentencePrediction
-        self.retrieve = retrieve
-        
-        #### if we are only testing the models or only retrieving from the AAC dataset, no need to load the model
-        if (self.test_generalSentencePrediction) or (not self.retrieve):
-            if(os.path.exists(self.modelname)):
-                self.logger.debug(f"Loading gpt2 model from {str(self.modelname)}")
-                self.generator = pipeline('text-generation', model=self.modelname, tokenizer=self.tokenizer)
-                self.model_loaded = True
-
-        elif (self.retrieve):
-                self.model_loaded = True
-
-        self.logger.debug(f"SentenceCompletionPredictor MODEL loaded: {self.model_loaded}")
-
-    def is_model_loaded(self):
-        return self.model_loaded
-
-    def ngram_to_string(self, ngram):
+    def _ngram_to_string(self, ngram):
         "|".join(ngram)
 
-    def filter_text(self, text):
+    def _filter_text(self, text):
         res = False
         words = []
         toxicwordsList = list(set(self.blacklist_words) - set(self.personalized_allowed_toxicwords))
@@ -307,7 +283,7 @@ class SentenceCompletionPredictor(Predictor):
             res = True
         return (res, words)
 
-    def textInCorpus(self, text):
+    def _textInCorpus(self, text):
         query_embedding = self.embedder.encode(text)
         
         #We use hnswlib knn_query method to find the top_k_hits
@@ -318,7 +294,7 @@ class SentenceCompletionPredictor(Predictor):
         self.logger.debug(f"text = {text}, score = {hits[0]['score']}, sentence = {self.corpus_sentences[hits[0]['corpus_id']]}")
         return hits[0]['score']
         
-    def retrieve_fromDataset(self, context):
+    def _retrieve_fromDataset(self, context):
         pred = Prediction()
         probs = {}
 
@@ -372,7 +348,7 @@ class SentenceCompletionPredictor(Predictor):
 
         return pred
 
-    def checkRepetition(self, text):
+    def _checkRepetition(self, text):
         tokens = nltk.word_tokenize(text)
 
         #Create bigrams and check if there are any repeititions. 
@@ -392,7 +368,7 @@ class SentenceCompletionPredictor(Predictor):
             return True        
         return False
 
-    def generate(self, context, num_gen, predi):
+    def _generate(self, context, num_gen, predi):
         try:
             start = time.perf_counter()
             result = self.generator(context, do_sample=False, max_new_tokens=20, num_return_sequences=10, num_beams = 10, num_beam_groups=10, diversity_penalty=1.5, repetition_penalty = 1.1) 
@@ -422,23 +398,23 @@ class SentenceCompletionPredictor(Predictor):
                 currSentence = gen_text_sent[num_context_sent-1]
                 
                 ### check for repetitive sentences
-                if (self.checkRepetition(currSentence)):
+                if (self._checkRepetition(currSentence)):
                     self.logger.warning(f"Repetition in the sentence: {currSentence}")
                     continue
 
                 reminderText = currSentence[len(contextList[-1]):]
                 reminderTextForFilter = re.sub(r'[?,!.\n]', '', reminderText.strip())
 
-                if(self.filter_text(reminderTextForFilter)[0]!=True):
+                if(self._filter_text(reminderTextForFilter)[0]!=True):
                     reminderText = re.sub(r'[?!.\n]', '', reminderText.strip())
-                    score = self.textInCorpus(currSentence.strip())
+                    score = self._textInCorpus(currSentence.strip())
 
                     #TODO: DO WE THRESHOLD SCORES?
                     #TODO: DETOXIFY
 
                     if reminderText!='':
                         if(currSentence not in allsent):
-                            imp_tokens = self.extract_svo(currSentence)
+                            imp_tokens = self._extract_svo(currSentence)
                             imp_tokens_reminder = []
                             #### get important tokens only of the generated completion
                             for imp in imp_tokens:
@@ -480,6 +456,31 @@ class SentenceCompletionPredictor(Predictor):
 
         return predi
 
+    # Base class method
+    def load_model(self, test_generalSentencePrediction, retrieve): 
+        self.logger.debug(f"{__name__} loading model {str(self._modelname)}")
+        
+        self.test_generalSentencePrediction = test_generalSentencePrediction
+        self.retrieve = retrieve
+        
+        #### if we are testing the models or not retrieving from the AAC dataset
+        if (self.test_generalSentencePrediction) or (not self.retrieve):
+            if(os.path.exists(self.modelname)):
+                self.logger.debug(f"Loading gpt2 model from {str(self.modelname)}")
+                self.generator = pipeline('text-generation', model=self.modelname, tokenizer=self.tokenizer)
+                self.model_loaded = True
+
+        elif (self.retrieve):
+                # TODO: REFACTOR THIS
+                self.model_loaded = True
+
+        self.logger.debug(f"SentenceCompletionPredictor MODEL loaded: {self.model_loaded}")
+
+    # Base class method
+    def is_model_loaded(self):
+        return self.model_loaded
+
+    # Base class method
     def predict(self, max_partial_prediction_size, filter):
         super().predict(max_partial_prediction_size, filter)
         
@@ -504,23 +505,23 @@ class SentenceCompletionPredictor(Predictor):
 
         #### If we are testing generation models
         if (self.test_generalSentencePrediction):
-            sentence_prediction = self.generate("<bos> "+context.strip(),5, sentence_prediction)
+            sentence_prediction = self._generate("<bos> "+context.strip(),5, sentence_prediction)
 
         #### if we want to Only retrieve from AAC dataset
         elif(self.retrieve):
             self.logger.debug("retireve is True - retrieving from database")
-            sentence_prediction = self.retrieve_fromDataset(context)
+            sentence_prediction = self._retrieve_fromDataset(context)
 
         #### Hybrid retrieve mode  elif(self.retrieve=="hybrid"):
         elif(self.retrieve=="False"):
             self.logger.debug("Hybrid retrieval - AAC dataset + model generation")
-            sentence_prediction = self.retrieve_fromDataset(context)
+            sentence_prediction = self._retrieve_fromDataset(context)
             self.logger.debug(f"retrieved {len(sentence_prediction)} sentences in {str(sentence_prediction)}")
             
             ##### ONLY IF THE GENERATION MODEL IS LOADED, GENERATE MODEL BASED PREDICTIONS
             if(len(sentence_prediction)<5 and self.model_loaded):
                 self.logger.debug(f"generating {5-len(sentence_prediction)} more predictions")
-                sentence_prediction = self.generate("<bos> "+context.strip(),5-len(sentence_prediction), sentence_prediction)
+                sentence_prediction = self._generate("<bos> "+context.strip(),5-len(sentence_prediction), sentence_prediction)
 
         latency = time.perf_counter() - start 
         self.logger.debug(f"latency = {latency}")
@@ -528,10 +529,7 @@ class SentenceCompletionPredictor(Predictor):
         
         return sentence_prediction, word_prediction
 
-
-    def close_database(self):
-        pass
-
+    # Base class method
     def learn(self, change_tokens):
         #### For the sentence completion predictor, learning adds the sentence to the database
         if self.learn_mode:
@@ -579,7 +577,7 @@ class SentenceCompletionPredictor(Predictor):
 
                     #### DEALING WITH PERSONALIZED, ALLOWED TOXIC WORDS
                     #### if sentence to be learnt contains a toxic word, add the toxic word to the "allowed" word list
-                    res, words = self.filter_text(change_tokens)
+                    res, words = self._filter_text(change_tokens)
                     if(res==True):
                         for tox in words:
                             self.logger.debug(f"toxic words to be added to personalized db: {tox}")
@@ -601,6 +599,7 @@ class SentenceCompletionPredictor(Predictor):
             finally:
                 dbconn.close()
 
+    # Base class method
     def _read_config(self):
         try:
             self.logger.debug(f"Reading config for {self.name}")
@@ -624,8 +623,3 @@ class SentenceCompletionPredictor(Predictor):
         except Exception as e:
             self.logger.error(f"Exception in SentenceCompletionPredictor._read_config = {e}")
             raise e
-        
-        # self.logger.debug(f"SENTENCE MODE CONFIGURATIONS")
-        # #self.logger.debug(f"using Onnx model for inference {self.use_onnx_model}")
-        # self.logger.debug(f"test_generalSentencePrediction {self.test_generalSentencePrediction}")
-        # self.logger.debug(f"model = {self.modelname} tokenizer = {self.tokenizer}")

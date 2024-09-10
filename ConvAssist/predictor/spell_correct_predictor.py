@@ -6,7 +6,7 @@ import os
 from collections import Counter
 from pathlib import Path
 
-from ConvAssist.predictor import Predictor
+from ConvAssist.predictor.predictor import Predictor
 from ConvAssist.predictor.utilities.suggestion import Suggestion
 from ConvAssist.predictor.utilities.prediction import Prediction
 
@@ -24,32 +24,15 @@ class SpellCorrectPredictor(Predictor):
             config,
             context_tracker,
             predictor_name,
-            short_desc=None,
-            long_desc=None,
             logger=None
     ):
         super().__init__(
             config, 
             context_tracker, 
             predictor_name, 
-            short_desc, 
-            long_desc,
             logger
         )
-        self.db = None
-        
-        self.cardinality = None
-        self.learn_mode_set = False
 
-        self.dbclass = None
-        self.dbuser = None
-        self.dbpass = None
-        self.dbhost = None
-        self.dbport = None
-
-        self._database = None
-        self._deltas = None
-        self._learn_mode = None
         self.config = config
         self.name = predictor_name
         self.context_tracker = context_tracker
@@ -57,30 +40,30 @@ class SpellCorrectPredictor(Predictor):
 
         if os.path.exists(self.spellingDatabase):
             with open(self.spellingDatabase) as file:
-                self.WORDS = Counter(self.words(file.read()))
+                self.WORDS = Counter(self._words(file.read()))
         else:
             self.WORDS = Counter()
 
-    def words(self, text): return re.findall(r'\w+', text.lower())
+    def _words(self, text): return re.findall(r'\w+', text.lower())
 
-    def P(self, word):
+    def _P(self, word):
         """ Probability of `word`."""
         N=sum(self.WORDS.values())
         return self.WORDS[word] / N
 
-    def correction(self, word):
+    def _correction(self, word):
         """Most probable spelling correction for word."""
-        return max(self.candidates(word), key=self.P)
+        return max(self._candidates(word), key=self._P)
 
-    def candidates(self, word):
+    def _candidates(self, word):
         """Generate possible spelling corrections for word."""
-        return (self.known([word]) or self.known(self.edits1(word)) or self.known(self.edits2(word)) or [word])
+        return (self._known([word]) or self._known(self._edits1(word)) or self._known(self._edits2(word)) or [word])
 
-    def known(self, words):
+    def _known(self, words):
         """The subset of `words` that appear in the dictionary of WORDS."""
         return set(w for w in words if w in self.WORDS)
 
-    def edits1(self, word):
+    def _edits1(self, word):
         """All edits that are one edit away from `word`."""
         letters = 'abcdefghijklmnopqrstuvwxyz'
         splits = [(word[:i], word[i:]) for i in range(len(word) + 1)]
@@ -90,30 +73,27 @@ class SpellCorrectPredictor(Predictor):
         inserts = [L + c + R for L, R in splits for c in letters]
         return set(deletes + transposes + replaces + inserts)
 
-    def edits2(self, word):
+    def _edits2(self, word):
         """All edits that are two edits away from `word`."""
-        return (e2 for e1 in self.edits1(word) for e2 in self.edits1(e1))
+        return (e2 for e1 in self._edits1(word) for e2 in self._edits1(e1))
 
-    def predict(self, max_partial_prediction_size, filter):
+    def predict(self, max_partial_prediction_size = None, filter = None):
         super().predict(max_partial_prediction_size, filter)
 
         token = self.context_tracker.token(0)
         setence_prediction = Prediction()
         word_prediction = Prediction()
 
-        prefix_completion_candidates = self.candidates(token)
+        prefix_completion_candidates = self._candidates(token)
 
         for j, candidate in enumerate(prefix_completion_candidates):
-            probability = self.P(candidate)
+            probability = self._P(candidate)
             if probability > 0.0001:
                 word_prediction.add_suggestion(
                     Suggestion(candidate, probability, self.name)
                 )
         return setence_prediction, word_prediction
 
-    def learn(self, text):
-        pass
-
     def _read_config(self):
-        self.static_resources_path = Path(self.config.get(self.name, "static_resources_path")).as_posix()
-        self.spellingDatabase = os.path.join(self.static_resources_path, self.config.get(self.name, "spellingDatabase"))
+        static_resources_path = self.config.get(self.name, "static_resources_path")
+        self.spellingDatabase = os.path.join(static_resources_path, self.config.get(self.name, "spellingDatabase"))

@@ -5,7 +5,7 @@ import string
 from pathlib import Path
 from typing import Any, List, Optional
 
-from ConvAssist.predictor import Predictor
+from ConvAssist.predictor.predictor import Predictor
 from ConvAssist.predictor.utilities.predictor_names import PredictorNames
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 from ConvAssist.predictor.utilities.ngram_map import NgramMap
@@ -25,13 +25,11 @@ class SmoothedNgramPredictor(Predictor):
             config,
             context_tracker,
             predictor_name,
-            short_desc = None,
-            long_desc = None,
             logger = None
     ):
         super().__init__(
             config, context_tracker, 
-            predictor_name, short_desc=short_desc, long_desc=long_desc, logger=logger
+            predictor_name, logger=logger
         )
         self.db: SQLiteNgramDatabaseConnector
         self.cardinality:int = 1
@@ -74,7 +72,7 @@ class SmoothedNgramPredictor(Predictor):
 
         if(self.name == PredictorNames.PersonalizedWord.value):
             # Create the personalized database if it does not exist
-            self.recreate_canned_db()
+            self.recreate_database()
 
     def extract_svo(self, sent):
         doc = self.nlp(sent)
@@ -111,7 +109,7 @@ class SmoothedNgramPredictor(Predictor):
                 return True, token.text.lower()
         return False, ""
 
-    def recreate_canned_db(self, personalized_corpus=None):
+    def recreate_database(self):
         # Check all phrases from the personalized corpus
         # if the phrase is found in the cannedSentences DB, continue,
         # Else, add it to both ngram and cannedSentences DB
@@ -125,6 +123,8 @@ class SmoothedNgramPredictor(Predictor):
             self.logger.error(f"exception in creating personalized db : {e}")
 
         # STEP 2: Update personalized_corups if it is not None
+        personalized_corpus = self.read_personalized_corpus()
+
         if personalized_corpus:
             try:
                 sentence_db = SQLiteDatabaseConnector(self.sentences_db)
@@ -367,9 +367,6 @@ class SmoothedNgramPredictor(Predictor):
         self.logger.info(f"End prediction. got {len(word_prediction)} word suggestions and {len(sentence_prediction)} sentence suggestions")
         
         return sentence_prediction, word_prediction
-
-    def close_database(self):
-        self.db.close()
 
     def _read_config(self):
         self.deltas = self.config.get(self.name, "deltas").split()
