@@ -28,8 +28,6 @@ from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATMessageTypes import ConvAssis
 from ConvAssist import ConvAssist
 from ConvAssist.utilities.logging_utility import LoggingUtility
 
-from ConvAssist.utilities.callback import BufferedCallback
-
 ca_main_id = "MAIN"
 ca_normal_ini = "wordPredMode.ini"
 ca_normal_id = "NORMAL"
@@ -54,7 +52,6 @@ class ACATConvAssistInterface(threading.Thread):
         self.retries = 5
         self.pipeName = "ACATConvAssistPipe"
 
-        self.ConvAssist_callback = BufferedCallback("")
         self.clientConnected: bool = False
 
         # Parameters that ACAT will send to ConvAssist
@@ -262,23 +259,17 @@ class ACATConvAssistInterface(threading.Thread):
         next_Letter_Probs = []
         sentence_nextLetterProbs = []
         sentence_predictions = []
-        sentences_count = 0
+
+        #TODO: Why a magic number?
+        sentences_count = 6
         prediction_type = ConvAssistPredictionTypes.NONE
 
         match messageReceived.PredictionType:
             case ConvAssistPredictionTypes.NORMAL:
                 prediction_type = ConvAssistPredictionTypes.NORMAL
                 if self.conv_normal.initialized:
-                    count = len(messageReceived.Data)
-                    if (count == 1 and messageReceived.Data.isspace()):
-                        if self.conv_normal.context_tracker.callback is not None:
-                            self.conv_normal.context_tracker.callback.update("")
-                    else:
-                        if self.conv_normal.context_tracker.callback is not None:
-                            self.conv_normal.context_tracker.callback.update(messageReceived.Data)
-                        
-                    self.conv_normal.context_tracker.prefix()
-                    self.conv_normal.context_tracker.past_stream()
+                    if self.conv_normal.context_tracker:
+                        self.conv_normal.context_tracker.context =  messageReceived.Data
 
                     (next_Letter_Probs,
                     word_prediction,
@@ -287,13 +278,12 @@ class ACATConvAssistInterface(threading.Thread):
 
             case ConvAssistPredictionTypes.SHORTHANDMODE:
                 prediction_type = ConvAssistPredictionTypes.SHORTHANDMODE
-                if self.conv_shorthand.initialized:
-                    sentences_count = 0
-                    if self.conv_shorthand.context_tracker.callback is not None:
-                        self.conv_shorthand.context_tracker.callback.update(messageReceived.Data)
 
-                    self.conv_shorthand.context_tracker.prefix()
-                    self.conv_shorthand.context_tracker.past_stream()
+                #TODO why is this necessary?
+                sentences_count = 0
+                if self.conv_shorthand.initialized:
+                    if self.conv_shorthand.context_tracker:
+                        self.conv_shorthand.context_tracker.context =  messageReceived.Data
 
                     (next_Letter_Probs,
                     word_prediction,
@@ -303,12 +293,8 @@ class ACATConvAssistInterface(threading.Thread):
             case ConvAssistPredictionTypes.CANNEDPHRASESMODE:
                 prediction_type = ConvAssistPredictionTypes.CANNEDPHRASESMODE
                 if self.conv_canned_phrases.initialized:
-                    sentences_count = 6
-                    if self.conv_canned_phrases.context_tracker.callback is not None:
-                        self.conv_canned_phrases.context_tracker.callback.update(messageReceived.Data)
-
-                    self.conv_canned_phrases.context_tracker.prefix()
-                    self.conv_canned_phrases.context_tracker.past_stream()
+                    if self.conv_canned_phrases.context_tracker:
+                        self.conv_canned_phrases.context_tracker.context =  messageReceived.Data
 
                     (next_Letter_Probs,
                     word_prediction,
@@ -342,10 +328,9 @@ class ACATConvAssistInterface(threading.Thread):
         prediction_type = ConvAssistPredictionTypes.SENTENCES
         
         if self.conv_sentence.initialized and self.conv_sentence.check_model() == 1:
-            if self.conv_sentence.context_tracker.callback is not None:
-                self.conv_sentence.context_tracker.callback.update(messageReceived.Data)
-            self.conv_sentence.context_tracker.prefix()
-            self.conv_sentence.context_tracker.past_stream()
+            if self.conv_sentence.context_tracker is not None:
+                self.conv_sentence.context_tracker.context = messageReceived.Data
+
             next_Letter_Probs, word_prediction, sentence_nextLetterProbs, sentence_predictions = self.conv_sentence.predict()
 
         next_Letter_Probs = ACATConvAssistInterface.sort_List(next_Letter_Probs, 0)
@@ -402,7 +387,7 @@ class ACATConvAssistInterface(threading.Thread):
                 try:
                     config = self.createPredictorConfig(f"{convassist.ini_file}")
                     if config:
-                        convassist.initialize(config, self.ConvAssist_callback, self.pathlog, self.loglevel)
+                        convassist.initialize(config, self.pathlog, self.loglevel)
                     
                         if convassist.id == ca_sentence_id:
                             convassist.read_updated_toxicWords()
