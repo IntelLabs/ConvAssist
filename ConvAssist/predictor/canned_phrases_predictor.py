@@ -33,7 +33,7 @@ class CannedPhrasesPredictor(Predictor):
         super().__init__(
             config, 
             context_tracker, 
-            predictor_name, 
+            predictor_name,
             short_desc, 
             long_desc,
             logger
@@ -56,20 +56,20 @@ class CannedPhrasesPredictor(Predictor):
         self.pers_cannedphrasesLines = open(self.personalized_cannedphrases, "r").readlines()
         self.pers_cannedphrasesLines = [s.strip() for s in self.pers_cannedphrasesLines]
 
-        self.logger.info(f"Start Initialization")
         if(not os.path.isfile(self.sentences_db_path)):
             self.logger.debug(f"{self.sentences_db_path} does not exist, creating.")
             columns = ['sentence TEXT UNIQUE', 'count INTEGER']
             self.createTable(self.sentences_db_path, "sentences", columns)
+        else:
+            self.logger.debug(f"{self.sentences_db_path} exists, not creating.")
 
         if(not os.path.isfile(self.embedding_cache_path)):
+            self.logger.info(f"{self.embedding_cache_path} does not exist, creating") 
             self.corpus_embeddings = self.embedder.encode(self.pers_cannedphrasesLines, show_progress_bar=True, convert_to_numpy=True)
-            # np.save(self.embedding_cache_path,{'sentences': self.pers_cannedphrasesLines, 'embeddings': self.corpus_embeddings})
-            joblib.dump({'sentences': self.pers_cannedphrasesLines, 'embeddings': self.corpus_embeddings},self.embedding_cache_path)
+            joblib.dump({'sentences': self.pers_cannedphrasesLines, 'embeddings': self.corpus_embeddings}, self.embedding_cache_path)
 
         else:
-            # cache_data = np.load(self.embedding_cache_path)
-
+            self.logger.info(f"{self.embedding_cache_path} exists, loading embeddings from cache.")
             cache_data = joblib.load(self.embedding_cache_path)
             self.corpus_sentences = cache_data['sentences']
             self.corpus_embeddings = cache_data['embeddings']
@@ -90,7 +90,7 @@ class CannedPhrasesPredictor(Predictor):
         self.index.set_ef(50)
 
         self.MODEL_LOADED = True
-        self.logger.debug(f"cannedPhrases counts: {self.cannedPhrases_counts}")
+        self.logger.debug(f"cannedPhrases count: {len(self.cannedPhrases_counts)}")
 
     def create_index(self, ind):
         ind.add_items(self.corpus_embeddings, list(range(len(self.corpus_embeddings))))
@@ -157,6 +157,7 @@ class CannedPhrasesPredictor(Predictor):
                 ret_sent = self.pers_cannedphrasesLines[hits[i]['corpus_id']]
                 if ret_sent.strip() not in direct_matchedSentences:
                     sent_prediction.add_suggestion(Suggestion(ret_sent.strip(), hits[i]["score"], self.name))
+
         except Exception as e:
             self.logger.error(f"Exception in CannedPhrasePredictor find_semantic_matches {e}")
             raise e
@@ -170,37 +171,62 @@ class CannedPhrasesPredictor(Predictor):
     # 4. If the number of matches is 0, add the sentence to the sent_prediction
     # Make sure the probability is not greater than 1
 
-    def find_direct_matches(self, context, lines, sent_prediction:Prediction, cannedph:dict):
+    # def find_direct_matches(self, context, lines, sent_prediction:Prediction, cannedph:dict):
+    #     try:
+    #         total_sent = sum(cannedph.values())
+    #         context_StemmedWords = [self.stemmer.stem(w) for w in context.split()]
+    #         rows = []
+
+    #         for phrase, _ in cannedph.items():
+    #             matchfound = 0
+    #             sentence_StemmedWords = [self.stemmer.stem(w) for w in word_tokenize(phrase)]
+    #             for context in context_StemmedWords:
+    #                 if context in sentence_StemmedWords:
+    #                     matchfound += 1
+    #             new_row = {'sentence':phrase, 'matches':matchfound, 'probability':float(cannedph[phrase]/total_sent)}
+    #             rows.append(new_row)
+
+    #         scores = pd.DataFrame.from_records(rows)
+    #         sorted_df = scores.sort_values(by = ['matches', 'probability'], ascending = [False, False])
+
+    #         for _, row in sorted_df.iterrows():
+    #             if(row["matches"]>0):
+    #                 try:
+    #                     # TODO: Check if 
+    #                     sent_prediction.add_suggestion(Suggestion(row['sentence'], row["probability"], self.name))
+    #                 except SuggestionException as e:
+    #                     self.logger.error(f"{row['sentence']} Error - {e}")
+    #                     continue
+    #     except Exception as e:
+    #         self.logger.error(f"CannedPhrasePredictor find_direct_matches Error {e}")
+    #         raise e
+    #     finally:
+    #         return sent_prediction
+
+    def find_direct_matches(self,context, lines, sent_prediction, cannedph):
         try:
             total_sent = sum(cannedph.values())
             context_StemmedWords = [self.stemmer.stem(w) for w in context.split()]
+            num_contextWords = len(context_StemmedWords)
             rows = []
-
-            for phrase, _ in cannedph.items():
+            for k,v in cannedph.items():
                 matchfound = 0
-                sentence_StemmedWords = [self.stemmer.stem(w) for w in word_tokenize(phrase)]
-                for context in context_StemmedWords:
-                    if context in sentence_StemmedWords:
-                        matchfound += 1
-                new_row = {'sentence':phrase, 'matches':matchfound, 'probability':float(cannedph[phrase]/total_sent)}
+                sentence_StemmedWords = [self.stemmer.stem(w) for w in word_tokenize(k)]
+                for c in context_StemmedWords:
+                    if c in sentence_StemmedWords:
+                        matchfound = matchfound+1
+                new_row = {'sentence':k, 'matches':matchfound, 'probability':float(cannedph[k]/total_sent)}
                 rows.append(new_row)
-
             scores = pd.DataFrame.from_records(rows)
             sorted_df = scores.sort_values(by = ['matches', 'probability'], ascending = [False, False])
-
-            for _, row in sorted_df.iterrows():
+            for index, row in sorted_df.iterrows():
                 if(row["matches"]>0):
-                    try:
-                        # TODO: Check if 
-                        sent_prediction.add_suggestion(Suggestion(row['sentence'], row["probability"], self.name))
-                    except SuggestionException as e:
-                        self.logger.error(f"{row['sentence']} Error - {e}")
-                        continue
+                    sent_prediction.add_suggestion(Suggestion(row['sentence'], row["matches"]+row["probability"], self.name))
         except Exception as e:
-            self.logger.error(f"CannedPhrasePredictor find_direct_matches Error {e}")
-            raise e
-        finally:
-            return sent_prediction
+            self.logger.error(f"Exception in CannedPhrasePredictor find_direct_matches: {e}")
+
+        return sent_prediction
+
 
     def getTop5InitialPhrases(self, cannedph, sent_prediction):
         total_sent = sum(cannedph.values())
@@ -219,10 +245,12 @@ class CannedPhrasesPredictor(Predictor):
 
 
     def predict(self, max_partial_prediction_size, filter):
+        super().predict(max_partial_prediction_size, filter)
+
         sent_prediction = Prediction()
-        word_prediction = Prediction()
+        word_prediction = Prediction() # Not used in this predictor
         try:
-            context = self.context_tracker.past_stream().strip()
+            context = self.context_tracker.context.strip()
 
             if(context==""):
                 ##### GET 5 MOST FREQUENT SENTENCES 
@@ -235,11 +263,11 @@ class CannedPhrasesPredictor(Predictor):
 
             ###### Get semantic matches based on both databases: 
             sent_prediction = self.find_semantic_matches(context, sent_prediction, self.cannedPhrases_counts)
-            #self.logger.debug("sent_prediction = "+str(sent_prediction))
 
         except Exception as e:
             self.logger.error("Exception in cannedPhrases Predict: {e} ")
 
+        self.logger.info(f"End prediction. got {len(word_prediction)} word suggestions and {len(sent_prediction)} sentence suggestions")
         return sent_prediction, word_prediction
 
     def close_database(self):

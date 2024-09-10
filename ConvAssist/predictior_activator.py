@@ -70,7 +70,8 @@ class PredictorActivator(object):
         word_result = []                    # Store the combined results from the word predictor(s)
 
         if self.context_tracker:
-            context = self.context_tracker.token(0)
+            context = self.context_tracker.get_last_token()
+            # context = self.context_tracker.token(0)
         else:
             context = ""
 
@@ -82,14 +83,14 @@ class PredictorActivator(object):
                 sentences, words = predictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter)
 
                 # Append the sentences to the sentence_predictions list
-                if not all(not sublist for sublist in sentences):
+                if sentences:
                     sentence_predictions.append(sentences)
 
                     # Combine the sentence predictions and get the next sentence letter probabilities
                     sentence_nextLetterProbs, sentence_result = self.combiner.combine(sentence_predictions, context)
 
                 # Append the words to the word_predictions list
-                if not all(not sublist for sublist in words):
+                if words:
                     word_predictions.append(words)
 
                     # Combine the word predictions and get the next word letter probabilities
@@ -99,43 +100,16 @@ class PredictorActivator(object):
                 self.logger.debug(f"Error in predictor {predictor.name}: {e}")
                 continue
 
-            # if(predictor.name == PredictorNames.SentenceComp.value):
-            #     # Get sentence predictions
-            #     sentenceCompPredictor:SentenceCompletionPredictor = predictor
-            #     sentence_predictions += (sentenceCompPredictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter))
-                
-            #     # Combine the sentence predictions and get the next letter probabilities and next sentence predictions
-            #     nextLetterProbs, result = self.combiner.combine(sentence_predictions, context)
-            #     sentence_nextLetterProbs.append(nextLetterProbs)
-            #     sentence_result.append(result)
-
-            # elif(predictor.name == PredictorNames.CannedPhrases.value):
-            #     # get canned phrases and words predictions 
-            #     cannedPhrasePredictor: CannedPhrasesPredictor = predictor
-            #     sentence_predictions, word_predictions = cannedPhrasePredictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter)
-
-            #     if sentence_predictions:
-            #         sentence_nextLetterProbs, sentence_result = self.combiner.combine(sentence_predictions, context)
-            #     # sentence_result.append(sentence_predictions)
-
-            #     if word_predictions:
-            #         word_nextLetterProbs, word_result = self.combiner.combine(word_predictions, context)
-            
-            # # Use the smoothed ngram predictor(s) to get the predictions
-            # else:
-            #     smoothedNGramPredictor: SmoothedNgramPredictor = predictor
-            #     word_predictions.append(smoothedNGramPredictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter))
-
-            #     if word_predictions:
-            #         word_nextLetterProbs, word_result = self.combiner.combine(word_predictions, context)
-
-
         # If the word predictor(s) return empty lists, use predictions from the spell predictor
         if word_result == []:
-            spellingPredictor: SpellCorrectPredictor = predictor
-            _, word_predictions = spellingPredictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter)
-            if word_predictions:
-                word_nextLetterProbs, word_result = self.combiner.combine(word_predictions, context)
+            # spellingPredictor: SpellCorrectPredictor = predictor
+            spellingPredictor = self.registry.get_predictor(PredictorNames.Spell.value)
+            if spellingPredictor:
+                _, words = spellingPredictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter)
+
+                if words:
+                    word_predictions.append(words)
+                    word_nextLetterProbs, word_result = self.combiner.combine(word_predictions, context)
 
         return (word_nextLetterProbs, word_result, sentence_nextLetterProbs, sentence_result)
 

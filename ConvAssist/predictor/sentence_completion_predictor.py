@@ -22,7 +22,6 @@ from ConvAssist.predictor import Predictor
 from ConvAssist.utilities.suggestion import Suggestion
 from ConvAssist.utilities.nlp import NLP
 from ConvAssist.predictor.utilities.prediction import Prediction
-from ConvAssist.utilities.singleton import PredictorSingleton
 
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
@@ -48,24 +47,44 @@ class SentenceCompletionPredictor(Predictor):
         super().__init__( 
             config, 
             context_tracker, 
-            predictor_name, 
+            predictor_name,
             short_desc, 
             long_desc,
             logger
         )
-        self.db = None
-        
-        self.cardinality = 3
-        self.learn_mode_set = False
 
-        self._database = None
-        self._deltas = None
-        self._learn_mode = None
-        self.config = config
-        self.name = predictor_name
         self.context_tracker = context_tracker
+        self.name = predictor_name
+        # self.db = None
+
+        # Sentence Completion Attributes - Defaults
+        #[Database]
+        self._class:str = "SentenceCompletionPredictor"
+
+        #[PredictorRegistry]
+        self._predictors: str = "SentenceCompletionPredictor"
+
+        # [SentenceCompletionPredictor]
+        self._predictor_class:str = "SentenceCompletionPredictor"
+        self._learn:bool = True
+        self._static_resources_path:str = ""
+        self._personalized_resources_path:str = ""
+        self._test_generalsentenceprediction:bool = False
+        self._retrieveaac:bool = True
+        self._sent_database:str = "sent_database.db"
+        self._retrieve_database:str = "all_aac.txt"
+        self._modelname:str = "aac_gpt2"
+        self._tokenizer:str = "aac_gpt2"
+        self._startsents:str = "startSentences.txt"
+        self._embedding_cache_path:str = "all_aac_embeddings.pkl"
+        self._sentence_transformer_model:str = "multi-qa-MiniLM-L6-cos-v1"
+        self._index_path:str = "all_aac_semanticSearch.index"
+        self._blacklist_file:str = "filter_words.txt"
+        self._stopwords:str = "stopwords.txt"
+        self._personalized_allowed_toxicwords_file:str = "personalized_allowed_toxicwords.txt"
+
         self._read_config()
-        self.MODEL_LOADED = False
+        self.model_loaded = False
         self.corpus_sentences=[]
         self.generator: Pipeline
         
@@ -86,7 +105,7 @@ class SentenceCompletionPredictor(Predictor):
         self.stemmer = PorterStemmer()
         
         ####### CREATE INDEX TO QUERY DATABASE
-        self.embedder = SentenceTransformer(str(self.sentence_transformer_model))
+        self.embedder = SentenceTransformer(str(self._sentence_transformer_model))
         self.embedding_size = 384    #Size of embeddings
         self.top_k_hits = 2       #Output k hits
         self.n_clusters = 350
@@ -151,6 +170,74 @@ class SentenceCompletionPredictor(Predictor):
             columns = ['sentence TEXT UNIQUE', 'count INTEGER']
             self.createTable(self.sent_database, "sentences", columns)
 
+    @property
+    def learn_mode(self):
+        return self._learn
+
+    @property
+    def modelname(self):
+        return self._modelname
+    
+    @property
+    def personalized_resources_path(self):
+        return self._personalized_resources_path
+
+    @property
+    def static_resources_path(self):
+        return self._static_resources_path
+
+    @property
+    def test_generalSentencePrediction(self):
+        return self._test_generalsentenceprediction
+    
+    @test_generalSentencePrediction.setter
+    def test_generalSentencePrediction(self, value):
+        self._test_generalsentenceprediction = value
+
+    @property
+    def sent_database(self):
+        return os.path.join(self.personalized_resources_path, self._sent_database)
+    
+    @property
+    def retrieve_database(self):
+        return os.path.join(self.static_resources_path, self._retrieve_database)
+    
+    @property
+    def blacklist_file(self):
+        return os.path.join(self.static_resources_path, self._blacklist_file)
+    
+    @property
+    def embedding_cache_path(self):
+        return os.path.join(self.personalized_resources_path, self._embedding_cache_path)
+    
+    @property
+    def index_path(self):
+        return os.path.join(self.personalized_resources_path, self._index_path)
+
+    @property
+    def stopwordsFile(self):
+        return os.path.join(self.static_resources_path, self._stopwords)
+    
+    @property
+    def personalized_allowed_toxicwords_file(self):
+        return os.path.join(self.personalized_resources_path, self._personalized_allowed_toxicwords_file)
+    
+    @property
+    def startsents(self):
+        return os.path.join(self.personalized_resources_path, self._startsents)
+    
+    @property
+    def tokenizer(self):
+        return self._tokenizer
+    
+    @property
+    def retrieve(self):
+        return self._retrieveaac
+    
+    @retrieve.setter
+    def retrieve(self, value):
+        self._retrieveaac = value
+
     def read_personalized_toxic_words(self):
         path = Path(self.personalized_allowed_toxicwords_file)
         if not Path.exists(path):
@@ -185,45 +272,26 @@ class SentenceCompletionPredictor(Predictor):
                     imp_tokens.append(token.text.lower())
         return imp_tokens
 
-    def load_model(self, test_generalSentencePrediction, retrieve):
-        self.MODEL_LOADED = False
+    def load_model(self, test_generalSentencePrediction, retrieve): 
+        self.logger.debug(f"SentenceCompletionPredictor LOAD MODEL: {str(os.path.exists(self.modelname))}")
         
-        self.logger.debug(f"Loading gpt2 model from {self.modelname}")
-        try:
-            self.generator = pipeline('text-generation', model=self.modelname, 
-                                      tokenizer=self.tokenizer,
-                                      cleanup_tokenization_spaces=True,
-                                      device=self.device)
-            self.MODEL_LOADED = True
-        except Exception as e:
-            self.logger.error(f"Exception in SentenceCompletionPredictor load_model = {e}")
-            
-        return self.MODEL_LOADED
-    
-        # self.test_generalSentencePrediction = test_generalSentencePrediction
-        # self.retrieve = retrieve
-        # # if we are only testing the models
-        # if self.test_generalSentencePrediction:
-        #     if Path.exists(self.modelname):
-        #         self.logger.debug(f"Loading gpt2 model from {self.modelname}")
-        #         self.generator = pipeline('text-generation', model=self.modelname, tokenizer=self.tokenizer)
-        #         self.MODEL_LOADED = True
-
-        # else:
-        #     if not self.retrieve:
-        #         self.logger.debug(f"RETRIEVE IS FALSE, loading model = {self.modelname}")
-        #         if Path.exists(self.modelname):
-        #             self.logger.debug(f"Loading gpt2 model from {self.modelname} with {self.tokenizer} tokenizer.")
-        #             self.generator = pipeline('text-generation', model=str(self.modelname), tokenizer=str(self.tokenizer), device=self.device)
-        #             self.MODEL_LOADED = True
-
-        #     elif self.retrieve:
-        #         self.MODEL_LOADED = True
-
-        # self.logger.debug(f"self.MODEL_LOADED = {self.MODEL_LOADED}")
+        self.test_generalSentencePrediction = test_generalSentencePrediction
+        self.retrieve = retrieve
         
+        #### if we are only testing the models or only retrieving from the AAC dataset, no need to load the model
+        if (self.test_generalSentencePrediction) or (not self.retrieve):
+            if(os.path.exists(self.modelname)):
+                self.logger.debug(f"Loading gpt2 model from {str(self.modelname)}")
+                self.generator = pipeline('text-generation', model=self.modelname, tokenizer=self.tokenizer)
+                self.model_loaded = True
+
+        elif (self.retrieve):
+                self.model_loaded = True
+
+        self.logger.debug(f"SentenceCompletionPredictor MODEL loaded: {self.model_loaded}")
+
     def is_model_loaded(self):
-        return self.MODEL_LOADED
+        return self.model_loaded
 
     def ngram_to_string(self, ngram):
         "|".join(ngram)
@@ -413,13 +481,16 @@ class SentenceCompletionPredictor(Predictor):
         return predi
 
     def predict(self, max_partial_prediction_size, filter):
+        super().predict(max_partial_prediction_size, filter)
+        
         sentence_prediction = Prediction()
         word_prediction = Prediction()   # not used in this predictor
 
-        tokens = [""] * self.cardinality
-        context = self.context_tracker.past_stream().lstrip()
+        # tokens = [""] * self.cardinality
+
+        context = self.context_tracker.context.lstrip()
         if(context == "" or context==" "):
-            self.logger.debug(f"context is empty, loading top sentences from {self.startsents}")
+            self.logger.debug(f"context is empty, loading top sentences from {self._startsents}")
             if (not Path.is_file(Path(self.startsents))):
                 self.logger.error(f"{self.startsents} not found!!!")
 
@@ -432,13 +503,13 @@ class SentenceCompletionPredictor(Predictor):
         self.logger.debug("context inside predictor predict = {context}")
 
         #### If we are testing generation models
-        if (self.test_generalSentencePrediction == "True"):
+        if (self.test_generalSentencePrediction):
             sentence_prediction = self.generate("<bos> "+context.strip(),5, sentence_prediction)
 
         #### if we want to Only retrieve from AAC dataset
-        elif(self.retrieve=="True"):
+        elif(self.retrieve):
             self.logger.debug("retireve is True - retrieving from database")
-            prediction = self.retrieve_fromDataset(context)
+            sentence_prediction = self.retrieve_fromDataset(context)
 
         #### Hybrid retrieve mode  elif(self.retrieve=="hybrid"):
         elif(self.retrieve=="False"):
@@ -447,7 +518,7 @@ class SentenceCompletionPredictor(Predictor):
             self.logger.debug(f"retrieved {len(sentence_prediction)} sentences in {str(sentence_prediction)}")
             
             ##### ONLY IF THE GENERATION MODEL IS LOADED, GENERATE MODEL BASED PREDICTIONS
-            if(len(sentence_prediction)<5 and self.MODEL_LOADED):
+            if(len(sentence_prediction)<5 and self.model_loaded):
                 self.logger.debug(f"generating {5-len(sentence_prediction)} more predictions")
                 sentence_prediction = self.generate("<bos> "+context.strip(),5-len(sentence_prediction), sentence_prediction)
 
@@ -459,12 +530,11 @@ class SentenceCompletionPredictor(Predictor):
 
 
     def close_database(self):
-        if self.db:
-            self.db.close()
+        pass
 
     def learn(self, change_tokens):
         #### For the sentence completion predictor, learning adds the sentence to the database
-        if self.learn_mode == "True":
+        if self.learn_mode:
             change_tokens = change_tokens.strip()
             self.logger.debug(f"learning, {change_tokens}")
             #### add to sentence database
@@ -528,39 +598,34 @@ class SentenceCompletionPredictor(Predictor):
                 dbconn.commit()
             except Exception as e:
                 self.logger.debug(f"Exception in SentenceCompletionPredictor learn  = {e}")
+            finally:
+                dbconn.close()
 
     def _read_config(self):
         try:
-            self.static_resources_path = Path(self.config.get(self.name, "static_resources_path")).as_posix()
-            self.personalized_resources_path = Path(self.config.get(self.name, "personalized_resources_path")).as_posix()
-            self.learn_mode = self.config.get(self.name, "learn")
-            self.retrieve = self.config.get(self.name, "retrieveAAC")
-            # self.use_onnx_model = self.config.get(self.name,"use_onnx_model")
-            self.test_generalSentencePrediction = self.config.get(self.name,"test_generalSentencePrediction")
-            #### define static databases, models
+            self.logger.debug(f"Reading config for {self.name}")
 
-            self.modelname = os.path.join(self.static_resources_path, self.config.get(self.name, "modelname"))
-            self.tokenizer = os.path.join(self.static_resources_path, self.config.get(self.name, "tokenizer"))
-            self.retrieve_database = os.path.join(self.static_resources_path, self.config.get(self.name, "retrieve_database"))
+            for attr, default in vars(self).items():
+                if attr.startswith("_"):
+                    for section in self.config.sections():
+                        if attr[1:] in self.config.options(section):
+                            new_value = default
+                            try:
+                                new_value = self.config.getboolean(section, attr[1:],fallback=default)
+                            except ValueError:
+                                try:
+                                    new_value = self.config.getint(section, attr[1:],fallback=default)
+                                except ValueError:
+                                    new_value = self.config.get(section, attr[1:],fallback=default)
 
-            # self.onnx_path = Path(self.static_resources_path) / self.config.get(self.name,"onnx_path")
-            # 
-            self.sentence_transformer_model = os.path.join(self.static_resources_path, self.config.get(self.name,"sentence_transformer_model")) 
-            self.blacklist_file = os.path.join(self.static_resources_path, self.config.get(self.name,"blacklist_file"))
-            self.stopwordsFile = os.path.join(self.static_resources_path, self.config.get(self.name,"stopwords"))   
+                            setattr(self, attr, new_value )
+                            break
             
-            #### define personalized databases
-            self.sent_database = os.path.join(self.personalized_resources_path, self.config.get(self.name, "sent_database"))
-            self.startsents = os.path.join(self.personalized_resources_path, self.config.get(self.name,"startsents"))
-            self.embedding_cache_path = os.path.join(self.personalized_resources_path, self.config.get(self.name,"embedding_cache_path"))
-            self.index_path = os.path.join(self.personalized_resources_path, self.config.get(self.name, "index_path"))
-            self.personalized_allowed_toxicwords_file = os.path.join(self.personalized_resources_path, self.config.get(self.name, "personalized_allowed_toxicwords_file"))
-
         except Exception as e:
             self.logger.error(f"Exception in SentenceCompletionPredictor._read_config = {e}")
             raise e
         
-        self.logger.debug(f"SENTENCE MODE CONFIGURATIONS")
-        #self.logger.debug(f"using Onnx model for inference {self.use_onnx_model}")
-        self.logger.debug(f"test_generalSentencePrediction {self.test_generalSentencePrediction}")
-        self.logger.debug(f"model = {self.modelname} tokenizer = {self.tokenizer}")
+        # self.logger.debug(f"SENTENCE MODE CONFIGURATIONS")
+        # #self.logger.debug(f"using Onnx model for inference {self.use_onnx_model}")
+        # self.logger.debug(f"test_generalSentencePrediction {self.test_generalSentencePrediction}")
+        # self.logger.debug(f"model = {self.modelname} tokenizer = {self.tokenizer}")

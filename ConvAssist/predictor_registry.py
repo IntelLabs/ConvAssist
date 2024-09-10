@@ -44,30 +44,13 @@ class PredictorRegistry(list):
 
         self.set_predictors(context_tracker)
 
-    # @property
-    # def context_tracker(self) -> Any:
-    #         """The context_tracker property."""
-    #         return self._context_tracker
-
-    # @context_tracker.setter
-    # def context_tracker(self, value):
-    #     if self._context_tracker is not value:
-    #         self._context_tracker = value
-    #         self[:] = []
-    #         self.set_predictors()
-
-    # @context_tracker.deleter
-    # def context_tracker(self):
-    #     del self._context_tracker
-
     def set_predictors(self, context_tracker=None):
-        # if self.context_tracker:
         self[:] = []
         predictors = self.config.get("PredictorRegistry", "predictors", fallback="").split()
         for predictor in predictors:
             self.add_predictor(predictor, context_tracker)
 
-    def add_predictor(self, predictor_name, context_tracker=None):
+    def add_predictor(self, predictor_name, context_tracker):
         predictor: Any = None
         
         if (self.config.get(predictor_name, "predictor_class") == "SmoothedNgramPredictor"
@@ -92,7 +75,8 @@ class PredictorRegistry(list):
             predictor = SentenceCompletionPredictor(
                 self.config, 
                 context_tracker, 
-                predictor_name, "gpt2",
+                predictor_name,
+                "gpt2",
                 "gpt-2 model predictions", 
                 logger=self.logger
             )
@@ -103,8 +87,7 @@ class PredictorRegistry(list):
             predictor = CannedPhrasesPredictor(
                 self.config, 
                 context_tracker, 
-                predictor_name, "gpt2",
-                "gpt-2 model predictions", 
+                predictor_name,
                 logger=self.logger
             )
 
@@ -134,6 +117,10 @@ class PredictorRegistry(list):
         for predictor in self:
             predictor.close_database()
 
-
+    def get_predictor(self, predictor_name):
+        for predictor in self:
+            if predictor.name == predictor_name:
+                return predictor
+        return None
 
     

@@ -17,7 +17,7 @@ class MeritocracyCombiner(Combiner):
     Computes probabilities for the next letter - for BCI 
     """
     def computeLetterProbs(self, result:Prediction, context:str) -> list[tuple[str, float]]:
-        #### compute letter probability
+
         totalWords = len(result)
         nextLetterProbs: Dict[str, float] = {}
 
@@ -31,15 +31,12 @@ class MeritocracyCombiner(Combiner):
                         nextLetter = word_predicted.strip().split()[0][0]
 
                 else:
-                    ####### check to ensure there is some word_prediction         
                     if(word_predicted!=""):
-                        ####### if context is not empty, split the word_predicted to compute the next letter
                         if(context!="" and context!=" "):
-                            if(word_predicted != context):
-                                nextLetter = word_predicted[len(context):][0]
-                                # print("word_pred = ", word_predicted, " nextLetter = ", nextLetter)
+                            position = word_predicted.find(context)
+                            if(position != -1) and word_predicted != context:
+                                nextLetter = word_predicted[position + len(context)]
                         else:
-                            ####### if context is empty, pick the first letter of the word_predicted as the next letter
                             nextLetter = word_predicted[0]
 
             if (nextLetter in nextLetterProbs):

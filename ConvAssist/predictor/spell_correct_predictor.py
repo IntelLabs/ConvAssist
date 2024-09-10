@@ -95,6 +95,8 @@ class SpellCorrectPredictor(Predictor):
         return (e2 for e1 in self.edits1(word) for e2 in self.edits1(e1))
 
     def predict(self, max_partial_prediction_size, filter):
+        super().predict(max_partial_prediction_size, filter)
+
         token = self.context_tracker.token(0)
         setence_prediction = Prediction()
         word_prediction = Prediction()

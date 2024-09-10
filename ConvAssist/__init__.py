@@ -7,7 +7,6 @@ from nltk import sent_tokenize
 from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor_registry import PredictorRegistry
 from ConvAssist.predictior_activator import PredictorActivator
-from ConvAssist.utilities.callback import BufferedCallback
 import logging
 from ConvAssist.utilities.logging_utility import LoggingUtility
 
@@ -17,22 +16,20 @@ class ConvAssist:
     """
     def __init__(self, id: str, ini_file: str,
                  config:ConfigParser | None = None, 
-                 callback:BufferedCallback | None = None,  
                  log_location:str | None = None, 
                  log_level:int | None = None):
  
         self.config = config
-        self.callback = callback
         self.log_level = log_level 
         self.log_location = log_location
         self.initialized = False
         self.id = id
         self.ini_file = ini_file
 
-        if self.config and self.callback:
-            self.initialize(self.config, self.callback, self.log_location, self.log_level)
+        if self.config:
+            self.initialize(self.config, self.log_location, self.log_level)
 
-    def initialize(self, config:ConfigParser, callback:BufferedCallback, log_location:str|None = None, log_level:int|None = None):
+    def initialize(self, config:ConfigParser, log_location:str|None = None, log_level:int|None = None):
         if not config:
             raise AttributeError("Config not provided.")
         
@@ -54,7 +51,7 @@ class ConvAssist:
 
             
         lowercase_mode = self.config.getboolean("ContextTracker", "lowercase_mode", fallback=False)
-        self.context_tracker = ContextTracker(lowercase_mode, callback)
+        self.context_tracker = ContextTracker(lowercase_mode)
 
         self.predictor_registry = PredictorRegistry(
                 self.config, self.logger, self.context_tracker
@@ -86,7 +83,10 @@ class ConvAssist:
                 prob_sum_over10 += w[1].probability
                 words.append(w[1].word)
 
-        return (wordprob, [(p.word, p.probability/prob_sum_over10) for p in word], sentprob, [(p.word, p.probability) for p in sent])
+        return (wordprob,
+                [(p.word, p.probability/prob_sum_over10) for p in word], 
+                sentprob, 
+                [(p.word, p.probability) for p in sent])
 
     # Paramters updated in ACAT are synced with the parameters initialized 
     # in ConvAssist Predictors.    

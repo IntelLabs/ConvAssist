@@ -29,7 +29,7 @@ class OptionalSingleton(type):
         cls._singleton_enabled = True
 
 
-class Predictor(metaclass=OptionalSingleton):
+class Predictor(ABC):
     """
     Base class for predictors.
 
@@ -41,20 +41,23 @@ class Predictor(metaclass=OptionalSingleton):
             context_tracker: ContextTracker, 
             predictor_name: str, 
             short_desc: str | None = None, 
-            long_des: str | None = None,
+            long_desc: str | None = None,
             logger: logging.Logger | None = None
     ):
+
         self.config = config
         self.context_tracker = context_tracker
         self._predictor_name = predictor_name
         self._short_description = short_desc
-        self._long_description = long_des
+        self._long_description = long_desc
         
         #configure a logger
         if logger:
             self.logger = logger
         else:
             self.logger = LoggingUtility().get_logger(self.predictor_name, log_level=logging.DEBUG)
+
+        self.logger.info(f"Initializing {self.predictor_name} predictor")
             
     @property
     def predictor_name(self):
@@ -79,7 +82,7 @@ class Predictor(metaclass=OptionalSingleton):
         returns:
             tuple[Prediction, Prediction]       # The predicted next word and sentence
         '''
-        pass
+        self.logger.info(f"{self.predictor_name} - Predicting next word and sentence")
     
     @abstractmethod
     def learn(self, change_tokens = None):

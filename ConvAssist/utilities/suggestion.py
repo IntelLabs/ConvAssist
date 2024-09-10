@@ -28,7 +28,7 @@ class Suggestion(object):
         return False
 
     def __repr__(self):
-        return "Word: {0} - Probability: {1}".format(self.word, self.probability)
+        return "Suggestion: {0} - Probability: {1}".format(self.word, self.probability)
 
     @property
     def word(self):
