@@ -3,7 +3,7 @@
 
 import unittest
 from ConvAssist.combiner.meritocrity_combiner import MeritocracyCombiner
-from ConvAssist.utilities.suggestion import Suggestion
+from ConvAssist.predictor.utilities.suggestion import Suggestion
 from ConvAssist.predictor.utilities.prediction import Prediction
 
 

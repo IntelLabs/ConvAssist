@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
-from ConvAssist.utilities.suggestion import Suggestion
+from ConvAssist.predictor.utilities.suggestion import Suggestion
 from ConvAssist.predictor.utilities.prediction import Prediction
 
 class TestSmoothedNgramPredictor(unittest.TestCase):

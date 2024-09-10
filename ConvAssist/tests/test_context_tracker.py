@@ -21,14 +21,14 @@ class TestContextTracker(unittest.TestCase):
         tracker = ContextTracker()
         tracker.context = "example token "
         tokens = [""] * 4
-        count = tracker.get_tokens(tokens)
+        count, tokens = tracker.get_tokens(len(tokens))
         assert count == 4
         self.assertEqual(tokens, ["example", " ", "token", " "])
 
     def test_get_tokens_empty(self):
         tracker = ContextTracker()
         tokens = [""] * 2
-        count = tracker.get_tokens(tokens)
+        count, tokens = tracker.get_tokens(len(tokens))
         assert count == 0
         self.assertEqual(tokens, ["", ""])
 
@@ -36,7 +36,7 @@ class TestContextTracker(unittest.TestCase):
         tracker = ContextTracker()
         tracker.context = "example! token, with %puncuation's."
         tokens = [""] * 4
-        count = tracker.get_tokens(tokens)
+        count, tokens = tracker.get_tokens(len(tokens))
         assert count == 4
         self.assertEqual(tokens, ["example", "token", "with", "puncuation's"])
 

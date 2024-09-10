@@ -1,5 +1,5 @@
 import unittest
-from ConvAssist.utilities.suggestion import Suggestion, SuggestionException
+from ConvAssist.predictor.utilities.suggestion import Suggestion, SuggestionException
 
 class TestSuggestion(unittest.TestCase):
     def test_init(self):
