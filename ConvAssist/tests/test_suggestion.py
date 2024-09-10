@@ -29,7 +29,7 @@ class TestSuggestion(unittest.TestCase):
 
     def test_repr(self):
         suggestion = Suggestion("test", 0.5, "predictor")
-        expected_repr = "Word: test - Probability: 0.5"
+        expected_repr = "Suggestion: test - Probability: 0.5"
         self.assertEqual(repr(suggestion), expected_repr)
 
     def test_probability_setter_valid(self):

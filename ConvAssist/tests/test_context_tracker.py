@@ -20,25 +20,22 @@ class TestContextTracker(unittest.TestCase):
     def test_get_tokens(self):
         tracker = ContextTracker()
         tracker.context = "example token "
-        tokens = [""] * 4
-        count, tokens = tracker.get_tokens(len(tokens))
+        count, tokens = tracker.get_tokens(4)
         assert count == 4
         self.assertEqual(tokens, ["example", " ", "token", " "])
 
     def test_get_tokens_empty(self):
         tracker = ContextTracker()
-        tokens = [""] * 2
-        count, tokens = tracker.get_tokens(len(tokens))
+        count, tokens = tracker.get_tokens(1)
         assert count == 0
-        self.assertEqual(tokens, ["", ""])
+        self.assertEqual(tokens, [])
 
     def test_context_has_punctuation(self):
         tracker = ContextTracker()
-        tracker.context = "example! token, with %puncuation's."
-        tokens = [""] * 4
-        count, tokens = tracker.get_tokens(len(tokens))
-        assert count == 4
-        self.assertEqual(tokens, ["example", "token", "with", "puncuation's"])
+        tracker.context = "tokens with punctuation's and hypenated-words "
+        count, tokens = tracker.get_tokens(10)
+        assert count == 10
+        self.assertEqual(tokens, ['tokens', ' ', 'with', ' ', 'punctuation\'s', ' ', 'and', ' ', 'hypenated-words', ' '])
 
 if __name__ == '__main__':
     unittest.main()

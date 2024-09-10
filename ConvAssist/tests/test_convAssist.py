@@ -5,7 +5,7 @@ from configparser import ConfigParser
 from ConvAssist.predictior_activator import PredictorActivator
 from ConvAssist.predictor_registry import PredictorRegistry
 from ConvAssist.context_tracker import ContextTracker
-from ConvAssist import ConvAssist
+from ConvAssist.ConvAssist import ConvAssist
 
 
 class TestConvAssist(unittest.TestCase):
@@ -64,11 +64,11 @@ class TestConvAssist(unittest.TestCase):
         conv_assist = ConvAssist(self.id_str, self.ini_file, config = self.config)
 
         # Mock the recreate_canned_phrasesDB method of predictor_activator
-        conv_assist.predictor_activator.recreate_canned_phrasesDB = MagicMock()
+        conv_assist.predictor_activator.recreate_database = MagicMock()
 
         conv_assist.cannedPhrase_recreateDB()
 
-        conv_assist.predictor_activator.recreate_canned_phrasesDB.assert_called()
+        conv_assist.predictor_activator.recreate_database.assert_called()
 
     def test_learn_db(self):
         conv_assist = ConvAssist(self.id_str, self.ini_file, config = self.config)
@@ -76,7 +76,7 @@ class TestConvAssist(unittest.TestCase):
         # Mock the learn_text method of predictor_activator
         conv_assist.predictor_activator.learn_text = MagicMock()
 
-        conv_assist.learn_db("This is a test sentence.")
+        conv_assist.learn_text("This is a test sentence.")
 
         conv_assist.predictor_activator.learn_text.assert_called_with("This is a test sentence.")
 
