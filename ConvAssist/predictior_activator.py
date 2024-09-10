@@ -2,15 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from configparser import ConfigParser
 import logging
-import os
-from pathlib import Path
-from typing import Any
 
-from ConvAssist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
-from ConvAssist.predictor.sentence_completion_predictor import SentenceCompletionPredictor
-from ConvAssist.predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
-from ConvAssist.predictor.spell_correct_predictor import SpellCorrectPredictor
-from ConvAssist.predictor.utilities.prediction import Prediction
 from ConvAssist.predictor.utilities.prediction import UnknownCombinerException
 from ConvAssist.predictor.utilities.predictor_names import PredictorNames
 from ConvAssist.combiner.meritocrity_combiner import MeritocracyCombiner
@@ -76,7 +68,7 @@ class PredictorActivator(object):
             context = ""
 
         for predictor in self.registry:
-            if predictor.name == PredictorNames.Spell.value:
+            if predictor.predictor_name == PredictorNames.Spell.value:
                 continue
             try:
                 # Get sentences and/or words from the predictor
@@ -97,7 +89,7 @@ class PredictorActivator(object):
                     word_nextLetterProbs, word_result = self.combiner.combine(word_predictions, context)
             
             except Exception as e:
-                self.logger.debug(f"Error in predictor {predictor.name}: {e}")
+                self.logger.debug(f"Error in predictor {predictor.predictor_name}: {e}")
                 continue
 
         # If the word predictor(s) return empty lists, use predictions from the spell predictor
@@ -113,15 +105,9 @@ class PredictorActivator(object):
 
         return (word_nextLetterProbs, word_result, sentence_nextLetterProbs, sentence_result)
 
-    def recreate_canned_phrasesDB(self):
+    def recreate_database(self):
         for predictor in self.registry:
-            if(predictor.name == PredictorNames.CannedPhrases.value or predictor.name == PredictorNames.CannedWord.value):
-                personalized_resources_path = Path(self.config.get(predictor.name, "personalized_resources_path")).as_posix()
-                personalized_cannedphrases = os.path.join(personalized_resources_path, self.config.get(predictor.name, "personalized_cannedphrases"))
-                pers_cannedphrasesLines = open(personalized_cannedphrases, "r").readlines()
-                pers_cannedphrasesLines = [s.strip() for s in pers_cannedphrasesLines]
-
-                predictor.recreate_canned_db(pers_cannedphrasesLines)
+            predictor.recreate_database()
 
     def update_params(self, test_gen_sentence_pred,retrieve_from_AAC):
         for predictor in self.registry:

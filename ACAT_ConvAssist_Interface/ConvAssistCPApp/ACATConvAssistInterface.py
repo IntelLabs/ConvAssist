@@ -21,11 +21,11 @@ current_path = os.path.dirname(os.path.realpath(__file__))
 if current_path not in sys.path:
     sys.path.append(current_path)
 
-import ACAT_ConvAssist_Interface.ConvAssistCPApp.Win32PipeHandler as Win32PipeHandler
-from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATMessageTypes import ConvAssistMessage, ConvAssistSetParam, WordAndCharacterPredictionResponse, \
+import Win32PipeHandler as Win32PipeHandler
+from ACATMessageTypes import ConvAssistMessage, ConvAssistSetParam, WordAndCharacterPredictionResponse, \
     ConvAssistMessageTypes, ConvAssistPredictionTypes, ParameterType
 
-from ConvAssist import ConvAssist
+from ConvAssist.ConvAssist import ConvAssist
 from ConvAssist.utilities.logging_utility import LoggingUtility
 
 ca_main_id = "MAIN"
@@ -359,7 +359,7 @@ class ACATConvAssistInterface(threading.Thread):
 
     def handle_learn(self, conv_assist: ConvAssist, messageReceived: ConvAssistMessage, mode: str):
         self.logger.debug(f"Calling Learn_db for {conv_assist.id} with mode {mode}.")
-        conv_assist.learn_db(messageReceived.Data)
+        conv_assist.learn_text(messageReceived.Data)
         self.logger.debug("Finished Learn_db for {conv_assist.id}.")
 
     def handle_parameter_change(self, messageReceived: ConvAssistMessage):

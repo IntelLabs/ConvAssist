@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import Any, Dict
-from ConvAssist.combiner import Combiner
+from ConvAssist.combiner.combiner import Combiner
 from ConvAssist.predictor.utilities.prediction import Prediction
 from ConvAssist.predictor.utilities.predictor_names import PredictorNames
 

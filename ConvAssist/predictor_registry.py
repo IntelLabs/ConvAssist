@@ -5,14 +5,20 @@ import logging
 from typing import Any
 from configparser import ConfigParser
 
-# from ConvAssist.context_tracker import ContextTracker
+from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.utilities.predictor_names import PredictorNames
-from ConvAssist.utilities.logging_utility import LoggingUtility
 
 from ConvAssist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
 from ConvAssist.predictor.sentence_completion_predictor import SentenceCompletionPredictor
 from ConvAssist.predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
 from ConvAssist.predictor.spell_correct_predictor import SpellCorrectPredictor
+
+predictor_mapping = {
+    "SmoothedNgramPredictor": SmoothedNgramPredictor,
+    "SpellCorrectPredictor": SpellCorrectPredictor,
+    "SentenceCompletionPredictor": SentenceCompletionPredictor,
+    "CannedPhrasesPredictor": CannedPhrasesPredictor
+}
 
 
 class PredictorRegistry(list):
@@ -26,70 +32,32 @@ class PredictorRegistry(list):
     The standard use case is: Predictor obtains an iterator from
     PredictorRegistry and invokes the predict() or learn() method on each
     Predictor pointed to by the iterator.
-
-    Predictor registry should eventually just be a simple wrapper around
-    plump.
-
     """
 
-    def __init__(self, config, logger=None, context_tracker=None):
+    def __init__(self):
         super().__init__()
 
-        self.config: ConfigParser = config
-        self._context_tracker = None
-        if logger:
-            self.logger = logger
-        else:
-            self.logger = LoggingUtility().get_logger("predictor_registry", log_level=logging.DEBUG)
-
-        self.set_predictors(context_tracker)
-
-    def set_predictors(self, context_tracker=None):
+    def set_predictors(self, config: ConfigParser, context_tracker: ContextTracker, logger: logging.Logger):
         self[:] = []
-        predictors = self.config.get("PredictorRegistry", "predictors", fallback="").split()
-        for predictor in predictors:
-            self.add_predictor(predictor, context_tracker)
 
-    def add_predictor(self, predictor_name, context_tracker):
+        predictors = config.get("PredictorRegistry", "predictors", fallback="").split()
+
+        for predictor in predictors:
+            self._add_predictor(predictor, config, context_tracker, logger)
+
+    def _add_predictor(self, predictor_name, config: ConfigParser, context_tracker: ContextTracker, logger: logging.Logger):
         predictor: Any = None
         
-        if (self.config.get(predictor_name, "predictor_class") == "SmoothedNgramPredictor"
-        ):
-            predictor = SmoothedNgramPredictor(
-                self.config,
-                context_tracker,
-                predictor_name,
-                logger=self.logger
-            )
-        if (self.config.get(predictor_name, "predictor_class") == "SpellCorrectPredictor"
-        ):
-            predictor = SpellCorrectPredictor(
-                self.config,
-                context_tracker,
-                predictor_name,
-                logger=self.logger
-            )
-
-        if (self.config.get(predictor_name, "predictor_class") == "SentenceCompletionPredictor"
-        ):
-            predictor = SentenceCompletionPredictor(
-                self.config, 
-                context_tracker, 
-                predictor_name,
-                "gpt2",
-                "gpt-2 model predictions", 
-                logger=self.logger
-            )
-
-
-        if (self.config.get(predictor_name, "predictor_class") == "CannedPhrasesPredictor"
-        ):
-            predictor = CannedPhrasesPredictor(
-                self.config, 
-                context_tracker, 
-                predictor_name,
-                logger=self.logger
-            )
+        predictor_class = config.get(predictor_name, "predictor_class")
+        predictor_args = [
+            config,
+            context_tracker,
+            predictor_name,
+            logger,
+        ]
+                
+        if predictor_class in predictor_mapping:
+            predictor = predictor_mapping[predictor_class](*predictor_args)
 
         if predictor:
             self.append(predictor)
@@ -100,7 +68,6 @@ class PredictorRegistry(list):
             if(str(each).find(PredictorNames.SentenceComp.value)!=-1):
                 status = each.is_model_loaded()
                 if(status):
-                    self.logger.info("SentenceCompletionPredictor model loaded")
                     model_status = 1
                 else:
                     model_status = 0
@@ -108,18 +75,13 @@ class PredictorRegistry(list):
                 status = each.is_model_loaded()
                 if(status):
                     model_status = 1
-                    self.logger.info("CannedPhrasesPredictor model loaded")
                 else:
                     model_status = 0
         return model_status
 
-    def close_database(self):
-        for predictor in self:
-            predictor.close_database()
-
     def get_predictor(self, predictor_name):
         for predictor in self:
-            if predictor.name == predictor_name:
+            if predictor.predictor_name == predictor_name:
                 return predictor
         return None
 
