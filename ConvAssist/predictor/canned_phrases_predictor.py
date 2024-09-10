@@ -13,7 +13,7 @@ from sentence_transformers import SentenceTransformer
 from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.utilities.prediction import Prediction
 from ConvAssist.predictor import Predictor
-from ConvAssist.utilities.suggestion import Suggestion, SuggestionException
+from ConvAssist.predictor.utilities.suggestion import Suggestion, SuggestionException
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
 class CannedPhrasesPredictor(Predictor):

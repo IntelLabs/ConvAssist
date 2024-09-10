@@ -19,8 +19,8 @@ from sentence_transformers import SentenceTransformer
 from transformers import pipeline, Pipeline
 
 from ConvAssist.predictor import Predictor
-from ConvAssist.utilities.suggestion import Suggestion
-from ConvAssist.utilities.nlp import NLP
+from ConvAssist.predictor.utilities.suggestion import Suggestion
+from ConvAssist.predictor.utilities.nlp import NLP
 from ConvAssist.predictor.utilities.prediction import Prediction
 
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector

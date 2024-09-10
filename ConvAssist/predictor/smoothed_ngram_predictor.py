@@ -6,13 +6,12 @@ from pathlib import Path
 from typing import Any, List, Optional
 
 from ConvAssist.predictor import Predictor
-from ConvAssist.utilities.singleton import PredictorSingleton
 from ConvAssist.predictor.utilities.predictor_names import PredictorNames
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
-from ConvAssist.utilities.ngram_map import NgramMap
-from ConvAssist.utilities.suggestion import Suggestion
+from ConvAssist.predictor.utilities.ngram_map import NgramMap
+from ConvAssist.predictor.utilities.suggestion import Suggestion
 from ConvAssist.predictor.utilities.prediction import Prediction
-from ConvAssist.utilities.nlp import NLP
+from ConvAssist.predictor.utilities.nlp import NLP
 from ConvAssist.utilities.databaseutils.sqllite_ngram_dbconnector import SQLiteNgramDatabaseConnector
 
 class SmoothedNgramPredictor(Predictor):

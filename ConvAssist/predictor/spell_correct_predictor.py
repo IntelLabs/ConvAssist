@@ -7,7 +7,7 @@ from collections import Counter
 from pathlib import Path
 
 from ConvAssist.predictor import Predictor
-from ConvAssist.utilities.suggestion import Suggestion
+from ConvAssist.predictor.utilities.suggestion import Suggestion
 from ConvAssist.predictor.utilities.prediction import Prediction
 
 

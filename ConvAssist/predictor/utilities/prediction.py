@@ -4,7 +4,7 @@
 MIN_PROBABILITY = 0.0
 MAX_PROBABILITY = 1.0
 
-from ConvAssist.utilities.suggestion import Suggestion
+from ConvAssist.predictor.utilities.suggestion import Suggestion
 
 class UnknownCombinerException(Exception):
     pass
