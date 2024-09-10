@@ -79,22 +79,23 @@ def cli_prompt(pipe_handle):
         msgs = []
         # Get input from the user
         message = input("Message> ")
-        
 
-        if message.lower() == 'exit':
+        if message.lower() == 'learn':
+            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNSHORTHAND, ConvAssistPredictionTypes.NONE, "").jsonSerialize())
+            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNWORDS, ConvAssistPredictionTypes.NONE, "").jsonSerialize())
+            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNCANNED, ConvAssistPredictionTypes.NONE, "").jsonSerialize())
+            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNSENTENCES, ConvAssistPredictionTypes.NONE, "").jsonSerialize())
+
+        elif message.lower() == 'exit':
             msgs.append(ConvAssistMessage(ConvAssistMessageTypes.FORCEQUITAPP, ConvAssistPredictionTypes.NONE, "").jsonSerialize())
             breakloop = True
-        else:
-            message += ' '
-            # msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNSHORTHAND, ConvAssistPredictionTypes.NONE, message).jsonSerialize())
-          
+        else:          
             msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTWORDPREDICTION, ConvAssistPredictionTypes.NORMAL, message).jsonSerialize())
+            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTSENTENCEPREDICTION, ConvAssistPredictionTypes.NORMAL, message).jsonSerialize())
             msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTWORDPREDICTION, ConvAssistPredictionTypes.CANNEDPHRASESMODE, message).jsonSerialize())
+            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTSENTENCEPREDICTION, ConvAssistPredictionTypes.CANNEDPHRASESMODE, message).jsonSerialize())
             msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTSENTENCEPREDICTION, ConvAssistPredictionTypes.SENTENCES, message).jsonSerialize())
             msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTWORDPREDICTION, ConvAssistPredictionTypes.SHORTHANDMODE, message).jsonSerialize())
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNWORDS, ConvAssistPredictionTypes.NONE, message).jsonSerialize())
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNCANNED, ConvAssistPredictionTypes.NONE, message).jsonSerialize())
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNSENTENCES, ConvAssistPredictionTypes.NONE, message).jsonSerialize())
 
         for msg in msgs:
             send_message_to_pipe(pipe_handle, msg)
