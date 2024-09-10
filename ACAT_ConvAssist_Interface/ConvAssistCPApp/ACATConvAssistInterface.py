@@ -196,7 +196,6 @@ class ACATConvAssistInterface(threading.Thread):
 
                 except Exception as e:
                     self.logger.critical(f"Catastrophic Error.  Bailing. {e}.")
-                    # messageReceived = ConvAssistMessage(ConvAssistMessageTypes.NONE, ConvAssistPredictionTypes.NONE, "")
                     send_response = False
                     self.app_quit_event.set()
                     continue
@@ -260,16 +259,25 @@ class ACATConvAssistInterface(threading.Thread):
         sentence_nextLetterProbs = []
         sentence_predictions = []
 
-        #TODO: Why a magic number?
+        # Return count defaults
+        words_count = 10
+        next_word_letter_count = 20
         sentences_count = 6
+        next_sentence_letter_count = 6
+
         prediction_type = ConvAssistPredictionTypes.NONE
 
         match messageReceived.PredictionType:
             case ConvAssistPredictionTypes.NORMAL:
+
                 prediction_type = ConvAssistPredictionTypes.NORMAL
                 if self.conv_normal.initialized:
                     if self.conv_normal.context_tracker:
                         self.conv_normal.context_tracker.context =  messageReceived.Data
+
+                    # Don't send any sentence predictions from NORMAL mode
+                    sentences_count = 0
+                    next_sentence_letter_count = 0
 
                     (next_Letter_Probs,
                     word_prediction,
@@ -279,8 +287,6 @@ class ACATConvAssistInterface(threading.Thread):
             case ConvAssistPredictionTypes.SHORTHANDMODE:
                 prediction_type = ConvAssistPredictionTypes.SHORTHANDMODE
 
-                #TODO why is this necessary?
-                sentences_count = 0
                 if self.conv_shorthand.initialized:
                     if self.conv_shorthand.context_tracker:
                         self.conv_shorthand.context_tracker.context =  messageReceived.Data
@@ -292,6 +298,7 @@ class ACATConvAssistInterface(threading.Thread):
 
             case ConvAssistPredictionTypes.CANNEDPHRASESMODE:
                 prediction_type = ConvAssistPredictionTypes.CANNEDPHRASESMODE
+
                 if self.conv_canned_phrases.initialized:
                     if self.conv_canned_phrases.context_tracker:
                         self.conv_canned_phrases.context_tracker.context =  messageReceived.Data
@@ -301,9 +308,9 @@ class ACATConvAssistInterface(threading.Thread):
                     sentence_nextLetterProbs,
                     sentence_predictions) = self.conv_canned_phrases.predict()
 
-        next_Letter_Probs = ACATConvAssistInterface.sort_List(next_Letter_Probs, 20)
-        word_prediction = ACATConvAssistInterface.sort_List(word_prediction, 10)
-        sentence_nextLetterProbs = ACATConvAssistInterface.sort_List(sentence_nextLetterProbs, 0)
+        next_Letter_Probs = ACATConvAssistInterface.sort_List(next_Letter_Probs, next_word_letter_count)
+        word_prediction = ACATConvAssistInterface.sort_List(word_prediction, words_count)
+        sentence_nextLetterProbs = ACATConvAssistInterface.sort_List(sentence_nextLetterProbs, next_sentence_letter_count)
         sentence_predictions = ACATConvAssistInterface.sort_List(sentence_predictions, sentences_count)
 
         #TODO - Check if this should be json.dumps instead?
@@ -320,23 +327,24 @@ class ACATConvAssistInterface(threading.Thread):
         PredictionResponse.PredictedSentence = result_Sentences
 
     def next_sentence_prediction(self, PredictionResponse, messageReceived):
-        word_prediction = []
         next_Letter_Probs = []
+        word_prediction = []
         sentence_nextLetterProbs = []
         sentence_predictions = []
-        sentences_count = 0
+        sentences_count = 6
+        next_sentence_letter_count = 6
+
         prediction_type = ConvAssistPredictionTypes.SENTENCES
         
         if self.conv_sentence.initialized and self.conv_sentence.check_model() == 1:
             if self.conv_sentence.context_tracker is not None:
                 self.conv_sentence.context_tracker.context = messageReceived.Data
 
-            next_Letter_Probs, word_prediction, sentence_nextLetterProbs, sentence_predictions = self.conv_sentence.predict()
+            _, _, sentence_nextLetterProbs, sentence_predictions = self.conv_sentence.predict()
 
-        next_Letter_Probs = ACATConvAssistInterface.sort_List(next_Letter_Probs, 0)
-        word_prediction = ACATConvAssistInterface.sort_List(word_prediction, 0)
-        sentence_nextLetterProbs = ACATConvAssistInterface.sort_List(sentence_nextLetterProbs, 0)
-        sentence_predictions = ACATConvAssistInterface.sort_List(sentence_predictions, 6)
+        sentence_nextLetterProbs = ACATConvAssistInterface.sort_List(sentence_nextLetterProbs, next_sentence_letter_count)
+        sentence_predictions = ACATConvAssistInterface.sort_List(sentence_predictions, sentences_count)
+
         result_Letters = str(next_Letter_Probs)
         result_Words = str(word_prediction)
         result_Letters_Sentence = str(sentence_nextLetterProbs)
