@@ -6,8 +6,7 @@
 Class for context tracker.
 
 """
-# from nltk.tokenize import word_tokenize
-from nltk import WordPunctTokenizer, RegexpTokenizer
+from nltk import RegexpTokenizer
 
 class ContextTracker(object):
     """
@@ -21,11 +20,12 @@ class ContextTracker(object):
         self._context = ""
 
     def _update_context(self):
-        reg = r"\w+|\s+"
+        # tokenize the context into words with punctuation and spaces
+        # reg = r"\w+('\w+)?|\w+(-\w+)?|\s+"
+        # reg = r'\w+(?:-\w+)*|\s|\w+(?:\'\w+)?'
+        reg = r"\w+(?:['-]\w+)*|\s"
         tokenizer = RegexpTokenizer(reg)
-        # tokenizer = WordPunctTokenizer()
         self.tokens = tokenizer.tokenize(self._context)
-        # self.tokens.reverse()
 
     def token(self, index):
 
