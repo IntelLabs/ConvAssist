@@ -379,26 +379,21 @@ class ACATConvAssistInterface(threading.Thread):
         convassists = [self.conv_normal, self.conv_shorthand, self.conv_sentence, self.conv_canned_phrases]
 
         for convassist in convassists:
-            if convassist.initialized:
-                convassist.update_params(str(self.testgensentencepred), str(self.retrieveaac))
-                convassist.read_updated_toxicWords()
-                self.logger.info(f"convassist {convassist.id} updated.")
-            else:
+            if not convassist.initialized:
                 try:
                     config = self.createPredictorConfig(f"{convassist.ini_file}")
                     if config:
                         convassist.initialize(config, self.pathlog, self.loglevel)
-                    
-                        if convassist.id == ca_sentence_id:
-                            convassist.read_updated_toxicWords()
-                        if convassist.id == ca_cannedphrases_id:
-                            self.conv_canned_phrases.cannedPhrase_recreateDB()
-
-                        self.logger.info(f"convassist {convassist.id} initialized and configured.")
+                        self.logger.info(f"convassist {convassist.id} initialized.")
 
                 except Exception as e:
                     self.logger.critical(f"Error initializing convassist {convassist.id}: {e}.")
                     raise e
+                
+            convassist.update_params(str(self.testgensentencepred), str(self.retrieveaac))
+            convassist.read_updated_toxicWords()
+            self.logger.info(f"convassist {convassist.id} updated.")
+
         
     def ConnectToACAT(self, connection_type=None) -> tuple[bool, Any]:
 
