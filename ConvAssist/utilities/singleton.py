@@ -10,11 +10,28 @@ class Singleton(type):
 
         return cls._instances[cls]
     
-class PredictorSingleton(Singleton):
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+class OptionalSingleton(type):
+    """
+    A metaclass that allows the class to be a singleton if the singleton attribute is set to True.
+    """
+    _instances = {}
+    _singleton_enabled = False
 
+    def __call__(cls, *args, **kwargs):
+        if cls._singleton_enabled:
+            if cls not in cls._instances:
+                cls._instances[cls] = super(OptionalSingleton, cls).__call__(*args, **kwargs)
+            return cls._instances[cls]
         else:
-            cls._instances[cls].context_tracker = args[1]
-        return cls._instances[cls]
+            return super(OptionalSingleton, cls).__call__(*args, **kwargs)
+        
+    @classmethod
+    def enable_singleton(cls):
+        cls._singleton_enabled = True
+
+    @classmethod
+    def disable_singleton(cls):
+        cls._singleton_enabled = False
+
+
+
