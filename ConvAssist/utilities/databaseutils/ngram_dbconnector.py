@@ -80,6 +80,7 @@ class NGramDatabaseConnector(DatabaseConnector):
         pass # pragma: no cover
     
     # Implemeneted NGRAM Functionality
+    #TODO Refactor to use dbconnector.create_table
     def create_ngram_table(self, cardinality):
         """
         Creates a table for n-gram of a given cardinality. The table name is

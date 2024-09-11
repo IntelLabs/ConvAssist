@@ -73,3 +73,16 @@ class SQLiteDatabaseConnector(DatabaseConnector):
             raise DatabaseError("Database connection is not established.")
         self.conn.rollback()
 
+    def create_table(self, tablename: str, columns: List[str]) -> None:
+        if not self.conn:
+            raise DatabaseError("Database connection is not established.")
+        try:
+            self.connect()
+    
+            self.execute_query(f'''
+                CREATE TABLE IF NOT EXISTS {tablename}
+                ({', '.join(columns)})
+            ''')
+            self.close()
+        except Exception as e:
+            raise Exception(f"Unable to create table {tablename} in {self.dbname}.", e)

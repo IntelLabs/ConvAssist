@@ -17,6 +17,7 @@ class DatabaseConnector(ABC):
             self.logger = logger
         else:
             self.logger = LoggingUtility().get_logger(__name__, log_level=logging.DEBUG)
+
     @abstractmethod
     def connect(self, **kwargs) -> Any:
         """
@@ -73,3 +74,9 @@ class DatabaseConnector(ABC):
         """
         pass # pragma: no cover
     
+    @abstractmethod
+    def create_table(self, dbname: str, tablename: str, columns: List[str]) -> None:
+        """
+        Create a table in the database.
+        """
+        pass
