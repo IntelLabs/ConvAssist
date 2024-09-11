@@ -17,11 +17,10 @@
             "request": "launch",
             "module": "pytest",
             "args": [
-                "tests/",
-                "ACAT_ConvAssist_Interface/ConvAssistCPApp/tests"
+                "ConvAssist",
             ],
             "env": {
-                "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}/ACAT_ConvAssist_Interface/ConvAssistCPApp"
+                "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}"
             },
             "console": "integratedTerminal",
             "justMyCode": true
