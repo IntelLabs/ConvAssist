@@ -1,14 +1,20 @@
 {
     "version": "0.2.0",
     "configurations": [
-
         {
-            "name": "Python Debugger: ConvAssistCP",
+            "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/ACAT_ConvAssist_Interface/ConvAssistCPApp/ConvAssistCPApp.py",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python Debugger: ConvAssistUI",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ACAT_ConvAssist_Interface/ConvAssistCPApp/ConvAssistUI.py",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}/ACAT_ConvAssist_Interface/ConvAssistCPApp"
+                "PYTHONPATH": "${workspaceFolder}"
             },
         },
         {
@@ -20,7 +26,7 @@
                 "ConvAssist",
             ],
             "env": {
-                "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}"
             },
             "console": "integratedTerminal",
             "justMyCode": true
