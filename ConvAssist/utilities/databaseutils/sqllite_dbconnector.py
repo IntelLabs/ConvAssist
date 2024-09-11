@@ -34,29 +34,33 @@ class SQLiteDatabaseConnector(DatabaseConnector):
         finally:
             cursor.close()  
   
-    def fetch_one(self, query: str, params: Optional[Tuple[Any, ...]] = None) -> Optional[Tuple[Any, ...]] | None:
+    def fetch_one(self, query: str, params: Optional[Tuple[Any, ...]] = None):
         if not self.conn:
             raise DatabaseError("Database connection is not established.")
 
+        result = []
         cursor = self.conn.cursor()
         try:
             cursor.execute(query, params or ())
-            return cursor.fetchone()
+            result = cursor.fetchone()
         
         finally:
             cursor.close()
+            return result
 
-    def fetch_all(self, query: str, params: Optional[Tuple[Any, ...]] = None) -> List[Tuple[Any, ...]] | None:
+    def fetch_all(self, query: str, params: Optional[Tuple[Any, ...]] = None):
         if not self.conn:
             raise DatabaseError("Database connection is not established.")
         
+        result = []
         cursor = self.conn.cursor()
         try:
             cursor.execute(query, params or ())
-            return cursor.fetchall()
+            result = cursor.fetchall()
         
         finally:
             cursor.close()
+            return result
 
     def begin_transaction(self) -> None:
         if not self.conn:

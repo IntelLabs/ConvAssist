@@ -1,3 +1,6 @@
+# Copyright (C) 2023 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 from abc import ABC, abstractmethod
 import logging
 from typing import Any, List, Optional, Tuple

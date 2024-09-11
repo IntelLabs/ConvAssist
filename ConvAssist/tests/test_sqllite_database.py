@@ -7,7 +7,7 @@ from ConvAssist.tests.utils import safe_delete_file, safe_check_folder
 
 class TestSQLiteDatabase(unittest.TestCase):
     def setUp(self):
-        self.db_path = "tests/test_data/dbs/"
+        self.db_path = "ConvAssist/tests/test_data/dbs/"
         self.db_file = "test_sqllite.db"
         safe_check_folder(self.db_path)
         self.db = SQLiteDatabaseConnector(str(Path(self.db_path) / (self.db_file)))
@@ -30,8 +30,6 @@ class TestSQLiteDatabase(unittest.TestCase):
         query = "CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, name TEXT)"
         self.db.execute_query(query)
         result = self.db.fetch_all("SELECT name FROM sqlite_master WHERE type='table' AND name='test_table'")
-        # self.assertEqual(len(result), 1)
-        # self.assertEqual(result[0][0], "test_table")
 
     def test_begin_transaction(self):
         self.db.connect()
@@ -52,7 +50,7 @@ class TestSQLiteDatabase(unittest.TestCase):
 
 class TestSQLiteFetchCommands(unittest.TestCase):
     def setUp(self):
-        self.db_path = "tests/test_data/dbs/"
+        self.db_path = "ConvAssist/tests/test_data/dbs/"
         self.db_file = "test_sqllite_fetch.db"
         safe_check_folder(self.db_path)
         self.db = SQLiteDatabaseConnector(str(Path(self.db_path) / (self.db_file)))
@@ -68,8 +66,7 @@ class TestSQLiteFetchCommands(unittest.TestCase):
         query = "SELECT COUNT(*) FROM test_table"
         result = self.db.fetch_one(query)
         self.assertIsNotNone(result)
-        if result is not None:
-            self.assertTupleEqual(result, (0,))
+        self.assertEqual(result[0], 0)
 
     def test_fetch_all(self):
         query = "SELECT * FROM test_table"

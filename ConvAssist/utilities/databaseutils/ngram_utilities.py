@@ -1,8 +1,6 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-# from __future__ import absolute_import, unicode_literals
-
 import re
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional, Tuple
@@ -11,76 +9,18 @@ from ConvAssist.utilities.databaseutils.dbconnector import DatabaseConnector, Da
 re_escape_singlequote = re.compile("'")
 
 
-class NGramDatabaseConnector(DatabaseConnector):
+class NGramUtilities(DatabaseConnector):
     """
     Abstract base class for database interactions.
     """
-    def __init__(self, dbname: str, cardinality=1, logger=None):
+    def __init__(self, cardinality=1, logger=None):
         super().__init__(logger)
         self.cardinality = cardinality
-        self.dbname = dbname
         self.lowercase = False
         self.normalize = False
         self.connection = None
-        
-    @abstractmethod
-    def connect(self, **kwargs) -> None:
-        """
-        Establish a connection to the database.
-        """
-        pass # pragma: no cover
-
-    @abstractmethod
-    def close(self) -> None:
-        """
-        Close the database connection.
-        """
-        pass # pragma: no cover
-
-    @abstractmethod
-    def execute_query(self, query: str, params: Optional[Tuple[Any, ...]] = None) -> None:
-        """
-        Execute a query without returning any results.
-        """
-        pass # pragma: no cover
-
-    @abstractmethod
-    def fetch_one(self, query: str, params: Optional[Tuple[Any, ...]] = None) -> Optional[Tuple[Any, ...]]:
-        """
-        Execute a query and return a single result.
-        """
-        pass # pragma: no cover
-
-    @abstractmethod
-    def fetch_all(self, query: str, params: Optional[Tuple[Any, ...]] = None) -> List[Tuple[Any, ...]]:
-        """
-        Execute a query and return all results.
-        """
-        pass # pragma: no cover
-
-    @abstractmethod
-    def begin_transaction(self) -> None:
-        """
-        Begin a new database transaction.
-        """
-        pass # pragma: no cover
-
-    @abstractmethod
-    def commit(self) -> None:
-        """
-        Commit the current transaction.
-        """
-        pass # pragma: no cover
-
-    @abstractmethod
-    def rollback(self) -> None:
-        """
-        Roll back the current transaction.
-        """
-        pass # pragma: no cover
     
     # Implemeneted NGRAM Functionality
-    #TODO Refactor to use dbconnector.create_table
     def create_ngram_table(self, cardinality):
         """
         Creates a table for n-gram of a given cardinality. The table name is
@@ -93,6 +33,7 @@ class NGramDatabaseConnector(DatabaseConnector):
             The cardinality to create a table for.
 
         """
+        # TODO Refactor to use dbconnector.create_table
         query = "CREATE TABLE IF NOT EXISTS _{0}_gram (".format(cardinality)
         unique = ""
         for i in reversed(range(cardinality)):
@@ -201,8 +142,9 @@ class NGramDatabaseConnector(DatabaseConnector):
         query += " FROM _{0}_gram;".format(self.cardinality)
 
         result = self.fetch_all(query)
-        for row in result:
-            yield tuple(row)
+        if result:
+            for row in result:
+                yield tuple(row)
 
     def unigram_counts_sum(self) -> int:
         query = "SELECT SUM(count) from _1_gram;"
@@ -233,7 +175,7 @@ class NGramDatabaseConnector(DatabaseConnector):
 
         return self._extract_first_integer(result)
 
-    def ngram_like_table(self, ngram, limit=-1):
+    def ngram_fetch_like(self, ngram, limit=-1):
         try:
             query = "SELECT {0} FROM _{1}_gram {2} ORDER BY count DESC".format(
                 self._build_select_like_clause(len(ngram)),
@@ -250,9 +192,6 @@ class NGramDatabaseConnector(DatabaseConnector):
             self.logger.critical(f"Error while ngram_like_table this query: {query}")
             raise e
         return result
-
-    def ngram_like_table_filtered(self, ngram, filter, limit=-1):
-        pass
 
     def increment_ngram_count(self, ngram):
         pass
@@ -371,4 +310,3 @@ class NGramDatabaseConnector(DatabaseConnector):
         if not count > 0:
             count = 0
         return count
-
