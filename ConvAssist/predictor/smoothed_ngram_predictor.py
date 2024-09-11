@@ -70,9 +70,7 @@ class SmoothedNgramPredictor(Predictor):
                 with open(self.startwords, 'w') as fp:
                     json.dump(self.precomputed_sentenceStart, fp)
 
-        if(self.name == PredictorNames.PersonalizedWord.value):
-            # Create the personalized database if it does not exist
-            self.recreate_database()
+        self.recreate_database()
 
     def extract_svo(self, sent):
         doc = self.nlp(sent)
@@ -110,23 +108,22 @@ class SmoothedNgramPredictor(Predictor):
         return False, ""
 
     def recreate_database(self):
-        # Check all phrases from the personalized corpus
-        # if the phrase is found in the cannedSentences DB, continue,
-        # Else, add it to both ngram and cannedSentences DB
 
-        # STEP 1: CREATE CANNED_NGRAM DATABASE IF IT DOES NOT EXIST
-        try:
-            self.db.create_ngram_table(cardinality=1)
-            self.db.create_ngram_table(cardinality=2)
-            self.db.create_ngram_table(cardinality=3)
-        except Exception as e:
-            self.logger.error(f"exception in creating personalized db : {e}")
-
-        # STEP 2: Update personalized_corups if it is not None
+        # STEP 1: Update personalized_corups if it is not None
         personalized_corpus = self.read_personalized_corpus()
 
         if personalized_corpus:
             try:
+
+                # STEP 2: CREATE CANNED_NGRAM DATABASE IF IT DOES NOT EXIST
+                try:
+                    self.db.create_ngram_table(cardinality=1)
+                    self.db.create_ngram_table(cardinality=2)
+                    self.db.create_ngram_table(cardinality=3)
+                except Exception as e:
+                    self.logger.error(f"exception in creating personalized db : {e}")
+
+
                 sentence_db = SQLiteDatabaseConnector(self.sentences_db)
                 sentence_db.connect()
 

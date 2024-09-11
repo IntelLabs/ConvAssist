@@ -135,7 +135,7 @@ class ConvAssist:
     #     # self.predictor_activator.set_log(filename, pathLoc, level)
     #     pass
 
-    def cannedPhrase_recreateDB(self):
+    def recreate_database(self):
         """
         Recreates the databases for the cannedPhrases predictor.
         """

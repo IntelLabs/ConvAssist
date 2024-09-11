@@ -139,7 +139,7 @@ class CannedPhrasesPredictor(Predictor):
                 self.logger.info("Recreate_DB of cannedPhrasesPredictor: NO modifications to cannedPhrases")
 
         except Exception as e:
-            self.logger.error("CannedPhrasePredictor recreateDB: {e}")
+            self.logger.error(f"CannedPhrasePredictor recreateDB: {e}")
 
         finally:
             self.sentences_db.close()

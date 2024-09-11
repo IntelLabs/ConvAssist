@@ -96,12 +96,15 @@ class Predictor(ABC):
 
     def read_personalized_corpus(self):
         corpus = []
-        path = self.config.get(self.predictor_name, "personalized_resources_path")
-        personalized_cannedphrases = os.path.join(path, self.predictor_name, "personalized_cannedphrases")
+        path = self.config.get(self.predictor_name, "personalized_resources_path", fallback="")
+        file = self.config.get(self.predictor_name, "personalized_cannedphrases", fallback="")
 
-        if os.path.exists(personalized_cannedphrases):
-            corpus = open(personalized_cannedphrases, "r").readlines()
-            corpus = [s.strip() for s in corpus]
+        if path  and file:
+            personalized_cannedphrases = os.path.join(path, file)
+
+            if os.path.exists(personalized_cannedphrases):
+                corpus = open(personalized_cannedphrases, "r").readlines()
+                corpus = [s.strip() for s in corpus]
 
         return corpus
 

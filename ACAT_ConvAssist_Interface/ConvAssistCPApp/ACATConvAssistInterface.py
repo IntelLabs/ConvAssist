@@ -398,8 +398,10 @@ class ACATConvAssistInterface(threading.Thread):
                     self.logger.critical(f"Error initializing convassist {convassist.id}: {e}.")
                     raise e
                 
+            convassist.recreate_database()
             convassist.update_params(str(self.testgensentencepred), str(self.retrieveaac))
             convassist.read_updated_toxicWords()
+
             self.logger.info(f"convassist {convassist.id} updated.")
 
         
