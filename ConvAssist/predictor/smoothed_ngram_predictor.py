@@ -311,28 +311,21 @@ class SmoothedNgramPredictor(Predictor):
                 if len(prefix_completion_candidates) >= max_partial_prediction_size:
                     break
                 prefix_ngram = tokens[(len(tokens) - k - 1):]
-                partial: List[tuple[Any, Any]] = []
 
                 if prefix_ngram:
-                    if not filter:
-                        partial = self.db.ngram_like_table(
-                            prefix_ngram,
-                            max_partial_prediction_size - len(prefix_completion_candidates),
-                        )
-                    else:
-                        self.logger.debug(f"TODO: Implement filter in SmoothedNgramPredictor")
-                        # partial = self.db.ngram_like_table_filtered(
-                        #     prefix_ngram,
-                        #     filter,
-                        #     max_partial_prediction_size - len(prefix_completion_candidates),
-                        # )
+                    partial = self.db.ngram_fetch_like(
+                        prefix_ngram,
+                        max_partial_prediction_size - len(prefix_completion_candidates),
+                    )
 
-                for p in partial:
-                    if len(prefix_completion_candidates) > max_partial_prediction_size:
-                        break
-                    candidate = p[-2]  # ???
-                    if candidate not in prefix_completion_candidates:
-                        prefix_completion_candidates.append(candidate)
+                if partial is not None:
+                    for p in partial:
+                        if len(prefix_completion_candidates) > max_partial_prediction_size:
+                            break
+                        #TODO explain why -2
+                        candidate = p[-2]
+                        if candidate not in prefix_completion_candidates:
+                            prefix_completion_candidates.append(candidate)
 
             # smoothing
             unigram_counts_sum = self.db.unigram_counts_sum()
