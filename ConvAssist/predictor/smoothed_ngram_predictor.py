@@ -1,3 +1,5 @@
+from configparser import ConfigParser
+import logging
 import os
 import collections
 import json
@@ -5,6 +7,7 @@ import string
 from pathlib import Path
 from typing import Any, List, Optional
 
+from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.predictor import Predictor
 from ConvAssist.predictor.utilities.predictor_names import PredictorNames
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
@@ -21,11 +24,11 @@ class SmoothedNgramPredictor(Predictor):
     """
 
     def __init__(
-            self,
-            config,
-            context_tracker,
-            predictor_name,
-            logger = None
+            self, 
+            config: ConfigParser, 
+            context_tracker: ContextTracker, 
+            predictor_name: str, 
+            logger: logging.Logger | None = None
     ):
         super().__init__(
             config, context_tracker, 

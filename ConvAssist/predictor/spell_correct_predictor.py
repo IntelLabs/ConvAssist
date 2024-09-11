@@ -1,11 +1,13 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
+from configparser import ConfigParser
+import logging
 import re
 import os
 from collections import Counter
-from pathlib import Path
 
+from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.predictor import Predictor
 from ConvAssist.predictor.utilities.suggestion import Suggestion
 from ConvAssist.predictor.utilities.prediction import Prediction
@@ -20,11 +22,11 @@ class SpellCorrectPredictor(Predictor):
     """
 
     def __init__(
-            self,
-            config,
-            context_tracker,
-            predictor_name,
-            logger=None
+            self, 
+            config: ConfigParser, 
+            context_tracker: ContextTracker, 
+            predictor_name: str, 
+            logger: logging.Logger | None = None
     ):
         super().__init__(
             config, 

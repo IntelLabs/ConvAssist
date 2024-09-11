@@ -1,5 +1,7 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
+from configparser import ConfigParser
+import logging
 import os
 from typing import Any, Dict, List, Optional
 import numpy
@@ -18,6 +20,7 @@ from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline, Pipeline
 
+from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.predictor import Predictor
 from ConvAssist.predictor.utilities.suggestion import Suggestion
 from ConvAssist.predictor.utilities.nlp import NLP
@@ -30,12 +33,13 @@ class SentenceCompletionPredictor(Predictor):
     Calculates prediction from n-gram model using gpt-2.
     """
 
-    def __init__(self, 
-                 config, 
-                 context_tracker, 
-                 predictor_name, 
-                 logger=None):
-
+    def __init__(
+        self, 
+        config: ConfigParser, 
+        context_tracker: ContextTracker, 
+        predictor_name: str, 
+        logger: logging.Logger | None = None
+    ):
         super().__init__( 
             config, 
             context_tracker, 

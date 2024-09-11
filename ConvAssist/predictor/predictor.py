@@ -10,25 +10,6 @@ from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.utilities.prediction import Prediction
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
-class OptionalSingleton(type):
-    """
-    A metaclass that allows the class to be a singleton if the singleton attribute is set to True.
-    """
-    _instances = {}
-    _singleton_enabled = False
-
-    def __call__(cls, *args, **kwargs):
-        if cls._singleton_enabled:
-            if cls not in cls._instances:
-                cls._instances[cls] = super(OptionalSingleton, cls).__call__(*args, **kwargs)
-            return cls._instances[cls]
-        else:
-            return super(OptionalSingleton, cls).__call__(*args, **kwargs)
-        
-    @classmethod
-    def enable_singleton(cls):
-        cls._singleton_enabled = True
-
 
 class Predictor(ABC):
     """
@@ -46,8 +27,6 @@ class Predictor(ABC):
         Loads the model.
     - read_personalized_toxic_words(self, *args, **kwargs) -> None 
         Reads the personalized toxic words.
-    - createTable(self, dbname, tablename, columns) -> None
-        Creates a table in the database.
     """
 
     def __init__(
@@ -128,18 +107,4 @@ class Predictor(ABC):
     def read_personalized_toxic_words(self, *args, **kwargs):
         # Not all predictors need this, but define it here for those that do
         pass
-        
-    #TODO: Move this to a better place. This is a utility function and should not be in the Predictor class
-    def createTable(self, dbname, tablename, columns):
-        try:
-            conn = SQLiteDatabaseConnector(dbname)
-            conn.connect()
-    
-            conn.execute_query(f'''
-                CREATE TABLE IF NOT EXISTS {tablename}
-                ({', '.join(columns)})
-            ''')
-            conn.close()
-        except Exception as e:
-            raise Exception(f"Unable to create table {tablename} in {dbname}.", e)
 

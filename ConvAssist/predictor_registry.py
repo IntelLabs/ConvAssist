@@ -20,7 +20,6 @@ predictor_mapping = {
     "CannedPhrasesPredictor": CannedPhrasesPredictor
 }
 
-
 class PredictorRegistry(list):
     """
     Manages instantiation and iteration through predictors and aids in
@@ -49,16 +48,17 @@ class PredictorRegistry(list):
         predictor: Any = None
         
         predictor_class = config.get(predictor_name, "predictor_class")
-        predictor_args = [
-            config,
-            context_tracker,
-            predictor_name,
-            logger,
-        ]
-                
-        if predictor_class in predictor_mapping:
-            predictor = predictor_mapping[predictor_class](*predictor_args)
 
+        if predictor_class in predictor_mapping:
+            try:
+                if predictor_class in predictor_mapping:
+                    predictor = predictor_mapping[predictor_class](config, context_tracker, predictor_name, logger)
+                else:
+                    logger.error(f"Predictor class {predictor_class} is not found in the predictor_mapping dictionary.")
+
+            except TypeError as e:
+                logger.error(f"Error instantiating predictor {predictor_name}: {e}")
+                return
         if predictor:
             self.append(predictor)
 
