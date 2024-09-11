@@ -53,7 +53,7 @@ class Predictor(ABC):
     def predictor_name(self):
         return self._predictor_name
     
-    @abstractmethod    
+    @abstractmethod # pragma: no cover 
     def predict(self, max_partial_prediction_size = None, filter = None)  -> tuple[Prediction, Prediction]:
         '''
         Predicts the next word and sentence based on the context
@@ -66,7 +66,7 @@ class Predictor(ABC):
         '''
         self.logger.info(f"{self.predictor_name} - Predicting next word and sentence")
     
-    @abstractmethod
+    @abstractmethod # pragma: no cover 
     def _read_config(self):
         '''
         Reads the configuration file
@@ -88,23 +88,23 @@ class Predictor(ABC):
         return corpus
 
     
-    def learn(self, change_tokens = None):
+    def learn(self, change_tokens = None): # pragma: no cover 
         # Not all predictors need this, but define it here for those that do
         pass
 
-    def recreate_database(self):
+    def recreate_database(self): # pragma: no cover 
         # Not all predictors need this, but define it here for those that do
         pass
 
-    def load_model(*args, **kwargs):
+    def load_model(*args, **kwargs): # pragma: no cover 
         # Not all predictors need this, but define it here for those that do
         pass
 
-    def is_model_loaded(self):
+    def is_model_loaded(self): # pragma: no cover 
         # Not all predictors need this, but define it here for those that do
         pass
 
-    def read_personalized_toxic_words(self, *args, **kwargs):
+    def read_personalized_toxic_words(self, *args, **kwargs): # pragma: no cover 
         # Not all predictors need this, but define it here for those that do
         pass
 

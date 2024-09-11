@@ -246,6 +246,7 @@ class ACATConvAssistInterface(threading.Thread):
                     self.logger.info(f"Sending message: {PredictionResponse}.")
                     Win32PipeHandler.send_message(Pipehandle, PredictionResponse.jsonSerialize())
 
+            #TODO - Handle more gracefully
             except Exception as e:
                 self.logger.critical(f"Critical Error in Handle incoming message. Bailing {e}.")
                 Win32PipeHandler.DisconnectNamedPipe(Pipehandle)
@@ -404,7 +405,6 @@ class ACATConvAssistInterface(threading.Thread):
 
             self.logger.info(f"convassist {convassist.id} updated.")
 
-        
     def ConnectToACAT(self, connection_type=None) -> tuple[bool, Any]:
 
         success = False

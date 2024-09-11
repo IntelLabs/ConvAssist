@@ -63,7 +63,6 @@ class PredictorActivator(object):
 
         if self.context_tracker:
             context = self.context_tracker.get_last_token()
-            # context = self.context_tracker.token(0)
         else:
             context = ""
 
@@ -78,30 +77,29 @@ class PredictorActivator(object):
                 if sentences:
                     sentence_predictions.append(sentences)
 
-                    # Combine the sentence predictions and get the next sentence letter probabilities
-                    sentence_nextLetterProbs, sentence_result = self.combiner.combine(sentence_predictions, context)
-
                 # Append the words to the word_predictions list
                 if words:
                     word_predictions.append(words)
-
-                    # Combine the word predictions and get the next word letter probabilities
-                    word_nextLetterProbs, word_result = self.combiner.combine(word_predictions, context)
             
             except Exception as e:
                 self.logger.debug(f"Error in predictor {predictor.predictor_name}: {e}")
                 continue
 
         # If the word predictor(s) return empty lists, use predictions from the spell predictor
-        if word_result == []:
-            # spellingPredictor: SpellCorrectPredictor = predictor
+        if word_predictions == []:
+
             spellingPredictor = self.registry.get_predictor(PredictorNames.Spell.value)
             if spellingPredictor:
                 _, words = spellingPredictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter)
 
                 if words:
                     word_predictions.append(words)
-                    word_nextLetterProbs, word_result = self.combiner.combine(word_predictions, context)
+
+        # Combine the sentence predictions and get the next sentence letter probabilities
+        sentence_nextLetterProbs, sentence_result = self.combiner.combine(sentence_predictions, context)
+
+        # Combine the word predictions and get the next word letter probabilities
+        word_nextLetterProbs, word_result = self.combiner.combine(word_predictions, context)
 
         return (word_nextLetterProbs, word_result, sentence_nextLetterProbs, sentence_result)
 

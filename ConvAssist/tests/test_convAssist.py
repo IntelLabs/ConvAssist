@@ -60,13 +60,13 @@ class TestConvAssist(unittest.TestCase):
 
         conv_assist.predictor_activator.read_updated_toxicWords.assert_called()
 
-    def test_cannedPhrase_recreateDB(self):
+    def test_recreate_database(self):
         conv_assist = ConvAssist(self.id_str, self.ini_file, config = self.config)
 
         # Mock the recreate_canned_phrasesDB method of predictor_activator
         conv_assist.predictor_activator.recreate_database = MagicMock()
 
-        conv_assist.cannedPhrase_recreateDB()
+        conv_assist.recreate_database()
 
         conv_assist.predictor_activator.recreate_database.assert_called()
 

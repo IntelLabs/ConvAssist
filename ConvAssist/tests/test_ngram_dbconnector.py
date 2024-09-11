@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import MagicMock
-from .ngram_dbconnector import NGramDatabaseConnector
+from ConvAssist.utilities.databaseutils.sqllite_ngram_dbconnector import SQLiteNgramDatabaseConnector
 
 class TestNGramDatabaseConnector(unittest.TestCase):
     def setUp(self):
         # Create a mock instance of NGramDatabaseConnector
-        self.connector = NGramDatabaseConnector(dbname="test_db")
+        self.connector = SQLiteNgramDatabaseConnector(dbname="test_db")
         self.connector.execute_query = MagicMock()
 
     def test_create_ngram_table(self):
