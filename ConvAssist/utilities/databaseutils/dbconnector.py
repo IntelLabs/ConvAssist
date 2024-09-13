@@ -19,7 +19,7 @@ class DatabaseConnector(ABC):
         if logger:
             self.logger = logger
         else:
-            self.logger = LoggingUtility().get_logger(__name__, log_level=logging.DEBUG)
+            self.logger = LoggingUtility().get_logger(__name__, log_level=logging.DEBUG, queue_handler=True)
 
     @abstractmethod
     def connect(self, **kwargs) -> Any:
