@@ -1,13 +1,12 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
+import logging
 from configparser import ConfigParser
-from typing import Any
 from nltk import sent_tokenize
 from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor_registry import PredictorRegistry
 from ConvAssist.predictior_activator import PredictorActivator
-import logging
 from ConvAssist.utilities.logging_utility import LoggingUtility
 
 class ConvAssist:
@@ -35,10 +34,10 @@ class ConvAssist:
         Checks if models associated with a predictor are loaded.
     """
 
-    def __init__(self, id: str, ini_file: str,
+    def __init__(self, name: str, ini_file: str,
                  config:ConfigParser | None = None, 
                  log_location:str | None = None, 
-                 log_level:int | None = None):
+                log_level:int = logging.ERROR):
         """
         Initializes an instance of the class.
         Args:
@@ -52,7 +51,7 @@ class ConvAssist:
         self.log_level = log_level 
         self.log_location = log_location
         self.initialized = False
-        self.id = id
+        self.name = name
         self.ini_file = ini_file
 
         if self.config:
@@ -74,15 +73,11 @@ class ConvAssist:
             
         if log_level:
             self.log_level = log_level
-        else:
-            self.log_level = logging.getLevelName(self.config.get("Logging", "log_level", fallback="DEBUG")) # default to info level logging
 
         if log_location:
             self.log_location = log_location
-        else:
-            self.log_location = self.config.get("Logging", "log_location", fallback="") # default to no log file
 
-        self.logger = LoggingUtility().get_logger(self.id, self.log_level, self.log_location, True)
+        self.logger = LoggingUtility().get_logger(self.name, self.log_level, self.log_location, True)
             
         lowercase_mode = self.config.getboolean("ContextTracker", "lowercase_mode", fallback=False)
         self.context_tracker = ContextTracker(lowercase_mode)
@@ -91,7 +86,7 @@ class ConvAssist:
         self.predictor_registry.set_predictors(self.config, self.context_tracker, self.logger)
     
         self.predictor_activator = PredictorActivator(
-                self.config, self.predictor_registry, self.context_tracker
+                self.config, self.predictor_registry, self.context_tracker, self.logger
             )
         self.predictor_activator.combination_policy = "meritocracy"
 
@@ -104,7 +99,7 @@ class ConvAssist:
             tuple: The predictions made by the predictor_activator.
         """
         if not self.initialized:
-            raise AttributeError("ConvAssist {self.name} not initialized.")
+            raise AttributeError(f"ConvAssist {self.name} not initialized.")
 
         multiplier = 1
         (wordprob, word, sentprob, sent) = self.predictor_activator.predict(multiplier)
@@ -127,7 +122,7 @@ class ConvAssist:
 
     def read_updated_toxicWords(self):
         if not self.initialized:
-            raise AttributeError("ConvAssist {self.name} not initialized.")
+            raise AttributeError(f"ConvAssist {self.name} not initialized.")
         
         self.predictor_activator.read_updated_toxicWords()
 
@@ -140,7 +135,7 @@ class ConvAssist:
         Recreates the databases for the cannedPhrases predictor.
         """
         if not self.initialized:
-            raise AttributeError("ConvAssist {self.name} not initialized.")
+            raise AttributeError(f"ConvAssist {self.name} not initialized.")
             
         self.predictor_activator.recreate_database()
 
@@ -151,7 +146,7 @@ class ConvAssist:
             text (str): The text to learn.
         """
         if not self.initialized:
-            raise AttributeError("ConvAssist {self.name} not initialized.")
+            raise AttributeError(f"ConvAssist {self.name} not initialized.")
         
         sentences = sent_tokenize(text)
         for eachSent in sentences:
@@ -164,7 +159,7 @@ class ConvAssist:
             Any: The status of the model.
         """
         if not self.initialized:
-            raise AttributeError("ConvAssist {self.name} not initialized.")
+            raise AttributeError(f"ConvAssist {self.name} not initialized.")
         
         status = self.predictor_registry.model_status()
         return status
