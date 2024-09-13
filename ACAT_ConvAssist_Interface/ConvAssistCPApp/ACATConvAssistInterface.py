@@ -18,7 +18,7 @@ current_path = os.path.dirname(os.path.realpath(__file__))
 if current_path not in sys.path:
     sys.path.append(current_path)
 
-import Win32PipeHandler as Win32PipeHandler
+from ACAT_ConvAssist_Interface.message_handler import MessageHandler
 from ACATMessageTypes import ConvAssistMessage, ConvAssistSetParam, WordAndCharacterPredictionResponse, \
     ConvAssistMessageTypes, ConvAssistPredictionTypes, ParameterType
 
@@ -56,6 +56,9 @@ class ACATConvAssistInterface(threading.Thread):
         self.pipeName = "ACATConvAssistPipe"
 
         self.clientConnected: bool = False
+
+        # Message Handler
+        self.messageHandler = MessageHandler.getMessageHandler({"type": "win32", "pipe_name": self.pipeName})
 
         # Parameters that ACAT will send to ConvAssist
         self.path: str = ""
@@ -177,7 +180,7 @@ class ACATConvAssistInterface(threading.Thread):
         #return the ConfigParser object
         return config_parser
 
-    def handle_incoming_messages(self, Pipehandle):
+    def handle_incoming_messages(self):
         """
         Main Thread, called when a server was found: Receives and send messages, Event message terminate App
 
@@ -192,7 +195,7 @@ class ACATConvAssistInterface(threading.Thread):
                 PredictionResponse = WordAndCharacterPredictionResponse()
 
                 try:
-                    message_json = Win32PipeHandler.get_incoming_message(Pipehandle)
+                    message_json = self.messageHandler.receive_message()
                     messageReceived = ConvAssistMessage.jsonDeserialize(message_json)
                     self.logger.info(f"Message received: {messageReceived} ")
 
@@ -248,7 +251,7 @@ class ACATConvAssistInterface(threading.Thread):
                                     
                     case ConvAssistMessageTypes.FORCEQUITAPP:
                         self.logger.info("Force Quit App message received.")
-                        Win32PipeHandler.DisconnectNamedPipe(Pipehandle)
+                        self.messageHandler.disconnect()
                         send_response = False
                         self.app_quit_event.set()
 
@@ -257,12 +260,12 @@ class ACATConvAssistInterface(threading.Thread):
 
                 if send_response:
                     self.logger.info(f"Sending message: {PredictionResponse}.")
-                    Win32PipeHandler.send_message(Pipehandle, PredictionResponse.jsonSerialize())
+                    self.messageHandler.send_message(PredictionResponse.jsonSerialize())
 
             #TODO - Handle more gracefully
             except Exception as e:
                 self.logger.critical(f"Critical Error in Handle incoming message. Bailing {e}.")
-                Win32PipeHandler.DisconnectNamedPipe(Pipehandle)
+                self.messageHandler.disconnect()
                 self.app_quit_event.set()
             
             self.logger.info("Handle incoming message finished.")
@@ -388,16 +391,16 @@ class ACATConvAssistInterface(threading.Thread):
 
             self.logger.info(f"convassist {convassist.name} updated.")
 
-    def ConnectToACAT(self, connection_type=None) -> tuple[bool, Any]:
+    def ConnectToACAT(self, connection_type=None) -> bool:
 
-        success = False
-        handle = None
+        # success = False
+        # handle = None
         # Try to connect to ACAT server.  Give up after #retries
         self.logger.info("Trying to connect to ACAT server.")
         try:
-            success, handle = Win32PipeHandler.ConnectToNamedPipe(self.pipeName, self.retries, self.logger)
+            connected = self.messageHandler.connect()
 
-            if success:
+            if connected:
                 self.logger.info("Connected to ACAT server.")
                 self.clientConnected = True
 
@@ -405,11 +408,11 @@ class ACATConvAssistInterface(threading.Thread):
             self.logger.error(f"Error connecting to named pipe: {e}")
 
         finally:
-            return success, handle
+            return connected
 
     def DisconnectFromACAT(self):
         if self.clientConnected:
-            Win32PipeHandler.DisconnectNamedPipe(self.pipeName)
+            self.messageHandler.disconnect()
             self.clientConnected
 
     def run(self):
@@ -417,15 +420,14 @@ class ACATConvAssistInterface(threading.Thread):
         Main function to start the application
         """        
         self.logger.info("Starting ACATConvAssistInterface.")
-        success, handle = self.ConnectToACAT()
 
-        if not success:
+        if not self.ConnectToACAT():
             self.logger.info("Failed to connect to ACAT server. Exiting.")
             self.app_quit_event.set()
             return
 
         # self.initialize_or_configure_convassists()
-        self.handle_incoming_messages(handle)
+        self.handle_incoming_messages()
         
         self.logger.info("Disconnecting from ACAT.")
         self.DisconnectFromACAT()

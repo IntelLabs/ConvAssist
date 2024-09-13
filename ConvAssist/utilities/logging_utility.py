@@ -5,10 +5,18 @@ import sys
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from typing import TextIO
+import pydebugstring
 
 from ConvAssist.utilities.singleton import Singleton
 
 class QueueHandler(logging.Handler):
+    '''
+    This class is a custom logging handler that sends log messages to a queue.
+    args:
+        log_queue: queue.Queue - the queue to send log messages to 
+    returns:
+        None
+    '''
     def __init__(self, log_queue):
         super().__init__()
         self.log_queue = log_queue
@@ -48,11 +56,13 @@ class LoggingUtility(metaclass=Singleton):
         self.add_stream_handler(logger, sys.stdout)
 
         # # optionally add a file handler
-        # if log_location: self.add_file_handler(logger, log_location)
+        if log_location: self.add_file_handler(logger, log_location)
 
         # optionally add a queue handler
         if queue_handler: self.add_queue_handler(logger)
 
+        # if log_level is logging.DEBUG add a pydebugstring handler
+        logger.addHandler(pydebugstring.OutputDebugStringHandler())
         return logger
 
     def add_file_handler(self, logger:logging.Logger, log_location:str):

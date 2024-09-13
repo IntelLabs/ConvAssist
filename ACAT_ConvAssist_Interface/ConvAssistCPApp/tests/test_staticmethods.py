@@ -1,5 +1,4 @@
 import unittest
-import sys
 from unittest.mock import MagicMock, patch
 from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATConvAssistInterface import ACATConvAssistInterface
 

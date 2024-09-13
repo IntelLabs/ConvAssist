@@ -15,7 +15,7 @@ if current_path not in sys.path:
     sys.path.append(current_path)
 
 from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATMessageTypes import ConvAssistSetParam, ParameterType, ConvAssistMessage, ConvAssistMessageTypes, ConvAssistPredictionTypes
-from ACAT_ConvAssist_Interface.ConvAssistCPApp.Win32PipeHandler import get_incoming_message
+from ACAT_ConvAssist_Interface.message_handler.Win32PipeHandler import get_incoming_message
 
 set_path_param = ConvAssistSetParam(ParameterType.PATH, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources")
 set_static_path_param = ConvAssistSetParam(ParameterType.PATHSTATIC, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/static_resources") 
