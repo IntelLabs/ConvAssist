@@ -11,19 +11,19 @@ class TestMeritocracyCombiner(unittest.TestCase):
     def setUp(self):
         self.combiner = MeritocracyCombiner()
 
-    def _create_prediction(self):
+    def _create_prediction(self, predictor_name="test_predictor"):
         prediction = Prediction()
-        prediction.add_suggestion(Suggestion("Test", 0.3, "test_predictor"))
-        prediction.add_suggestion(Suggestion("Test2", 0.3, "test_predictor"))
-        prediction.add_suggestion(Suggestion("Test", 0.1, "test_predictor"))
-        prediction.add_suggestion(Suggestion("Test3", 0.2, "test_predictor"))
+        prediction.add_suggestion(Suggestion("Test", 0.3, predictor_name))
+        prediction.add_suggestion(Suggestion("Test2", 0.3, predictor_name))
+        prediction.add_suggestion(Suggestion("Test", 0.1, predictor_name))
+        prediction.add_suggestion(Suggestion("Test3", 0.2, predictor_name))
         return prediction
 
-    def _create_prediction2(self):
+    def _create_prediction2(self, predictor_name="test_predictor"):
         prediction = Prediction()
-        prediction.add_suggestion(Suggestion("Test2", 0.3, "test_predictor"))
-        prediction.add_suggestion(Suggestion("Test", 0.1, "test_predictor"))
-        prediction.add_suggestion(Suggestion("Test3", 0.2, "test_predictor"))
+        prediction.add_suggestion(Suggestion("Test2", 0.3, predictor_name))
+        prediction.add_suggestion(Suggestion("Test", 0.1, predictor_name))
+        prediction.add_suggestion(Suggestion("Test3", 0.2, predictor_name))
         return prediction
 
     def test_filter(self):
@@ -51,3 +51,17 @@ class TestMeritocracyCombiner(unittest.TestCase):
 
         assert result == correct
 
+    def test_combine_with_sentence_prediction(self):
+        predictions = [self._create_prediction2()]
+        prediction2 = self._create_prediction2("SentenceCompletionPredictor")
+        prediction2.add_suggestion(Suggestion("test is a sentence", 0.1, "SentenceCompletionPredictor"))
+        predictions.append(prediction2)
+        _, result = self.combiner.combine(predictions, "")
+
+        correct = Prediction()
+        correct.add_suggestion(Suggestion("Test2", 0.6, "test_predictor"))
+        correct.add_suggestion(Suggestion("Test3", 0.4, "test_predictor"))
+        correct.add_suggestion(Suggestion("Test", 0.2, "test_predictor"))
+        correct.add_suggestion(Suggestion("test is a sentence", 0.1, "SentenceCompletionPredictor"))
+
+        assert result == correct
