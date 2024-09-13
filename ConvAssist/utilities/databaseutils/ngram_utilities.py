@@ -189,7 +189,7 @@ class NGramUtilities(DatabaseConnector):
 
             result = self.fetch_all(query)
         except DatabaseError as e:
-            self.logger.critical(f"Error while ngram_like_table this query: {query}")
+            self.logger.critical(f"Error while ngram_fetch_like this query: {query}")
             raise e
         return result
 
