@@ -130,10 +130,10 @@ def ConnectToNamedPipe(PipeServerName, retries, logger) -> tuple[bool, Any]:
                 break
         except pywintypes.error as e:
             if e.args[0] == winerror.ERROR_PIPE_BUSY:
-                logger.debug(f"Pipe {pipeName} is busy, retrying...")
+                logger.info("ACAT is busy, retrying...")
                 retries -= 1
             elif e.args[0] == winerror.ERROR_FILE_NOT_FOUND:
-                logger.debug(f"Pipe {pipeName} not found, retrying...")
+                logger.info("ACAT not found, retrying...")
                 retries -= 1
             else:
                 raise Exception(f"Error connecting to named pipe: {e}") from e
