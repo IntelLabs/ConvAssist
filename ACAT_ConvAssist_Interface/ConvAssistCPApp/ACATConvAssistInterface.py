@@ -7,14 +7,11 @@
 
 import logging
 import os
-import queue
 import sys
 import threading
 import sys
-import tempfile
 
 from configparser import ConfigParser
-import time
 from typing import Any
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -28,23 +25,29 @@ from ACATMessageTypes import ConvAssistMessage, ConvAssistSetParam, WordAndChara
 from ConvAssist.ConvAssist import ConvAssist
 from ConvAssist.utilities.logging_utility import LoggingUtility
 
-ca_main_id = "MAIN"
+ca_main_id = "ACATINTERFACE"
+
 ca_normal_ini = "wordPredMode.ini"
-ca_normal_id = "NORMAL"
+ca_normal_id = "WORDPREDICTOR"
+
 ca_shorthand_ini = "shortHandMode.ini"
-ca_shorthand_id = "SHORTHAND"
+ca_shorthand_id = "SHORTHANDPREDICTOR"
+
 ca_sentence_ini = "sentenceMode.ini"
-ca_sentence_id = "SENTENCE"
+ca_sentence_id = "SENTENCEPREDICTOR"
+
 ca_cannedphrases_ini = "cannedPhrasesMode.ini"
-ca_cannedphrases_id = "CANNED"
+ca_cannedphrases_id = "CANNEDPREDICTOR"
+
+log_level = logging.DEBUG
 
 class ACATConvAssistInterface(threading.Thread):
     '''Class to handle the ConvAssist Interface with ACAT'''
 
-    def __init__(self, app_quit_event: threading.Event, queue_handler:bool = False):
+    def __init__(self, app_quit_event: threading.Event, queue_handler:bool = False, logging_level: int = log_level):
         super().__init__()
 
-        self.logger = LoggingUtility().get_logger(ca_main_id, logging.DEBUG, queue_handler=queue_handler)
+        self.logger = LoggingUtility().get_logger(ca_main_id, logging_level, queue_handler=queue_handler)
 
         self.app_quit_event = app_quit_event
         self.daemon = True
@@ -65,7 +68,7 @@ class ACATConvAssistInterface(threading.Thread):
         self.loglevel:int = logging.DEBUG
         self._pathlog = ""
 
-        # Variables for the configuration of the predictors
+        # Variables for the configuration of the instances of ConvAssist
         self.word_config: ConfigParser = ConfigParser()
         self.sh_config: ConfigParser = ConfigParser()
         self.sent_config: ConfigParser = ConfigParser()
@@ -74,11 +77,20 @@ class ACATConvAssistInterface(threading.Thread):
         self.sent_config_change: bool = False
         self.enable_logs: bool = True
 
-        # Variables for the predictors
+        self.convAssists = {}
+
+        # instances of ConvAssist
         self.conv_normal: ConvAssist = ConvAssist(ca_normal_id, ca_normal_ini)
+        self.convAssists.update({ConvAssistPredictionTypes.NORMAL: self.conv_normal})
+
         self.conv_shorthand: ConvAssist = ConvAssist(ca_shorthand_id, ca_shorthand_ini)
+        self.convAssists.update({ConvAssistPredictionTypes.SHORTHANDMODE: self.conv_shorthand})
+
         self.conv_sentence: ConvAssist = ConvAssist(ca_sentence_id, ca_sentence_ini)
+        self.convAssists.update({ConvAssistPredictionTypes.SENTENCES: self.conv_sentence})
+
         self.conv_canned_phrases: ConvAssist = ConvAssist(ca_cannedphrases_id, ca_cannedphrases_ini)
+        self.convAssists.update({ConvAssistPredictionTypes.CANNEDPHRASESMODE: self.conv_canned_phrases})
 
     @property
     def pathlog(self):
@@ -148,14 +160,15 @@ class ACATConvAssistInterface(threading.Thread):
                     config_parser[section][key] = self.pathpersonalized
                 elif key == "suggestions":
                     config_parser[section][key] = str(self.suggestions)
-                elif key == "test_generalSentencePrediction":
+                elif key == "_test_generalsentenceprediction":
                     config_parser[section][key] = str(self.testgensentencepred)
                 elif key == "retrieveAAC":
                     config_parser[section][key] = str(self.retrieveaac)
                 elif key == "log_location":
                     config_parser[section][key] = self.pathlog
                 elif key == "log_level":
-                    config_parser[section][key] = logging.getLevelName(self.loglevel)
+                    # config_parser[section][key] = logging.getLevelName(self.loglevel)
+                    config_parser[section][key] = logging.getLevelName(log_level)
 
         # Write the config file
         with open(config_file, 'w') as configfile:
@@ -181,10 +194,10 @@ class ACATConvAssistInterface(threading.Thread):
                 try:
                     message_json = Win32PipeHandler.get_incoming_message(Pipehandle)
                     messageReceived = ConvAssistMessage.jsonDeserialize(message_json)
-                    self.logger.debug(f"Message received: {messageReceived} ")
+                    self.logger.info(f"Message received: {messageReceived} ")
 
                 except TimeoutError as e:
-                    self.logger.debug(f"Timeout Error waiting for named pipe.  Try again.")
+                    self.logger.info(f"Timeout Error waiting for named pipe.  Try again.")
                     continue
                 
                 except BrokenPipeError as e:
@@ -208,7 +221,7 @@ class ACATConvAssistInterface(threading.Thread):
                             try:
                                 self.initialize_or_configure_convassists()
                             except AttributeError as e:
-                                self.logger.warning(f"Initializing predictors - Config not ready: {e}.")
+                                self.logger.warning(f"ConfigAssist not ready: {e}.")
                                 pass
                     
                     case ConvAssistMessageTypes.NEXTWORDPREDICTION:
@@ -255,103 +268,73 @@ class ACATConvAssistInterface(threading.Thread):
             self.logger.info("Handle incoming message finished.")
 
     def next_word_prediction(self, PredictionResponse, messageReceived):
-        word_prediction = []
-        next_Letter_Probs = []
-        sentence_nextLetterProbs = []
-        sentence_predictions = []
-
-        # Return count defaults
         words_count = 10
         next_word_letter_count = 20
         sentences_count = 6
         next_sentence_letter_count = 6
 
-        prediction_type = ConvAssistPredictionTypes.NONE
+        PredictionResponse.MessageType = ConvAssistMessageTypes.NEXTWORDPREDICTIONRESPONSE
 
-        match messageReceived.PredictionType:
-            case ConvAssistPredictionTypes.NORMAL:
+        self.make_prediction(messageReceived, 
+                                PredictionResponse,
+                                words_count,
+                                next_word_letter_count,
+                                sentences_count,
+                                next_sentence_letter_count)
+        
+    def next_sentence_prediction(self, PredictionResponse, messageReceived):
+        words_count = 0
+        next_word_letter_count = 0
+        sentences_count = 6
+        next_sentence_letter_count = 6
 
-                prediction_type = ConvAssistPredictionTypes.NORMAL
-                if self.conv_normal.initialized:
-                    if self.conv_normal.context_tracker:
-                        self.conv_normal.context_tracker.context =  messageReceived.Data
+        PredictionResponse.MessageType = ConvAssistMessageTypes.NEXTSENTENCEPREDICTIONRESPONSE
 
-                    # Don't send any sentence predictions from NORMAL mode
-                    sentences_count = 0
-                    next_sentence_letter_count = 0
+        # TODO: Due to a bug in ACAT, the prediction type is not being set correctly.  This is a workaround.
+        messageReceived.PredictionType = ConvAssistPredictionTypes.SENTENCES
 
-                    (next_Letter_Probs,
-                    word_prediction,
-                    sentence_nextLetterProbs,
-                    sentence_predictions) = self.conv_normal.predict()
+        self.make_prediction(messageReceived, 
+                                PredictionResponse,
+                                words_count,
+                                next_word_letter_count,
+                                sentences_count,
+                                next_sentence_letter_count)
 
-            case ConvAssistPredictionTypes.SHORTHANDMODE:
-                prediction_type = ConvAssistPredictionTypes.SHORTHANDMODE
+    def make_prediction(self, messageReceived, PredictionResponse, words_count, next_word_letter_count, sentences_count, next_sentence_letter_count):
+        word_prediction = []
+        next_Letter_Probs = []
+        sentence_nextLetterProbs = []
+        sentence_predictions = []
 
-                if self.conv_shorthand.initialized:
-                    if self.conv_shorthand.context_tracker:
-                        self.conv_shorthand.context_tracker.context =  messageReceived.Data
+        prediction_type = messageReceived.PredictionType
+        convAssistInstance:ConvAssist = self.convAssists.get(messageReceived.PredictionType, None)
 
-                    (next_Letter_Probs,
-                    word_prediction,
-                    sentence_nextLetterProbs,
-                    sentence_predictions) = self.conv_shorthand.predict()
+        if convAssistInstance and convAssistInstance.initialized and convAssistInstance.context_tracker:
+            convAssistInstance.context_tracker.context =  messageReceived.Data
 
-            case ConvAssistPredictionTypes.CANNEDPHRASESMODE:
-                prediction_type = ConvAssistPredictionTypes.CANNEDPHRASESMODE
+            # Don't send any sentence predictions from NORMAL mode
+            if messageReceived.PredictionType == ConvAssistPredictionTypes.NORMAL:
+                sentences_count = 0
+                next_sentence_letter_count = 0
 
-                if self.conv_canned_phrases.initialized:
-                    if self.conv_canned_phrases.context_tracker:
-                        self.conv_canned_phrases.context_tracker.context =  messageReceived.Data
+            (next_Letter_Probs,
+            word_prediction,
+            sentence_nextLetterProbs,
+            sentence_predictions) = convAssistInstance.predict()
 
-                    (next_Letter_Probs,
-                    word_prediction,
-                    sentence_nextLetterProbs,
-                    sentence_predictions) = self.conv_canned_phrases.predict()
+        else:
+            self.logger.warning(f"ConvAssist instance not found or not initialized for {messageReceived.PredictionType}.")
 
         next_Letter_Probs = ACATConvAssistInterface.sort_List(next_Letter_Probs, next_word_letter_count)
         word_prediction = ACATConvAssistInterface.sort_List(word_prediction, words_count)
         sentence_nextLetterProbs = ACATConvAssistInterface.sort_List(sentence_nextLetterProbs, next_sentence_letter_count)
         sentence_predictions = ACATConvAssistInterface.sort_List(sentence_predictions, sentences_count)
 
-        #TODO - Check if this should be json.dumps instead?
         result_Letters = str(next_Letter_Probs)
         result_Words = str(word_prediction)
         result_Letters_Sentence = str(sentence_nextLetterProbs)
         result_Sentences = str(sentence_predictions)
 
-        PredictionResponse.MessageType = ConvAssistMessageTypes.NEXTWORDPREDICTIONRESPONSE
-        PredictionResponse.PredictionType = prediction_type
-        PredictionResponse.PredictedWords = result_Words
-        PredictionResponse.NextCharacters = result_Letters
-        PredictionResponse.NextCharactersSentence = result_Letters_Sentence
-        PredictionResponse.PredictedSentence = result_Sentences
-
-    def next_sentence_prediction(self, PredictionResponse, messageReceived):
-        next_Letter_Probs = []
-        word_prediction = []
-        sentence_nextLetterProbs = []
-        sentence_predictions = []
-        sentences_count = 6
-        next_sentence_letter_count = 6
-
-        prediction_type = ConvAssistPredictionTypes.SENTENCES
-        
-        if self.conv_sentence.initialized and self.conv_sentence.check_model() == 1:
-            if self.conv_sentence.context_tracker is not None:
-                self.conv_sentence.context_tracker.context = messageReceived.Data
-
-            _, _, sentence_nextLetterProbs, sentence_predictions = self.conv_sentence.predict()
-
-        sentence_nextLetterProbs = ACATConvAssistInterface.sort_List(sentence_nextLetterProbs, next_sentence_letter_count)
-        sentence_predictions = ACATConvAssistInterface.sort_List(sentence_predictions, sentences_count)
-
-        result_Letters = str(next_Letter_Probs)
-        result_Words = str(word_prediction)
-        result_Letters_Sentence = str(sentence_nextLetterProbs)
-        result_Sentences = str(sentence_predictions)
-
-        PredictionResponse.MessageType = ConvAssistMessageTypes.NEXTSENTENCEPREDICTIONRESPONSE
         PredictionResponse.PredictionType = prediction_type
         PredictionResponse.PredictedWords = result_Words
         PredictionResponse.NextCharacters = result_Letters
@@ -359,9 +342,9 @@ class ACATConvAssistInterface(threading.Thread):
         PredictionResponse.PredictedSentence = result_Sentences
 
     def handle_learn(self, conv_assist: ConvAssist, messageReceived: ConvAssistMessage, mode: str):
-        self.logger.debug(f"Calling Learn_db for {conv_assist.id} with mode {mode}.")
+        self.logger.debug(f"Calling Learn_db for {conv_assist.name} with mode {mode}.")
         conv_assist.learn_text(messageReceived.Data)
-        self.logger.debug("Finished Learn_db for {conv_assist.id}.")
+        self.logger.debug(f"Finished Learn_db for {conv_assist.name}.")
 
     def handle_parameter_change(self, messageReceived: ConvAssistMessage):
         changed = False
@@ -393,17 +376,17 @@ class ACATConvAssistInterface(threading.Thread):
                     config = self.createPredictorConfig(f"{convassist.ini_file}")
                     if config:
                         convassist.initialize(config, self.pathlog, self.loglevel)
-                        self.logger.info(f"convassist {convassist.id} initialized.")
+                        self.logger.info(f"convassist {convassist.name} initialized.")
 
                 except Exception as e:
-                    self.logger.critical(f"Error initializing convassist {convassist.id}: {e}.")
+                    self.logger.critical(f"Error initializing convassist {convassist.name}: {e}.")
                     raise e
                 
             convassist.recreate_database()
             convassist.update_params(str(self.testgensentencepred), str(self.retrieveaac))
             convassist.read_updated_toxicWords()
 
-            self.logger.info(f"convassist {convassist.id} updated.")
+            self.logger.info(f"convassist {convassist.name} updated.")
 
     def ConnectToACAT(self, connection_type=None) -> tuple[bool, Any]:
 
