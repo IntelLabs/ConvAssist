@@ -15,11 +15,11 @@ class TestPredictorRegistry(unittest.TestCase):
         }
         self.config['SpellCorrectPredictor'] = {
             'predictor_class': "SpellCorrectPredictor",
-            'static_resources_path': './',
+            'static_resources_path': './static/',
+            'personalized_resources_path': './personalized/',
             'spellingdatabase': 'big.txt',
         }
         self.config['ContextTracker'] = {
-            'sliding_window_size': '80',
             'lowercase_mode': 'True'
         }
         
@@ -38,6 +38,9 @@ class TestPredictorRegistry(unittest.TestCase):
         predictor = self.predictor_registry.get_predictor("SpellCorrectPredictor")
         self.assertIsNotNone(predictor)
 
+    def test_model_loaded(self):
+        self.predictor_registry.set_predictors(self.config, self.context_tracker, logging.getLogger())
+        self.assertFalse(self.predictor_registry.model_status())
 
 if __name__ == '__main__':
     unittest.main()
