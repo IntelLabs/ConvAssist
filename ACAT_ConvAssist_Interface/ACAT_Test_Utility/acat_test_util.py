@@ -22,8 +22,8 @@ set_static_path_param = ConvAssistSetParam(ParameterType.PATHSTATIC, "C:/Users/m
 set_personalized_path_param = ConvAssistSetParam(ParameterType.PATHPERSONALIZED, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/personalized")
 set_log_param = ConvAssistSetParam(ParameterType.PATHLOG, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/logs")
 set_enable_logs_param = ConvAssistSetParam(ParameterType.ENABLELOGS, True)
-set_suggestions_param = ConvAssistSetParam(ParameterType.SUGGESTIONS, 4)
-set_test_general_sentence_prediction_param = ConvAssistSetParam(ParameterType.TESTGENSENTENCEPRED, True)
+set_suggestions_param = ConvAssistSetParam(ParameterType.SUGGESTIONS, 10)
+set_test_general_sentence_prediction_param = ConvAssistSetParam(ParameterType.TESTGENSENTENCEPRED, False)
 set_retrieve_aac_param = ConvAssistSetParam(ParameterType.RETRIEVEAAC, True)
 
 params = [set_log_param, set_enable_logs_param, set_suggestions_param, \
@@ -80,22 +80,20 @@ def cli_prompt(pipe_handle):
         # Get input from the user
         message = input("Message> ")
 
-        if message.lower() == 'learn':
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNSHORTHAND, ConvAssistPredictionTypes.NONE, "").jsonSerialize())
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNWORDS, ConvAssistPredictionTypes.NONE, "").jsonSerialize())
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNCANNED, ConvAssistPredictionTypes.NONE, "").jsonSerialize())
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.LEARNSENTENCES, ConvAssistPredictionTypes.NONE, "").jsonSerialize())
+        cmd, *args = message.split(":")
 
-        elif message.lower() == 'exit':
+        if cmd.lower() == 'learn':
+            for learn_type in list(ConvAssistMessageTypes)[6:9]:
+                msgs.append(ConvAssistMessage(learn_type, ConvAssistPredictionTypes.NONE, args[0]).jsonSerialize())
+
+        elif cmd.lower() == 'exit':
             msgs.append(ConvAssistMessage(ConvAssistMessageTypes.FORCEQUITAPP, ConvAssistPredictionTypes.NONE, "").jsonSerialize())
             breakloop = True
-        else:          
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTWORDPREDICTION, ConvAssistPredictionTypes.NORMAL, message).jsonSerialize())
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTSENTENCEPREDICTION, ConvAssistPredictionTypes.NORMAL, message).jsonSerialize())
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTWORDPREDICTION, ConvAssistPredictionTypes.CANNEDPHRASESMODE, message).jsonSerialize())
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTSENTENCEPREDICTION, ConvAssistPredictionTypes.CANNEDPHRASESMODE, message).jsonSerialize())
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTSENTENCEPREDICTION, ConvAssistPredictionTypes.SENTENCES, message).jsonSerialize())
-            msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTWORDPREDICTION, ConvAssistPredictionTypes.SHORTHANDMODE, message).jsonSerialize())
+            
+        else:
+            for prediction_type in list(ConvAssistPredictionTypes)[1:5]:
+                msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTSENTENCEPREDICTION, prediction_type, message).jsonSerialize())
+                msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTWORDPREDICTION, prediction_type, message).jsonSerialize())
 
         for msg in msgs:
             send_message_to_pipe(pipe_handle, msg)
