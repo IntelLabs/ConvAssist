@@ -35,16 +35,15 @@ class SpellCorrectPredictor(Predictor):
             logger
         )
 
-        self.config = config
-        self.name = predictor_name
-        self.context_tracker = context_tracker
-        self._read_config()
-
-        if os.path.exists(self.spellingDatabase):
-            with open(self.spellingDatabase) as file:
+        if os.path.exists(self.spellingdatabase):
+            with open(self.spellingdatabase) as file:
                 self.WORDS = Counter(self._words(file.read()))
         else:
             self.WORDS = Counter()
+
+    @property
+    def spellingdatabase(self):
+        return os.path.join(self._static_resources_path, self._spellingdatabase)
 
     def _words(self, text): return re.findall(r'\w+', text.lower())
 
@@ -92,10 +91,10 @@ class SpellCorrectPredictor(Predictor):
             probability = self._P(candidate)
             if probability > 0.0001:
                 word_prediction.add_suggestion(
-                    Suggestion(candidate, probability, self.name)
+                    Suggestion(candidate, probability, self.predictor_name)
                 )
-        return setence_prediction, word_prediction
 
-    def _read_config(self):
-        static_resources_path = self.config.get(self.name, "static_resources_path")
-        self.spellingDatabase = os.path.join(static_resources_path, self.config.get(self.name, "spellingDatabase"))
+        if len(word_prediction) == 0:
+            self.logger.error(f"No predictions from SpellCorrectPredictor")
+
+        return setence_prediction, word_prediction

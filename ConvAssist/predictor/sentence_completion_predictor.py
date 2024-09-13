@@ -49,36 +49,8 @@ class SentenceCompletionPredictor(Predictor):
 
         self.context_tracker = context_tracker
         self.name = predictor_name
-        # self.db = None
 
-        # Sentence Completion Attributes - Defaults
-        #[Database]
-        self._class:str = "SentenceCompletionPredictor"
-
-        #[PredictorRegistry]
-        self._predictors: str = "SentenceCompletionPredictor"
-
-        # [SentenceCompletionPredictor]
-        self._predictor_class:str = "SentenceCompletionPredictor"
-        self._learn:bool = True
-        self._static_resources_path:str = ""
-        self._personalized_resources_path:str = ""
-        self._test_generalsentenceprediction:bool = False
-        self._retrieveaac:bool = True
-        self._sent_database:str = "sent_database.db"
-        self._retrieve_database:str = "all_aac.txt"
-        self._modelname:str = "aac_gpt2"
-        self._tokenizer:str = "aac_gpt2"
-        self._startsents:str = "startSentences.txt"
-        self._embedding_cache_path:str = "all_aac_embeddings.pkl"
-        self._sentence_transformer_model:str = "multi-qa-MiniLM-L6-cos-v1"
-        self._index_path:str = "all_aac_semanticSearch.index"
-        self._blacklist_file:str = "filter_words.txt"
-        self._stopwords:str = "stopwords.txt"
-        self._personalized_allowed_toxicwords_file:str = "personalized_allowed_toxicwords.txt"
-
-        self._read_config()
-        self.model_loaded = False
+        self._model_loaded = False
         self.corpus_sentences=[]
         self.generator: Pipeline
         
@@ -95,7 +67,7 @@ class SentenceCompletionPredictor(Predictor):
             self.device = torch.device("cpu")
             self.n_gpu = 0
             
-        self.load_model(self.test_generalSentencePrediction, self.retrieve)            
+        self.load_model(self.test_generalsentenceprediction, self.retrieve)            
         self.stemmer = PorterStemmer()
         
         ####### CREATE INDEX TO QUERY DATABASE
@@ -129,10 +101,8 @@ class SentenceCompletionPredictor(Predictor):
         if(not Path.is_file(Path(self.embedding_cache_path))):
             self.corpus_embeddings = self.embedder.encode(self.corpus_sentences, show_progress_bar=True, convert_to_numpy=True)
             joblib.dump({'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings}, self.embedding_cache_path)
-            # np.save(self.embedding_cache_path,{'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings})
-
+ 
         else:
-            # cache_data = np.load(self.embedding_cache_path)
             cache_data = joblib.load(self.embedding_cache_path)
             self.corpus_sentences = cache_data['sentences']
             self.corpus_embeddings = cache_data['embeddings']
@@ -162,68 +132,8 @@ class SentenceCompletionPredictor(Predictor):
         if(not Path.is_file(Path(self.sent_database))) :
             self.logger.debug(f"{self.sent_database} not found, creating it")
             columns = ['sentence TEXT UNIQUE', 'count INTEGER']
-            self.createTable(self.sent_database, "sentences", columns)
+            SQLiteDatabaseConnector(self.sent_database, self.logger).create_table("sentences", columns)
 
-    @property
-    def learn_mode(self):
-        return self._learn
-
-    @property
-    def modelname(self):
-        return self._modelname
-    
-    @property
-    def personalized_resources_path(self):
-        return self._personalized_resources_path
-
-    @property
-    def static_resources_path(self):
-        return self._static_resources_path
-
-    @property
-    def test_generalSentencePrediction(self):
-        return self._test_generalsentenceprediction
-    
-    @test_generalSentencePrediction.setter
-    def test_generalSentencePrediction(self, value):
-        self._test_generalsentenceprediction = value
-
-    @property
-    def sent_database(self):
-        return os.path.join(self.personalized_resources_path, self._sent_database)
-    
-    @property
-    def retrieve_database(self):
-        return os.path.join(self.static_resources_path, self._retrieve_database)
-    
-    @property
-    def blacklist_file(self):
-        return os.path.join(self.static_resources_path, self._blacklist_file)
-    
-    @property
-    def embedding_cache_path(self):
-        return os.path.join(self.personalized_resources_path, self._embedding_cache_path)
-    
-    @property
-    def index_path(self):
-        return os.path.join(self.personalized_resources_path, self._index_path)
-
-    @property
-    def stopwordsFile(self):
-        return os.path.join(self.static_resources_path, self._stopwords)
-    
-    @property
-    def personalized_allowed_toxicwords_file(self):
-        return os.path.join(self.personalized_resources_path, self._personalized_allowed_toxicwords_file)
-    
-    @property
-    def startsents(self):
-        return os.path.join(self.personalized_resources_path, self._startsents)
-    
-    @property
-    def tokenizer(self):
-        return self._tokenizer
-    
     @property
     def retrieve(self):
         return self._retrieveaac
@@ -348,7 +258,7 @@ class SentenceCompletionPredictor(Predictor):
                     addedcompletions.append(k)
                     count = count+1
         except Exception as e:
-            self.logger.debug(f"Exception in SentenceCompletionPredictor, retrieveFromDataset function {e}")
+            self.logger.error(f"Exception in SentenceCompletionPredictor, retrieveFromDataset function {e}")
 
         return pred
 
@@ -372,7 +282,16 @@ class SentenceCompletionPredictor(Predictor):
             return True        
         return False
 
-    def _generate(self, context, num_gen, predi):
+    def _generate(self, context:str, num_gen:int, predi:Prediction) -> Prediction:
+        '''
+        _generate: generates completions for the given context
+        Args:
+            context: str: context for which completions are to be generated
+            num_gen: int: number of completions to be generated 
+            predi: Prediction: object to store the generated completions
+        Returns:
+            predi: Prediction: object with generated completions
+        '''
         try:
             start = time.perf_counter()
             result = self.generator(context, do_sample=False, max_new_tokens=20, num_return_sequences=10, num_beams = 10, num_beam_groups=10, diversity_penalty=1.5, repetition_penalty = 1.1) 
@@ -456,42 +375,53 @@ class SentenceCompletionPredictor(Predictor):
 
             self.logger.debug(f"latency in generation = {time.perf_counter()-start}")
         except Exception as e:
-            self.logger.debug(f"Exception in SentenceCompletionPredictor.{e}")
+            self.logger.error(f"Exception in SentenceCompletionPredictor.{e}")
 
         return predi
 
     # Base class method
-    def load_model(self, test_generalSentencePrediction, retrieve): 
+    def load_model(self, test_generalsentenceprediction:bool, retrieve:bool) -> None:
+        '''
+        load_model: loads the model for sentence completion
+        Args:
+            test_generalSentencePrediction: bool: flag to test the model
+            retrieve: bool: flag to retrieve from the dataset
+        Returns:
+            None
+        '''
+
         self.logger.debug(f"{__name__} loading model {str(self._modelname)}")
         
-        self.test_generalSentencePrediction = test_generalSentencePrediction
+        self.test_generalsentenceprediction = test_generalsentenceprediction
         self.retrieve = retrieve
         
         #### if we are testing the models or not retrieving from the AAC dataset
-        if (self.test_generalSentencePrediction) or (not self.retrieve):
+        if (self.test_generalsentenceprediction) or (not self.retrieve):
             if(os.path.exists(self.modelname)):
-                self.logger.debug(f"Loading gpt2 model from {str(self.modelname)}")
-                self.generator = pipeline('text-generation', model=self.modelname, tokenizer=self.tokenizer)
-                self.model_loaded = True
+                try:
+                    self.logger.debug(f"Loading gpt2 model from {str(self.modelname)}")
+                    self.generator = pipeline('text-generation', model=self.modelname, tokenizer=self.tokenizer)
+                    self._model_loaded = True
+                except Exception as e:
+                    self.logger.error(f"Exception in SentenceCompletionPredictor load_model = {e}")
+                    self._model_loaded = False
 
         elif (self.retrieve):
                 # TODO: REFACTOR THIS
-                self.model_loaded = True
+                self._model_loaded = True
 
         self.logger.debug(f"SentenceCompletionPredictor MODEL loaded: {self.model_loaded}")
 
-    # Base class method
-    def is_model_loaded(self):
-        return self.model_loaded
+    @property
+    def model_loaded(self):
+        return self._model_loaded
 
     # Base class method
-    def predict(self, max_partial_prediction_size, filter):
+    def predict(self, max_partial_prediction_size:int, filter: Optional[str] = None) -> tuple[Prediction, Prediction]:
         super().predict(max_partial_prediction_size, filter)
         
         sentence_prediction = Prediction()
         word_prediction = Prediction()   # not used in this predictor
-
-        # tokens = [""] * self.cardinality
 
         context = self.context_tracker.context.lstrip()
         if(context == "" or context==" "):
@@ -508,7 +438,7 @@ class SentenceCompletionPredictor(Predictor):
         self.logger.debug("context inside predictor predict = {context}")
 
         #### If we are testing generation models
-        if (self.test_generalSentencePrediction):
+        if (self.test_generalsentenceprediction):
             sentence_prediction = self._generate("<bos> "+context.strip(),5, sentence_prediction)
 
         #### if we want to Only retrieve from AAC dataset
@@ -536,7 +466,7 @@ class SentenceCompletionPredictor(Predictor):
     # Base class method
     def learn(self, change_tokens):
         #### For the sentence completion predictor, learning adds the sentence to the database
-        if self.learn_mode:
+        if self.learn_enabled:
             change_tokens = change_tokens.strip()
             self.logger.debug(f"learning, {change_tokens}")
             #### add to sentence database
@@ -599,31 +529,7 @@ class SentenceCompletionPredictor(Predictor):
                     UPDATE sentences SET count = ? where sentence = ?''', (count+1, change_tokens))
                 dbconn.commit()
             except Exception as e:
-                self.logger.debug(f"Exception in SentenceCompletionPredictor learn  = {e}")
+                self.logger.error(f"Exception in SentenceCompletionPredictor learn  = {e}")
             finally:
                 dbconn.close()
 
-    # Base class method
-    def _read_config(self):
-        try:
-            self.logger.debug(f"Reading config for {self.name}")
-
-            for attr, default in vars(self).items():
-                if attr.startswith("_"):
-                    for section in self.config.sections():
-                        if attr[1:] in self.config.options(section):
-                            new_value = default
-                            try:
-                                new_value = self.config.getboolean(section, attr[1:],fallback=default)
-                            except ValueError:
-                                try:
-                                    new_value = self.config.getint(section, attr[1:],fallback=default)
-                                except ValueError:
-                                    new_value = self.config.get(section, attr[1:],fallback=default)
-
-                            setattr(self, attr, new_value )
-                            break
-            
-        except Exception as e:
-            self.logger.error(f"Exception in SentenceCompletionPredictor._read_config = {e}")
-            raise e

@@ -36,17 +36,8 @@ class CannedPhrasesPredictor(Predictor):
             predictor_name,
             logger
         )
-        self.sentences_db: SQLiteDatabaseConnector
-        self.cardinality = 3
-        self.learn_mode_set = False
-        self.MODEL_LOADED = False
-        self._database = None
-        self._deltas = None
-        self._learn_mode = None
-        self.config = config
-        self.name = predictor_name
-        self.context_tracker: ContextTracker = context_tracker
-        self._read_config()
+
+        self._model_loaded = False
         self.seed = 42
         self.cannedPhrases_counts={}
         self.stemmer = PorterStemmer()
@@ -87,7 +78,7 @@ class CannedPhrasesPredictor(Predictor):
             self.index = self._create_index(self.index)
         self.index.set_ef(50)
 
-        self.MODEL_LOADED = True
+        self._model_loaded = True
         self.logger.debug(f"cannedPhrases count: {len(self.cannedPhrases_counts)}")
 
     def _create_index(self, ind):
@@ -96,9 +87,13 @@ class CannedPhrasesPredictor(Predictor):
         ind.save_index(self.index_path)
         return ind
 
-    # base class method
-    def is_model_loaded(self):
-        return self.MODEL_LOADED
+    @property
+    def sentences_db_path(self):
+        return os.path.join(self._personalized_resources_path, self._sentences_db)
+    
+    @property
+    def model_loaded(self):
+        return self._model_loaded
 
     # base class method
     def recreate_database(self):
@@ -158,7 +153,7 @@ class CannedPhrasesPredictor(Predictor):
             for i in range(0, len(hits)):
                 ret_sent = self.pers_cannedphrasesLines[hits[i]['corpus_id']]
                 if ret_sent.strip() not in direct_matchedSentences:
-                    sent_prediction.add_suggestion(Suggestion(ret_sent.strip(), hits[i]["score"], self.name))
+                    sent_prediction.add_suggestion(Suggestion(ret_sent.strip(), hits[i]["score"], self.predictor_name))
 
         except Exception as e:
             self.logger.error(f"Exception in CannedPhrasePredictor find_semantic_matches {e}")
@@ -184,7 +179,7 @@ class CannedPhrasesPredictor(Predictor):
             sorted_df = scores.sort_values(by = ['matches', 'probability'], ascending = [False, False])
             for index, row in sorted_df.iterrows():
                 if(row["matches"]>0):
-                    sent_prediction.add_suggestion(Suggestion(row['sentence'], row["matches"]+row["probability"], self.name))
+                    sent_prediction.add_suggestion(Suggestion(row['sentence'], row["matches"]+row["probability"], self.predictor_name))
         except Exception as e:
             self.logger.error(f"Exception in CannedPhrasePredictor find_direct_matches: {e}")
 
@@ -198,7 +193,7 @@ class CannedPhrasesPredictor(Predictor):
 
         sorted_x = collections.OrderedDict(sorted(probs.items(), key=lambda kv: kv[1], reverse=True))
         for k,v in list(sorted_x.items())[:count]:
-            sent_prediction.add_suggestion(Suggestion(k, v, self.name))
+            sent_prediction.add_suggestion(Suggestion(k, v, self.predictor_name))
         return sent_prediction
 
     # base class method
@@ -225,13 +220,16 @@ class CannedPhrasesPredictor(Predictor):
         except Exception as e:
             self.logger.error("Exception in cannedPhrases Predict: {e} ")
 
+        if len(sent_prediction) == 0:
+            self.logger.error("No canned phrases found")
+
         self.logger.info(f"End prediction. got {len(word_prediction)} word suggestions and {len(sent_prediction)} sentence suggestions")
         return sent_prediction, word_prediction
 
     # base class method
     def learn(self, change_tokens):
         #### For the cannedPhrase predictor, learning adds the sentence to the PSMCannedPhrases 
-        if self.learn_mode:
+        if self.learn_enabled:
             try:
                 #### ADD THE NEW PHRASE TO THE EMBEDDINGS, AND RECREATE THE INDEX. 
                 if(change_tokens not in self.corpus_sentences):
@@ -274,14 +272,3 @@ class CannedPhrasesPredictor(Predictor):
                 self.logger.error("Exception in LEARN CANNED PHRASES SENTENCES  = {e}")
             finally:
                 self.sentences_db.close()
-
-    # base class method
-    def _read_config(self):
-        self.static_resources_path = self.config.get(self.name, "static_resources_path")
-        self.personalized_resources_path = self.config.get(self.name, "personalized_resources_path")
-        self.learn_mode = self.config.get(self.name, "learn")
-        self.personalized_cannedphrases = os.path.join(self.personalized_resources_path, self.config.get(self.name, "personalized_cannedphrases"))
-        self.sentences_db_path  = os.path.join(self.personalized_resources_path, self.config.get(self.name, "sentences_db"))
-        self.embedding_cache_path = os.path.join(self.personalized_resources_path, self.config.get(self.name, "embedding_cache_path"))
-        self.index_path = os.path.join(self.personalized_resources_path, self.config.get(self.name, "index_path"))
-        self.sbertmodel = os.path.join(self.static_resources_path, self.config.get(self.name, "sbertmodel"))

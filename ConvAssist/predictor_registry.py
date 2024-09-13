@@ -6,7 +6,9 @@ from typing import Any
 from configparser import ConfigParser
 
 from ConvAssist.context_tracker import ContextTracker
-from ConvAssist.predictor.utilities.predictor_names import PredictorNames
+from ConvAssist.predictor.canned_word_predictor import CannedWordPredictor
+from ConvAssist.predictor.general_word_predictor import GeneralWordPredictor
+# from ConvAssist.predictor.utilities.predictor_names import PredictorNames
 
 from ConvAssist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
 from ConvAssist.predictor.sentence_completion_predictor import SentenceCompletionPredictor
@@ -17,7 +19,9 @@ predictor_mapping = {
     "SmoothedNgramPredictor": SmoothedNgramPredictor,
     "SpellCorrectPredictor": SpellCorrectPredictor,
     "SentenceCompletionPredictor": SentenceCompletionPredictor,
-    "CannedPhrasesPredictor": CannedPhrasesPredictor
+    "CannedPhrasesPredictor": CannedPhrasesPredictor,
+    "CannedWordPredictor": CannedWordPredictor,
+    "GeneralWordPredictor": GeneralWordPredictor
 }
 
 class PredictorRegistry(list):
@@ -62,21 +66,17 @@ class PredictorRegistry(list):
         if predictor:
             self.append(predictor)
 
-    def model_status(self) -> int:
-        model_status = 999
-        for each in self:
-            if(str(each).find(PredictorNames.SentenceComp.value)!=-1):
-                status = each.is_model_loaded()
-                if(status):
-                    model_status = 1
-                else:
-                    model_status = 0
-            if(str(each).find(PredictorNames.CannedPhrases.value)!=-1):
-                status = each.is_model_loaded()
-                if(status):
-                    model_status = 1
-                else:
-                    model_status = 0
+    def model_status(self) -> bool:
+        model_status = False
+
+        sentPredictor = self.get_predictor("SentenceCompletionPredictor")
+        if type(sentPredictor) is SentenceCompletionPredictor:
+            model_status = model_status and sentPredictor.model_loaded
+
+        cannedPredictor = self.get_predictor("CannedPhrasesPredictor")
+        if type(cannedPredictor) is CannedPhrasesPredictor:
+            model_status = model_status and cannedPredictor.model_loaded
+
         return model_status
 
     def get_predictor(self, predictor_name):
