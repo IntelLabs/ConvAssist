@@ -3,8 +3,8 @@
 from configparser import ConfigParser
 import logging
 
+from ConvAssist.predictor.spell_correct_predictor import SpellCorrectPredictor
 from ConvAssist.predictor.utilities.prediction import UnknownCombinerException
-from ConvAssist.predictor.utilities.predictor_names import PredictorNames
 from ConvAssist.combiner.meritocrity_combiner import MeritocracyCombiner
 from ConvAssist.predictor_registry import PredictorRegistry
 from ConvAssist.utilities.logging_utility import LoggingUtility
@@ -66,10 +66,13 @@ class PredictorActivator(object):
         else:
             context = ""
 
+        self.logger.info("Predicting next words and sentences")
+
         for predictor in self.registry:
-            if predictor.predictor_name == PredictorNames.Spell.value:
+            if type(predictor).__name__ == SpellCorrectPredictor.__name__:
                 continue
             try:
+                self.logger.info(f"Predictor {predictor.predictor_name} - Predicting next words and sentences")
                 # Get sentences and/or words from the predictor
                 sentences, words = predictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter)
 
@@ -80,15 +83,17 @@ class PredictorActivator(object):
                 # Append the words to the word_predictions list
                 if words:
                     word_predictions.append(words)
+
+                self.logger.info(f"Predictor {predictor.predictor_name} - Predicted {len(sentences)} sentences and {len(words)} words")
             
             except Exception as e:
-                self.logger.debug(f"Error in predictor {predictor.predictor_name}: {e}")
+                self.logger.critical(f"Predictor {predictor.predictor_name}: {e}")
                 continue
 
         # If the word predictor(s) return empty lists, use predictions from the spell predictor
         if word_predictions == []:
 
-            spellingPredictor = self.registry.get_predictor(PredictorNames.Spell.value)
+            spellingPredictor = self.registry.get_predictor(SpellCorrectPredictor.__name__)
             if spellingPredictor:
                 _, words = spellingPredictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter)
 
@@ -101,6 +106,7 @@ class PredictorActivator(object):
         # Combine the word predictions and get the next word letter probabilities
         word_nextLetterProbs, word_result = self.combiner.combine(word_predictions, context)
 
+        self.logger.info(f"Predictions completed. Returning {len(word_result)} words and {len(sentence_result)} sentences.")
         return (word_nextLetterProbs, word_result, sentence_nextLetterProbs, sentence_result)
 
     def recreate_database(self):
