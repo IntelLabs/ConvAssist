@@ -21,10 +21,10 @@ class MessageHandler(ABC):
     @staticmethod
     def getMessageHandler(config):
         if config['type'] == "win32":
-            from ACAT_Interfaces.utilities.message_handler.Win32PipeHandler import Win32PipeMessageHandler
+            from message_handler.Win32PipeHandler import Win32PipeMessageHandler
             return Win32PipeMessageHandler(config['pipe_name'])
         elif config['type'] == "WebSocket":
-            from ACAT_Interfaces.utilities.message_handler.WebSocketHandler import WebSocketHandler
+            from message_handler.WebSocketHandler import WebSocketHandler
             return WebSocketHandler(config['url'])
         
         else:

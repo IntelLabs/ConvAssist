@@ -18,7 +18,7 @@ current_path = os.path.dirname(os.path.realpath(__file__))
 if current_path not in sys.path:
     sys.path.append(current_path)
 
-from ACAT_ConvAssist_Interface.message_handler import MessageHandler
+from message_handler import MessageHandler
 from ACATMessageTypes import ConvAssistMessage, ConvAssistSetParam, WordAndCharacterPredictionResponse, \
     ConvAssistMessageTypes, ConvAssistPredictionTypes, ParameterType
 
