@@ -56,22 +56,23 @@ class SentenceCompletionPredictor(Predictor):
         
         self.nlp = NLP().get_nlp()
         
-        ################ check if saved torch model exists  
         if torch.cuda.is_available():
-            self.device = torch.device("cuda")
+            self.device = "cuda"
             self.n_gpu = torch.cuda.device_count()
         elif torch.backends.mps.is_available():
-            self.device = torch.device("mps")
+            self.device = "mps"
             self.n_gpu = torch.mps.device_count()
         else:
-            self.device = torch.device("cpu")
+            self.device = "cpu"
             self.n_gpu = 0
+
             
+        ################ check if saved torch model exists  
         self.load_model(self.test_generalsentenceprediction, self.retrieve)            
         self.stemmer = PorterStemmer()
         
         ####### CREATE INDEX TO QUERY DATABASE
-        self.embedder = SentenceTransformer(str(self._sentence_transformer_model))
+        self.embedder = SentenceTransformer(str(self._sentence_transformer_model), device=self.device)
         self.embedding_size = 384    #Size of embeddings
         self.top_k_hits = 2       #Output k hits
         self.n_clusters = 350
@@ -400,7 +401,7 @@ class SentenceCompletionPredictor(Predictor):
             if(os.path.exists(self.modelname)):
                 try:
                     self.logger.debug(f"Loading gpt2 model from {str(self.modelname)}")
-                    self.generator = pipeline('text-generation', model=self.modelname, tokenizer=self.tokenizer)
+                    self.generator = pipeline('text-generation', model=self.modelname, tokenizer=self.tokenizer, device=self.device, clean_up_tokenization_spaces=True)
                     self._model_loaded = True
                 except Exception as e:
                     self.logger.error(f"Exception in SentenceCompletionPredictor load_model = {e}")

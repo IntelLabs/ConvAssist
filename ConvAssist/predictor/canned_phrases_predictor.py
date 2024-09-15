@@ -12,6 +12,7 @@ from nltk.stem import PorterStemmer
 import numpy
 import pandas as pd
 from sentence_transformers import SentenceTransformer
+import torch
 from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.utilities.prediction import Prediction
 from ConvAssist.predictor.predictor import Predictor
@@ -37,11 +38,22 @@ class CannedPhrasesPredictor(Predictor):
             logger
         )
 
+        if torch.cuda.is_available():
+            self.device = "cuda"
+            self.n_gpu = torch.cuda.device_count()
+        elif torch.backends.mps.is_available():
+            self.device = "mps"
+            self.n_gpu = torch.mps.device_count()
+        else:
+            self.device = "cpu"
+            self.n_gpu = 0
+
         self._model_loaded = False
         self.seed = 42
         self.cannedPhrases_counts={}
         self.stemmer = PorterStemmer()
-        self.embedder = SentenceTransformer(self.sbertmodel)
+        self.embedder = SentenceTransformer(self.sbertmodel, device=self.device)
+        
         self.pers_cannedphrasesLines = open(self.personalized_cannedphrases, "r").readlines()
         self.pers_cannedphrasesLines = [s.strip() for s in self.pers_cannedphrasesLines]
 
