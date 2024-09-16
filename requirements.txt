@@ -1,5 +1,23 @@
+# TODO Switch to using Poetry for dependency management
+
+# ConvAssist Dependencies
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl#sha256=86cc141f63942d4b2c5fcee06630fd6f904788d2f0ab005cce45aadb8fb73889
 hnswlib>=0.8.0
 nltk>=3.9.1
 pandas>=2.2.2
 sentence-transformers>=3.0.1
+
+#ACAT_Interface Dependencies
+psutil>=6.0.0
+pystray>=0.19.5
+wxPython>=4.2.1
+pywin32>=306;sys_platform=="win32"
+pyinstaller>=6.10.0
+sv-ttk>=2.6.0
+pydebugstring >= 1.0.0.2
+websocket >= 0.2.1
+
+# Test Dependencies
+pytest==8.3.2
+pytest-timeout==2.3.1
+pytest-coverage==0.0
