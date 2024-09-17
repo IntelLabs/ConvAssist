@@ -1,5 +1,5 @@
 # Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 from configparser import ConfigParser
 import logging
@@ -59,8 +59,7 @@ class CannedPhrasesPredictor(Predictor):
 
         if(not os.path.isfile(self.sentences_db_path)):
             self.logger.debug(f"{self.sentences_db_path} does not exist, creating.")
-            columns = ['sentence TEXT UNIQUE', 'count INTEGER']
-            SQLiteDatabaseConnector(self.sentences_db_path).create_table("sentences", columns)
+            self.recreate_database()
         else:
             self.logger.debug(f"{self.sentences_db_path} exists, not creating.")
 
@@ -116,7 +115,12 @@ class CannedPhrasesPredictor(Predictor):
             #### RETRIEVE ALL SENTENCES FROM THE DATABASE
             self.sentences_db = SQLiteDatabaseConnector(self.sentences_db_path)
             self.sentences_db.connect()
-            res_all = self.sentences_db.fetch_all("SELECT * FROM sentences")
+
+            if(not os.path.isfile(self.sentences_db_path)):
+                columns = ['sentence TEXT UNIQUE', 'count INTEGER']
+                self.sentences_db.create_table("sentences", columns)
+            else:
+                res_all = self.sentences_db.fetch_all("SELECT * FROM sentences")
 
             if res_all:
                 for r in res_all:
