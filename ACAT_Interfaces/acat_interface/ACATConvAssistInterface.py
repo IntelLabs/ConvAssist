@@ -1,5 +1,5 @@
 # Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 """
    Systray application for ConvAssist to be used with ACAT
@@ -18,8 +18,8 @@ current_path = os.path.dirname(os.path.realpath(__file__))
 if current_path not in sys.path:
     sys.path.append(current_path)
 
-from message_handler import MessageHandler
-from ACATMessageTypes import ConvAssistMessage, ConvAssistSetParam, WordAndCharacterPredictionResponse, \
+from utilities.message_handler import MessageHandler
+from utilities.ACATMessageTypes import ConvAssistMessage, ConvAssistSetParam, WordAndCharacterPredictionResponse, \
     ConvAssistMessageTypes, ConvAssistPredictionTypes, ParameterType
 
 from ConvAssist.ConvAssist import ConvAssist
