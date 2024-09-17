@@ -1,5 +1,5 @@
 # Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import sqlite3
 from typing import Any, Optional, Tuple, List

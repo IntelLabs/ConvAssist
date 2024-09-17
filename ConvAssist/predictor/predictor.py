@@ -1,5 +1,5 @@
 # Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 from abc import ABC, abstractmethod
 import logging
@@ -196,15 +196,10 @@ class Predictor(ABC):
 
     def read_personalized_corpus(self):
         corpus = []
-        path = self.config.get(self.predictor_name, "personalized_resources_path", fallback="")
-        file = self.config.get(self.predictor_name, "personalized_cannedphrases", fallback="")
 
-        if path  and file:
-            personalized_cannedphrases = os.path.join(path, file)
-
-            if os.path.exists(personalized_cannedphrases):
-                corpus = open(personalized_cannedphrases, "r").readlines()
-                corpus = [s.strip() for s in corpus]
+        with open(self.personalized_cannedphrases, "r") as f:
+            corpus = f.readlines()
+            corpus = [s.strip() for s in corpus]
 
         return corpus
 
@@ -235,15 +230,16 @@ class Predictor(ABC):
                 properties = {k: v for k, v in vars(self).items() if k.startswith("_")}
 
                 for attr, default in properties.items():
-                    if attr[1:] in self.config.options(self.predictor_name):
+                    option = attr[1:]
+                    if option in self.config.options(self.predictor_name):
                         new_value = default
                         try:
-                            new_value = self.config.getboolean(self.predictor_name, attr[1:],fallback=default)
+                            new_value = self.config.getboolean(self.predictor_name, option,fallback=default)
                         except ValueError:
                             try:
-                                new_value = self.config.getint(self.predictor_name, attr[1:],fallback=default)
+                                new_value = self.config.getint(self.predictor_name, option,fallback=default)
                             except ValueError:
-                                new_value = self.config.get(self.predictor_name, attr[1:],fallback=default)
+                                new_value = self.config.get(self.predictor_name, option,fallback=default)
 
                         setattr(self, attr, new_value )
             

@@ -1,5 +1,5 @@
 # Copyright (C) 2024 Intel Corporation
-#SPDX-License-Identifier: Apache-2.0
+#SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 from ConvAssist.combiner.meritocrity_combiner import MeritocracyCombiner
