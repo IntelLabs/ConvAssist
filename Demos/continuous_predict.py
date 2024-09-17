@@ -1,6 +1,7 @@
 # Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 
+import os
 import configparser
 import json
 import logging
@@ -8,45 +9,25 @@ from pathlib import Path
 
 from ConvAssist.ConvAssist import ConvAssist
 
-SCRIPT_DIR = Path(__file__).resolve().parent.parent
+SCRIPT_DIR = str(Path(__file__).resolve().parent)
 
-# config file for shorthand mode
-shorthand_config_file = Path(SCRIPT_DIR) / ("ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/shortHandMode.ini")
-sh_config = configparser.ConfigParser()
-sh_config.read(shorthand_config_file)
+# config file for continuous predictions
+config_file = os.path.join(SCRIPT_DIR, "resources/continuous_prediction.ini")
+config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
 
-# config file for sentence completion mode
-sentence_config_file = Path(SCRIPT_DIR) / ("ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/sentenceMode.ini")
-sent_config = configparser.ConfigParser()
-sent_config.read(sentence_config_file)
+success_count = config.read(config_file)
 
-# config file for word prediction mode
-wordpred_config_file = Path(SCRIPT_DIR) / ("ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/wordPredMode.ini")
-wordpred_config = configparser.ConfigParser()
-wordpred_config.read(wordpred_config_file)
+if not success_count:
+    print("Config file not found. Exiting.")
+    exit(1)
 
-# config file for canned phrases mode
-canned_config_file = Path(SCRIPT_DIR) / ("ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/cannedPhrasesMode.ini")
-canned_config = configparser.ConfigParser()
-canned_config.read(canned_config_file)
+# Customize file paths
+config["Common"]["home_dir"] = SCRIPT_DIR
 
-###### Define the shorthand ConvAssist objects
-shortHandConvAssist = ConvAssist("shorthand", config=sh_config, log_level=logging.INFO)
+# Create an instance of ConvAssist
+ContinuosPreidictor = ConvAssist("CONT_PREDICT", config=config, log_level=logging.DEBUG)
 
-# # Define the canned ConvAssist objects
-# cannedPhrasesConvAssist = ConvAssist("canned", config=canned_config)
-
-# Define the sentence prediction ConvAssist objects
-sentCompleteConvAssist = ConvAssist("sentence", config=sent_config, log_level=logging.INFO)
-if(sentCompleteConvAssist.check_model()):
-    print("SENTENCE COMPLETION MODEL LOADED")
-
-# Define the word ConvAssist objects
-wordCompleteConvAssist = ConvAssist("word", config=wordpred_config, log_level=logging.INFO)
-if(wordCompleteConvAssist.check_model()):
-    print("WORD PREDICTION MODEL LOADED")
-
-convAssists = [wordCompleteConvAssist, sentCompleteConvAssist, shortHandConvAssist]
+convAssists = [ContinuosPreidictor]
     
 def main():
     while (True):
@@ -55,7 +36,7 @@ def main():
             print("Closing CLI.")
             break
             
-        print("GOING INTO WORD PREDICTION MODE")
+        print("GOING INTO PREDICTION MODE")
 
         for convAssist in convAssists:
             convAssist.context_tracker.context = buffer
@@ -65,8 +46,8 @@ def main():
 
             word_nextLetterProbs, \
                 word_predictions, \
-                    sentence_nextLetterProbs, \
-                    sentence_predictions = convAssist.predict()
+                sentence_nextLetterProbs, \
+                sentence_predictions = convAssist.predict()
             
             print("word_nextLetterProbs ----", json.dumps(word_nextLetterProbs))
             print("word_predictions: ----- ", json.dumps(word_predictions))
