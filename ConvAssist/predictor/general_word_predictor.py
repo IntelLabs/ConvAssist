@@ -1,4 +1,7 @@
 
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from configparser import ConfigParser
 import logging
 import os
@@ -15,19 +18,19 @@ from ConvAssist.predictor.utilities.suggestion import Suggestion
 
 class GeneralWordPredictor(SmoothedNgramPredictor):
     """
-    Calculates prediction from n-gram model in sqlite database. 
+    Calculates prediction from n-gram model in sqlite database.
 
     """
 
     def __init__(
-            self, 
-            config: ConfigParser, 
-            context_tracker: ContextTracker, 
-            predictor_name: str, 
+            self,
+            config: ConfigParser,
+            context_tracker: ContextTracker,
+            predictor_name: str,
             logger: logging.Logger | None = None
     ):
         super().__init__(
-            config, context_tracker, 
+            config, context_tracker,
             predictor_name, logger=logger
         )
 
@@ -49,16 +52,16 @@ class GeneralWordPredictor(SmoothedNgramPredictor):
     @property
     def aac_dataset(self):
         return os.path.join(self._static_resources_path, self._aac_dataset)
-    
+
     @property
     def database(self):
         return os.path.join(self._static_resources_path, self._database)
-    
+
     @database.setter
     def database(self, value):
         self._database = value
         self.init_database_connector_if_ready()
-            
+
     @property
     def startwords(self):
         return os.path.join(self._personalized_resources_path, self._startwords)
@@ -82,11 +85,11 @@ class GeneralWordPredictor(SmoothedNgramPredictor):
                 word_prediction.add_suggestion(
                         Suggestion(w, prob, self.predictor_name)
                     )
-        
+
             if len(word_prediction) == 0:
                 self.logger.error(f"Error getting most frequent start words.")
-                
+
             return sentence_prediction, word_prediction
-        
+
         else:
             return super().predict(max_partial_prediction_size, filter)

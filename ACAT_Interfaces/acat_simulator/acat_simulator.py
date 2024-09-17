@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import sys
 import os
 import json
@@ -22,7 +25,7 @@ from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATMessageTypes import ConvAssis
 # from ACAT_ConvAssist_Interface.message_handler.Win32PipeHandler import get_incoming_message
 
 set_path_param = ConvAssistSetParam(ParameterType.PATH, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources")
-set_static_path_param = ConvAssistSetParam(ParameterType.PATHSTATIC, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/static_resources") 
+set_static_path_param = ConvAssistSetParam(ParameterType.PATHSTATIC, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/static_resources")
 set_personalized_path_param = ConvAssistSetParam(ParameterType.PATHPERSONALIZED, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/personalized")
 set_log_param = ConvAssistSetParam(ParameterType.PATHLOG, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/logs")
 set_enable_logs_param = ConvAssistSetParam(ParameterType.ENABLELOGS, True)
@@ -109,7 +112,7 @@ def create_named_pipe(pipe_name):
         pipe_handle = win32pipe.CreateNamedPipe(
             pipe_name,
             win32pipe.PIPE_ACCESS_DUPLEX,
-            win32pipe.PIPE_TYPE_MESSAGE | 
+            win32pipe.PIPE_TYPE_MESSAGE |
                 win32pipe.PIPE_WAIT |
                 win32pipe.PIPE_READMODE_MESSAGE,
             1, 65536, 65536,
@@ -157,7 +160,7 @@ def cli_prompt(pipe_handle):
         elif cmd.lower() == 'exit':
             msgs.append(ConvAssistMessage(ConvAssistMessageTypes.FORCEQUITAPP, ConvAssistPredictionTypes.NONE, "").jsonSerialize())
             breakloop = True
-            
+
         else:
             for prediction_type in list(ConvAssistPredictionTypes)[1:5]:
                 msgs.append(ConvAssistMessage(ConvAssistMessageTypes.NEXTSENTENCEPREDICTION, prediction_type, message).jsonSerialize())
@@ -175,7 +178,7 @@ if __name__ == "__main__":
         # Wait for a client to connect
         print("Waiting for client to connect to the pipe...")
         win32pipe.ConnectNamedPipe(pipe_handle, None)
-        
+
         # # Start the CLI prompt
         # cli_prompt(pipe_handle)
         for param in params:

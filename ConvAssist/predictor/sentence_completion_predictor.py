@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 from configparser import ConfigParser
@@ -34,15 +37,15 @@ class SentenceCompletionPredictor(Predictor):
     """
 
     def __init__(
-        self, 
-        config: ConfigParser, 
-        context_tracker: ContextTracker, 
-        predictor_name: str, 
+        self,
+        config: ConfigParser,
+        context_tracker: ContextTracker,
+        predictor_name: str,
         logger: logging.Logger | None = None
     ):
-        super().__init__( 
-            config, 
-            context_tracker, 
+        super().__init__(
+            config,
+            context_tracker,
             predictor_name,
             logger
         )
@@ -53,9 +56,9 @@ class SentenceCompletionPredictor(Predictor):
         self._model_loaded = False
         self.corpus_sentences=[]
         self.generator: Pipeline
-        
+
         self.nlp = NLP().get_nlp()
-        
+
         if torch.cuda.is_available():
             self.device = "cuda"
             self.n_gpu = torch.cuda.device_count()
@@ -66,18 +69,18 @@ class SentenceCompletionPredictor(Predictor):
             self.device = "cpu"
             self.n_gpu = 0
 
-            
-        ################ check if saved torch model exists  
-        self.load_model(self.test_generalsentenceprediction, self.retrieve)            
+
+        ################ check if saved torch model exists
+        self.load_model(self.test_generalsentenceprediction, self.retrieve)
         self.stemmer = PorterStemmer()
-        
+
         ####### CREATE INDEX TO QUERY DATABASE
         self.embedder = SentenceTransformer(str(self._sentence_transformer_model), device=self.device)
         self.embedding_size = 384    #Size of embeddings
         self.top_k_hits = 2       #Output k hits
         self.n_clusters = 350
-        
-        #We use Inner Product (dot-product) as Index. 
+
+        #We use Inner Product (dot-product) as Index.
         #We will normalize our vectors to unit length, then is Inner Product equal to cosine similarity
         self.index = hnswlib.Index(space = 'cosine', dim = self.embedding_size)
 
@@ -91,7 +94,7 @@ class SentenceCompletionPredictor(Predictor):
 
         self.OBJECT_DEPS = {"dobj","pobj", "dative", "attr", "oprd", "npadvmod", "amod","acomp","advmod"}
         self.SUBJECT_DEPS = {"nsubj", "nsubjpass", "csubj", "agent", "expl"}
-        
+
         # tags that define wether the word is wh-
         self.WH_WORDS = {"WP", "WP$", "WRB"}
         self.stopwords = []
@@ -102,13 +105,13 @@ class SentenceCompletionPredictor(Predictor):
         if(not Path.is_file(Path(self.embedding_cache_path))):
             self.corpus_embeddings = self.embedder.encode(self.corpus_sentences, show_progress_bar=True, convert_to_numpy=True)
             joblib.dump({'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings}, self.embedding_cache_path)
- 
+
         else:
             cache_data = joblib.load(self.embedding_cache_path)
             self.corpus_sentences = cache_data['sentences']
             self.corpus_embeddings = cache_data['embeddings']
 
-        ###### LOAD INDEX IF EXISTS, ELSE CREATE INDEX 
+        ###### LOAD INDEX IF EXISTS, ELSE CREATE INDEX
         if Path.exists(Path(self.index_path)):
             self.logger.debug("Loading index...")
             self.index.load_index(str(self.index_path))
@@ -126,7 +129,7 @@ class SentenceCompletionPredictor(Predictor):
 
             self.logger.debug(f"Saving index to: {self.index_path}")
             self.index.save_index(self.index_path)
-            
+
         # Controlling the recall by setting ef:
         self.index.set_ef(50)  # ef should always be > top_k_hits
 
@@ -138,7 +141,7 @@ class SentenceCompletionPredictor(Predictor):
     @property
     def retrieve(self):
         return self._retrieveaac
-    
+
     @retrieve.setter
     def retrieve(self, value):
         self._retrieveaac = value
@@ -200,7 +203,7 @@ class SentenceCompletionPredictor(Predictor):
 
     def _textInCorpus(self, text):
         query_embedding = self.embedder.encode(text)
-        
+
         #We use hnswlib knn_query method to find the top_k_hits
         corpus_ids, distances = self.index.knn_query(query_embedding, k=self.top_k_hits)
         hits = [{'corpus_id': id, 'score': 1-score} for id, score in zip(corpus_ids[0], distances[0])]
@@ -208,7 +211,7 @@ class SentenceCompletionPredictor(Predictor):
         self.logger.debug(f"score = {hits[0]['score']}, corpus_id = {hits[0]['corpus_id']}, len(corpus_sentences) = {len(self.corpus_sentences)}, corpus_embeddings.shape = {self.corpus_embeddings[0].shape}")
         self.logger.debug(f"text = {text}, score = {hits[0]['score']}, sentence = {self.corpus_sentences[hits[0]['corpus_id']]}")
         return hits[0]['score']
-        
+
     def _retrieve_fromDataset(self, context):
         pred = Prediction()
         probs = {}
@@ -231,7 +234,7 @@ class SentenceCompletionPredictor(Predictor):
             dbconn = SQLiteDatabaseConnector(self.sent_database, self.logger)
             dbconn.connect()
             count = 0
-            #### CHECK IF SENTENCE EXISITS IN THE DATABASE
+            #### CHECK IF SENTENCE EXISTS IN THE DATABASE
             res = dbconn.fetch_all("SELECT * FROM sentences")
             if res:
                 for r in res:
@@ -266,7 +269,7 @@ class SentenceCompletionPredictor(Predictor):
     def _checkRepetition(self, text):
         tokens = nltk.word_tokenize(text)
 
-        #Create bigrams and check if there are any repeititions. 
+        #Create bigrams and check if there are any repeititions.
         bgs = nltk.bigrams(tokens)
         #compute frequency distribution for all the bigrams in the text
         fdist = nltk.FreqDist(bgs)
@@ -274,13 +277,13 @@ class SentenceCompletionPredictor(Predictor):
         if (fdist!={}):
             return True
 
-        #Create trigrams and check if there are any repeititions. 
+        #Create trigrams and check if there are any repeititions.
         bgs = nltk.trigrams(tokens)
         #compute frequency distribution for all the trigrams in the text
         fdist = nltk.FreqDist(bgs)
         fdist = {k:v for (k,v) in fdist.items() if v >= 2}
         if (fdist!={}):
-            return True        
+            return True
         return False
 
     def _generate(self, context:str, num_gen:int, predi:Prediction) -> Prediction:
@@ -288,20 +291,20 @@ class SentenceCompletionPredictor(Predictor):
         _generate: generates completions for the given context
         Args:
             context: str: context for which completions are to be generated
-            num_gen: int: number of completions to be generated 
+            num_gen: int: number of completions to be generated
             predi: Prediction: object to store the generated completions
         Returns:
             predi: Prediction: object with generated completions
         '''
         try:
             start = time.perf_counter()
-            result = self.generator(context, do_sample=False, max_new_tokens=20, num_return_sequences=10, num_beams = 10, num_beam_groups=10, diversity_penalty=1.5, repetition_penalty = 1.1) 
+            result = self.generator(context, do_sample=False, max_new_tokens=20, num_return_sequences=10, num_beams = 10, num_beam_groups=10, diversity_penalty=1.5, repetition_penalty = 1.1)
 
             if isinstance(result, List) and all(isinstance(item, dict) for item in result):
                 generated_text:List[Dict[str, Any]] = result
             else:
                 raise TypeError(f"Unexpected type for result: {type(result)}")
-            
+
             inputContext = context
             allsent: list[str] = []
             counts: Dict[str, float] = {}
@@ -320,7 +323,7 @@ class SentenceCompletionPredictor(Predictor):
                 self.logger.debug(f"Full generated Text = {newgen[1]}")
                 gen_text_sent = sent_tokenize(newgen[1])
                 currSentence = gen_text_sent[num_context_sent-1]
-                
+
                 ### check for repetitive sentences
                 if (self._checkRepetition(currSentence)):
                     self.logger.warning(f"Repetition in the sentence: {currSentence}")
@@ -353,10 +356,10 @@ class SentenceCompletionPredictor(Predictor):
                             if(present==False):
                                 allsent.append(currSentence)
                                 counts[reminderText] = 1*score
-                                totalsent = totalsent + 1 
+                                totalsent = totalsent + 1
                         else:
                             counts[reminderText] = counts[reminderText]+1*score
-                            totalsent = totalsent + 1 
+                            totalsent = totalsent + 1
 
             # toxic_filtered_sent = self.detoxify(allsent)
             self.logger.warning(f"toxic_filtered_sent not called.")
@@ -367,7 +370,7 @@ class SentenceCompletionPredictor(Predictor):
             sorted_x = collections.OrderedDict(sorted(counts.items(), key=lambda kv: kv[1], reverse=True))
             count = 0
             for k,v in sorted_x.items():
-                
+
                 if(count==num_gen):
                     break
                 self.logger.debug(f"sentence = {k} score = {v}")
@@ -392,10 +395,10 @@ class SentenceCompletionPredictor(Predictor):
         '''
 
         self.logger.debug(f"{__name__} loading model {str(self._modelname)}")
-        
+
         self.test_generalsentenceprediction = test_generalsentenceprediction
         self.retrieve = retrieve
-        
+
         #### if we are testing the models or not retrieving from the AAC dataset
         if (self.test_generalsentenceprediction) or (not self.retrieve):
             if(os.path.exists(self.modelname)):
@@ -420,7 +423,7 @@ class SentenceCompletionPredictor(Predictor):
     # Base class method
     def predict(self, max_partial_prediction_size:int, filter: Optional[str] = None) -> tuple[Prediction, Prediction]:
         super().predict(max_partial_prediction_size, filter)
-        
+
         sentence_prediction = Prediction()
         word_prediction = Prediction()   # not used in this predictor
 
@@ -430,7 +433,7 @@ class SentenceCompletionPredictor(Predictor):
             if (not Path.is_file(Path(self.startsents))):
                 self.logger.error(f"{self.startsents} not found!!!")
 
-            ##### retrieve top5 from startsentFile 
+            ##### retrieve top5 from startsentFile
             data = open(self.startsents,"r").readlines()
             for k in data:
                 sentence_prediction.add_suggestion(Suggestion(k.strip(), float(1/len(data)), self.name))
@@ -444,7 +447,7 @@ class SentenceCompletionPredictor(Predictor):
 
         #### if we want to Only retrieve from AAC dataset
         elif(self.retrieve):
-            self.logger.debug("retireve is True - retrieving from database")
+            self.logger.debug("retrieve is True - retrieving from database")
             sentence_prediction = self._retrieve_fromDataset(context)
 
         #### Hybrid retrieve mode  elif(self.retrieve=="hybrid"):
@@ -452,16 +455,16 @@ class SentenceCompletionPredictor(Predictor):
             self.logger.debug("Hybrid retrieval - AAC dataset + model generation")
             sentence_prediction = self._retrieve_fromDataset(context)
             self.logger.debug(f"retrieved {len(sentence_prediction)} sentences in {str(sentence_prediction)}")
-            
+
             ##### ONLY IF THE GENERATION MODEL IS LOADED, GENERATE MODEL BASED PREDICTIONS
             if(len(sentence_prediction)<5 and self.model_loaded):
                 self.logger.debug(f"generating {5-len(sentence_prediction)} more predictions")
                 sentence_prediction = self._generate("<bos> "+context.strip(),5-len(sentence_prediction), sentence_prediction)
 
-        latency = time.perf_counter() - start 
+        latency = time.perf_counter() - start
         self.logger.debug(f"latency = {latency}")
         self.logger.debug(f"prediction = {sentence_prediction}")
-        
+
         return sentence_prediction, word_prediction
 
     # Base class method
@@ -472,10 +475,10 @@ class SentenceCompletionPredictor(Predictor):
             self.logger.debug(f"learning, {change_tokens}")
             #### add to sentence database
             try:
-                dbconn = SQLiteDatabaseConnector(self.sent_database, self.logger) 
+                dbconn = SQLiteDatabaseConnector(self.sent_database, self.logger)
                 dbconn.connect()
                 count = 0
-                #### CHECK IF SENTENCE EXISITS IN THE DATABASE
+                #### CHECK IF SENTENCE EXISTS IN THE DATABASE
                 res = dbconn.fetch_all("SELECT count FROM sentences WHERE sentence = ?", (change_tokens,))
                 if res and len(res) > 0:
                     if len(res[0]) > 0:
@@ -487,10 +490,10 @@ class SentenceCompletionPredictor(Predictor):
                     dbconn.execute_query('''
                     INSERT INTO sentences (sentence, count)
                     VALUES (?,?)''', (change_tokens, 1))
-                    ### update retrieval index: 
+                    ### update retrieval index:
                     # self.index.load_index(self.index_path)
                     self.logger.debug("shape before: {} len*self.corpus_sentences = {}".format(self.corpus_embeddings[0].shape, len(self.corpus_sentences)))
-                    
+
                     self.logger.debug("sentence  {} not present, adding to embeddings and creating new index".format(change_tokens))
                     phrase_emb = self.embedder.encode(change_tokens.strip())
                     phrase_id = len(self.corpus_embeddings)
@@ -500,7 +503,7 @@ class SentenceCompletionPredictor(Predictor):
                     joblib.dump({'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings}, self.embedding_cache_path)
                     # with open(self.embedding_cache_path, "wb") as fOut:
                     #     pickle.dump({'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings}, fOut)
-                    
+
                     # Then we train the index to find a suitable clustering
                     self.logger.debug("phrase_emb.shape = {} id= {}".format(str(phrase_emb[0].shape), str(len(self.corpus_embeddings))))
                     self.index.add_items(phrase_emb, phrase_id)
@@ -533,4 +536,3 @@ class SentenceCompletionPredictor(Predictor):
                 self.logger.error(f"Exception in SentenceCompletionPredictor learn  = {e}")
             finally:
                 dbconn.close()
-

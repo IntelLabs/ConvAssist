@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -19,8 +22,8 @@ class NGramUtilities(DatabaseConnector):
         self.lowercase = False
         self.normalize = False
         self.connection = None
-    
-    # Implemeneted NGRAM Functionality
+
+    # Implemented NGRAM Functionality
     def create_ngram_table(self, cardinality):
         """
         Creates a table for n-gram of a given cardinality. The table name is
@@ -211,7 +214,7 @@ class NGramUtilities(DatabaseConnector):
         values = self._build_values_clause(ngram, count)
         query_check = f"SELECT * from _{len(ngram)}_gram where word = '{re_escape_singlequote.sub("''", ngram[0])}';"
         query_insert = f"INSERT INTO _{len(ngram)}_gram {values};"
-        
+
         # query = "INSERT INTO _{0}_gram {1};".format(
         #     len(ngram), self._build_values_clause(ngram, count)
         # )
@@ -245,7 +248,7 @@ class NGramUtilities(DatabaseConnector):
 
     def remove_ngram(self, ngram):
         """
-        Removes a given ngram from the databae. The ngram has to be in the
+        Removes a given ngram from the database. The ngram has to be in the
         database, otherwise this method will stop with an error.
 
         Parameters

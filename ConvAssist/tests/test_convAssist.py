@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import unittest
 from unittest.mock import MagicMock
 from configparser import ConfigParser
@@ -89,7 +92,7 @@ class TestConvAssist(unittest.TestCase):
 
         status = conv_assist.check_model()
 
-        self.assertEqual(status, 1) 
+        self.assertEqual(status, 1)
 
 if __name__ == "__main__":
     unittest.main()

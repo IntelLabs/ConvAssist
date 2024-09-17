@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 from configparser import ConfigParser
@@ -85,7 +88,7 @@ class PredictorActivator(object):
                     word_predictions.append(words)
 
                 self.logger.info(f"Predictor {predictor.predictor_name} - Predicted {len(sentences)} sentences and {len(words)} words")
-            
+
             except Exception as e:
                 self.logger.critical(f"Predictor {predictor.predictor_name}: {e}")
                 continue

@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from ConvAssist.predictor.utilities.prediction import MAX_PROBABILITY, MIN_PROBABILITY
 
 class SuggestionException(Exception):
@@ -33,7 +36,7 @@ class Suggestion(object):
     @property
     def word(self):
         return self._word
-    
+
     @property
     def predictor_name(self):
         return self._predictor_name
@@ -52,4 +55,3 @@ class Suggestion(object):
     @probability.deleter
     def probability(self):
             del self._probability
-

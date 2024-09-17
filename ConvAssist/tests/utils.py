@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from pathlib import Path
 import time
 
@@ -10,10 +13,10 @@ def safe_delete_file(file_path):
             try:
                 file_to_delete.unlink()
                 break
-            except PermissionError: 
+            except PermissionError:
                 time.sleep(.1)
                 pass
-            
+
     if file_to_delete.is_file():
         raise Exception(f"Could not delete file {file_path}")
 

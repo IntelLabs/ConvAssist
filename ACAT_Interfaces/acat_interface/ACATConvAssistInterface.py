@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -98,13 +101,13 @@ class ACATConvAssistInterface(threading.Thread):
     @property
     def pathlog(self):
         return self._pathlog
-    
+
     @pathlog.setter
     def pathlog(self, value):
         self.logger.debug(f"Setting log location to {value}.")
         self._pathlog = value
         # LoggingUtility.add_file_handler(self.logger, self._pathlog )
-    
+
     @pathlog.deleter
     def pathlog(self):
         del self._pathlog
@@ -138,13 +141,13 @@ class ACATConvAssistInterface(threading.Thread):
         if not self.path or not self.pathstatic or not self.pathpersonalized:
             self.logger.debug("Path not set")
             return None
-        
+
         # Check if config file exists
         config_file = os.path.join(self.path, config_file_name)
         if not os.path.exists(config_file):
             self.logger.debug("Config file not found")
             return None
-        
+
         # Create a ConfigParser object and read the config file
         config_parser = ConfigParser()
         config_parser.read(config_file)
@@ -153,7 +156,7 @@ class ACATConvAssistInterface(threading.Thread):
         if not config_parser:
             self.logger.debug("Config file not read successfully")
             return None
-        
+
         # make additional customizations to the ConfigParser object
         for section in config_parser.sections():
             for key in config_parser[section]:
@@ -202,7 +205,7 @@ class ACATConvAssistInterface(threading.Thread):
                 except TimeoutError as e:
                     self.logger.info(f"Timeout Error waiting for named pipe.  Try again.")
                     continue
-                
+
                 except BrokenPipeError as e:
                     # If the pipe is broken, exit the loop
                     self.logger.critical(f"Broken Pipe Error. Bailing. {e}.")
@@ -226,29 +229,29 @@ class ACATConvAssistInterface(threading.Thread):
                             except AttributeError as e:
                                 self.logger.warning(f"ConfigAssist not ready: {e}.")
                                 pass
-                    
+
                     case ConvAssistMessageTypes.NEXTWORDPREDICTION:
                         self.next_word_prediction(PredictionResponse, messageReceived)
 
                     case ConvAssistMessageTypes.NEXTSENTENCEPREDICTION:
                         self.next_sentence_prediction(PredictionResponse, messageReceived)
-                    
+
                     case ConvAssistMessageTypes.LEARNWORDS:
                         self.handle_learn(self.conv_sentence, messageReceived, "WORDS")
                         PredictionResponse.MessageType = ConvAssistMessageTypes.LEARNWORDS
-                    
+
                     case ConvAssistMessageTypes.LEARNSENTENCES:
                         self.handle_learn(self.conv_sentence, messageReceived, "SENTENCES")
                         PredictionResponse.MessageType = ConvAssistMessageTypes.LEARNSENTENCES
 
-                    case ConvAssistMessageTypes.LEARNCANNED:    
+                    case ConvAssistMessageTypes.LEARNCANNED:
                         self.handle_learn(self.conv_canned_phrases, messageReceived, "CANNEDPHRASESMODE")
                         PredictionResponse.MessageType = ConvAssistMessageTypes.LEARNCANNED
-                    
+
                     case ConvAssistMessageTypes.LEARNSHORTHAND:
                         self.handle_learn(self.conv_shorthand, messageReceived, "SHORTHANDMODE")
                         PredictionResponse.MessageType = ConvAssistMessageTypes.LEARNSHORTHAND
-                                    
+
                     case ConvAssistMessageTypes.FORCEQUITAPP:
                         self.logger.info("Force Quit App message received.")
                         self.messageHandler.disconnect()
@@ -267,7 +270,7 @@ class ACATConvAssistInterface(threading.Thread):
                 self.logger.critical(f"Critical Error in Handle incoming message. Bailing {e}.")
                 self.messageHandler.disconnect()
                 self.app_quit_event.set()
-            
+
             self.logger.info("Handle incoming message finished.")
 
     def next_word_prediction(self, PredictionResponse, messageReceived):
@@ -278,13 +281,13 @@ class ACATConvAssistInterface(threading.Thread):
 
         PredictionResponse.MessageType = ConvAssistMessageTypes.NEXTWORDPREDICTIONRESPONSE
 
-        self.make_prediction(messageReceived, 
+        self.make_prediction(messageReceived,
                                 PredictionResponse,
                                 words_count,
                                 next_word_letter_count,
                                 sentences_count,
                                 next_sentence_letter_count)
-        
+
     def next_sentence_prediction(self, PredictionResponse, messageReceived):
         words_count = 0
         next_word_letter_count = 0
@@ -296,7 +299,7 @@ class ACATConvAssistInterface(threading.Thread):
         # TODO: Due to a bug in ACAT, the prediction type is not being set correctly.  This is a workaround.
         messageReceived.PredictionType = ConvAssistPredictionTypes.SENTENCES
 
-        self.make_prediction(messageReceived, 
+        self.make_prediction(messageReceived,
                                 PredictionResponse,
                                 words_count,
                                 next_word_letter_count,
@@ -366,7 +369,7 @@ class ACATConvAssistInterface(threading.Thread):
 
         except Exception as e:
             self.logger.error(f"handle_parameters exception: {e}.")
-            
+
         self.logger.info("Parameters message answered.")
         return changed
 
@@ -384,7 +387,7 @@ class ACATConvAssistInterface(threading.Thread):
                 except Exception as e:
                     self.logger.critical(f"Error initializing convassist {convassist.name}: {e}.")
                     raise e
-                
+
             convassist.recreate_database()
             convassist.update_params(str(self.testgensentencepred), str(self.retrieveaac))
             convassist.read_updated_toxicWords()
@@ -418,7 +421,7 @@ class ACATConvAssistInterface(threading.Thread):
     def run(self):
         """
         Main function to start the application
-        """        
+        """
         self.logger.info("Starting ACATConvAssistInterface.")
 
         if not self.ConnectToACAT():
@@ -428,7 +431,7 @@ class ACATConvAssistInterface(threading.Thread):
 
         # self.initialize_or_configure_convassists()
         self.handle_incoming_messages()
-        
+
         self.logger.info("Disconnecting from ACAT.")
         self.DisconnectFromACAT()
 

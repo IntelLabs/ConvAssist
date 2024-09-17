@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from configparser import ConfigParser
 import logging
 import os
@@ -12,14 +15,14 @@ from ConvAssist.utilities.databaseutils.sqllite_ngram_dbconnector import SQLiteN
 
 class CannedWordPredictor(SmoothedNgramPredictor):
     def __init__(
-            self, 
-            config: ConfigParser, 
-            context_tracker: ContextTracker, 
-            predictor_name: str, 
+            self,
+            config: ConfigParser,
+            context_tracker: ContextTracker,
+            predictor_name: str,
             logger: logging.Logger | None = None
     ):
         super().__init__(
-            config, context_tracker, 
+            config, context_tracker,
             predictor_name, logger=logger
         )
 
@@ -35,7 +38,7 @@ class CannedWordPredictor(SmoothedNgramPredictor):
 
         with open(self.stopwordsFile, 'r') as f:
             self.stopwordsList = f.read().splitlines()
-            
+
             # strip each word in stopwordsList
             self.stopwordsList = [word.strip() for word in self.stopwordsList]
 
@@ -80,7 +83,7 @@ class CannedWordPredictor(SmoothedNgramPredictor):
         # Canned Word Predictor database is dynamically created.
         # Only check if cardinality is set.
         if (self.cardinality and self.cardinality > 0):
-            self.ngram_db_conn = SQLiteNgramDatabaseConnector(self.database, 
+            self.ngram_db_conn = SQLiteNgramDatabaseConnector(self.database,
                 self.cardinality,
                 self.logger)
 
@@ -121,7 +124,7 @@ class CannedWordPredictor(SmoothedNgramPredictor):
 
                 # Add phrases_toAdd to the database and ngram
                 for phrase in phrases_toAdd:
-                    # Add to 
+                    # Add to
                     query = '''INSERT INTO sentences (sentence, count)
                                     VALUES (?,?)'''
                     phraseToInsert = (phrase, 1)

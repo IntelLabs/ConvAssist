@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """
@@ -58,10 +58,10 @@ class ConvAssistMessage:
         _PredictionType = int(obj.get("PredictionType"))
         _Data = str(obj.get("Data"))
         return ConvAssistMessage(_MessageType, _PredictionType, _Data)
-    
+
     def jsonSerialize(self) -> str:
         return json.dumps(dataclasses.asdict(self))
-    
+
     def __repr__(self) -> str:
         return f"MessageType: {ConvAssistMessageTypes(self.MessageType).name}, " \
                f"PredictionType: {ConvAssistPredictionTypes(self.PredictionType).name}, " \
@@ -72,7 +72,7 @@ class ConvAssistMessage:
 class ConvAssistSetParam:
     Parameter: ParameterType
     Value: Any
-        
+
     @staticmethod
     def custom_parser(obj):
         for key, value in obj.items():
@@ -87,7 +87,7 @@ class ConvAssistSetParam:
                     else:
                         obj[key] = value
         return obj
-    
+
     @staticmethod
     def jsonDeserialize(json_str: str) -> 'ConvAssistSetParam':
         #TODO: REMOVE THIS HACK!!!
@@ -97,10 +97,10 @@ class ConvAssistSetParam:
         _Parameter = ParameterType(int(data.get("Parameter")))
         _Value = data.get("Value")
         return ConvAssistSetParam(_Parameter, _Value)
-    
+
     def jsonSerialize(self) -> str:
         return json.dumps(dataclasses.asdict(self))
-    
+
     def __repr__(self) -> str:
         return f"Parameter: {ParameterType(self.Parameter).name}, Value: {self.Value}"
 
@@ -121,7 +121,7 @@ class WordAndCharacterPredictionResponse:
 
     def jsonSerialize(self) -> str:
         return json.dumps(dataclasses.asdict(self))
-    
+
     def __repr__(self) -> str:
         return f"MessageType: {ConvAssistMessageTypes(self.MessageType).name}, " \
                f"PredictionType: {ConvAssistPredictionTypes(self.PredictionType).name}, " \

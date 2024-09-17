@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -24,7 +27,7 @@ class SQLiteDatabaseConnector(DatabaseConnector):
     def execute_query(self, query: str, params: Optional[Tuple[Any, ...]] = None) -> None:
         if not self.conn:
             raise DatabaseError("Database connection is not established.")
-        
+
         cursor = self.conn.cursor()
 
         try:
@@ -32,8 +35,8 @@ class SQLiteDatabaseConnector(DatabaseConnector):
             self.conn.commit()
 
         finally:
-            cursor.close()  
-  
+            cursor.close()
+
     def fetch_one(self, query: str, params: Optional[Tuple[Any, ...]] = None):
         if not self.conn:
             raise DatabaseError("Database connection is not established.")
@@ -43,7 +46,7 @@ class SQLiteDatabaseConnector(DatabaseConnector):
         try:
             cursor.execute(query, params or ())
             result = cursor.fetchone()
-        
+
         finally:
             cursor.close()
             return result
@@ -51,13 +54,13 @@ class SQLiteDatabaseConnector(DatabaseConnector):
     def fetch_all(self, query: str, params: Optional[Tuple[Any, ...]] = None):
         if not self.conn:
             raise DatabaseError("Database connection is not established.")
-        
+
         result = []
         cursor = self.conn.cursor()
         try:
             cursor.execute(query, params or ())
             result = cursor.fetchall()
-        
+
         finally:
             cursor.close()
             return result
@@ -82,7 +85,7 @@ class SQLiteDatabaseConnector(DatabaseConnector):
             raise DatabaseError("Database connection is not established.")
         try:
             self.connect()
-    
+
             self.execute_query(f'''
                 CREATE TABLE IF NOT EXISTS {tablename}
                 ({', '.join(columns)})

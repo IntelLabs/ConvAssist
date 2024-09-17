@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -76,7 +79,7 @@ class DatabaseConnector(ABC):
         Roll back the current transaction.
         """
         pass # pragma: no cover
-    
+
     @abstractmethod
     def create_table(self, dbname: str, tablename: str, columns: List[str]) -> None:
         """

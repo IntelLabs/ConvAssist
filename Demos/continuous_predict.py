@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
@@ -25,17 +25,17 @@ if not success_count:
 config["Common"]["home_dir"] = SCRIPT_DIR
 
 # Create an instance of ConvAssist
-ContinuosPreidictor = ConvAssist("CONT_PREDICT", config=config, log_level=logging.DEBUG)
+ContinuousPreidictor = ConvAssist("CONT_PREDICT", config=config, log_level=logging.DEBUG)
 
-convAssists = [ContinuosPreidictor]
-    
+convAssists = [ContinuousPreidictor]
+
 def main():
     while (True):
         buffer = input("Enter text ('close' to exit): ")
         if buffer == "close":
             print("Closing CLI.")
             break
-            
+
         print("GOING INTO PREDICTION MODE")
 
         for convAssist in convAssists:
@@ -48,7 +48,7 @@ def main():
                 word_predictions, \
                 sentence_nextLetterProbs, \
                 sentence_predictions = convAssist.predict()
-            
+
             print("word_nextLetterProbs ----", json.dumps(word_nextLetterProbs))
             print("word_predictions: ----- ", json.dumps(word_predictions))
             print("sentence_nextLetterProbs ---- ", json.dumps(sentence_nextLetterProbs))

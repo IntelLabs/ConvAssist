@@ -1,0 +1,61 @@
+# Copyright (C) 2023 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+default_language_version:
+    # force all unspecified python hooks to run python3
+    python: python3.12
+repos:
+    #check the py files for trailing whitespace
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.5.0 # Updated 2024/04
+      hooks:
+        - id: trailing-whitespace
+          files: \.(py)$
+        - id: end-of-file-fixer
+          files: \.(py)$
+        - id: check-merge-conflict
+        - id: mixed-line-ending
+          files: \.(py)$
+        - id: check-yaml
+          args:
+          - --allow-multiple-documents
+
+    # # Check for typos in the code
+    # - repo: https://github.com/crate-ci/typos
+    #   rev: v1.20.9 # Updated 2024/04
+    #   hooks:
+    #     - id: typos
+
+    # Check for license headers in the code
+    - repo: https://github.com/Lucas-C/pre-commit-hooks
+      rev: v1.5.1 # Updated 2023/07
+      hooks:
+        - id: insert-license
+          name: insert-license-shell
+          files: \.(sh|py)$
+          args:
+          - --license-filepath
+          # defaults to: LICENSE.txt
+          - HEADER
+
+    # Check for code formatting
+    # - repo: https://github.com/psf/black-pre-commit-mirror
+    #   rev: 24.4.0 # Updated 2024/04
+    #   hooks:
+    #     - id: black
+    #       language_version: python3.10
+    # - repo: https://github.com/pre-commit/mirrors-mypy
+    #   rev: v1.9.0 # Last checked 2024/04
+    #   hooks:
+    #     - id: mypy
+    # - repo: local
+    #   hooks:
+    #     - id: pylint
+    #       name: pylint
+    #       entry: pylint
+    #       language: system
+    #       types: [python]
+    #       args:
+    #       - -rn # Only display messages
+    #       - -sn # Don't display the score
+    #       - --source-roots=kerngen # Working directory

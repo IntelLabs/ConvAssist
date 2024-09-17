@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -25,15 +28,15 @@ class CannedPhrasesPredictor(Predictor):
     """
 
     def __init__(
-            self, 
-            config: ConfigParser, 
-            context_tracker: ContextTracker, 
-            predictor_name: str, 
+            self,
+            config: ConfigParser,
+            context_tracker: ContextTracker,
+            predictor_name: str,
             logger: logging.Logger | None = None
         ):
         super().__init__(
-            config, 
-            context_tracker, 
+            config,
+            context_tracker,
             predictor_name,
             logger
         )
@@ -53,7 +56,7 @@ class CannedPhrasesPredictor(Predictor):
         self.cannedPhrases_counts={}
         self.stemmer = PorterStemmer()
         self.embedder = SentenceTransformer(self.sbertmodel, device=self.device)
-        
+
         self.pers_cannedphrasesLines = open(self.personalized_cannedphrases, "r").readlines()
         self.pers_cannedphrasesLines = [s.strip() for s in self.pers_cannedphrasesLines]
 
@@ -64,7 +67,7 @@ class CannedPhrasesPredictor(Predictor):
             self.logger.debug(f"{self.sentences_db_path} exists, not creating.")
 
         if(not os.path.isfile(self.embedding_cache_path)):
-            self.logger.info(f"{self.embedding_cache_path} does not exist, creating") 
+            self.logger.info(f"{self.embedding_cache_path} does not exist, creating")
             self.corpus_embeddings = self.embedder.encode(self.pers_cannedphrasesLines, show_progress_bar=True, convert_to_numpy=True)
             joblib.dump({'sentences': self.pers_cannedphrasesLines, 'embeddings': self.corpus_embeddings}, self.embedding_cache_path)
 
@@ -101,7 +104,7 @@ class CannedPhrasesPredictor(Predictor):
     @property
     def sentences_db_path(self):
         return os.path.join(self._personalized_resources_path, self._sentences_db)
-    
+
     @property
     def model_loaded(self):
         return self._model_loaded
@@ -110,7 +113,7 @@ class CannedPhrasesPredictor(Predictor):
     def recreate_database(self):
 
         self.pers_cannedphrasesLines = self.read_personalized_corpus()
-        
+
         try:
             #### RETRIEVE ALL SENTENCES FROM THE DATABASE
             self.sentences_db = SQLiteDatabaseConnector(self.sentences_db_path)
@@ -134,7 +137,7 @@ class CannedPhrasesPredictor(Predictor):
                 self.logger.info("In Recreate_DB of cannedPhrasesPredictor, EMBEDDINGS FILE DOES NOT EXIST!!! ")
 
 
-            # check if cannedPhrases file has been modified!!! 
+            # check if cannedPhrases file has been modified!!!
             if(set(self.corpus_sentences) != set(self.pers_cannedphrasesLines) ):
                 self.logger.debug("Canned Phrases has been modified externally.. Recreating embeddings and indices")
                 phrasesToAdd = set(self.pers_cannedphrasesLines) - set(self.corpus_sentences)
@@ -222,15 +225,15 @@ class CannedPhrasesPredictor(Predictor):
             context = self.context_tracker.context.strip()
 
             if(context==""):
-                ##### GET 5 MOST FREQUENT SENTENCES 
+                ##### GET 5 MOST FREQUENT SENTENCES
                 sent_prediction = self._getTopInitialPhrases(self.cannedPhrases_counts, sent_prediction)
                 return sent_prediction, word_prediction
 
-            ###### get matching sentences 
-            ###### First get direct matches based on both databases: 
+            ###### get matching sentences
+            ###### First get direct matches based on both databases:
             sent_prediction = self._find_direct_matches(context, self.pers_cannedphrasesLines, sent_prediction, self.cannedPhrases_counts)
 
-            ###### Get semantic matches based on both databases: 
+            ###### Get semantic matches based on both databases:
             sent_prediction = self._find_semantic_matches(context, sent_prediction, self.cannedPhrases_counts)
 
         except Exception as e:
@@ -244,10 +247,10 @@ class CannedPhrasesPredictor(Predictor):
 
     # base class method
     def learn(self, change_tokens):
-        #### For the cannedPhrase predictor, learning adds the sentence to the PSMCannedPhrases 
+        #### For the cannedPhrase predictor, learning adds the sentence to the PSMCannedPhrases
         if self.learn_enabled:
             try:
-                #### ADD THE NEW PHRASE TO THE EMBEDDINGS, AND RECREATE THE INDEX. 
+                #### ADD THE NEW PHRASE TO THE EMBEDDINGS, AND RECREATE THE INDEX.
                 if(change_tokens not in self.corpus_sentences):
                     phrase_emb = self.embedder.encode(change_tokens.strip())
                     self.corpus_embeddings = numpy.vstack((self.corpus_embeddings, phrase_emb))
@@ -260,7 +263,7 @@ class CannedPhrasesPredictor(Predictor):
                 #TODO: Move all database funtionality to a separate class
                 #### CHECK IF SENTENCE EXISITS IN THE DATABASE
                 res = self.sentences_db.fetch_all("SELECT count FROM sentences WHERE sentence = ?", (change_tokens,))
-                
+
                 if res and  len(res) > 0:
                     if len(res[0]) > 0:
                         count = int(res[0][0])

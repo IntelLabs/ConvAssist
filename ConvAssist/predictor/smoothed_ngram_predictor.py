@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from configparser import ConfigParser
 import logging
 import os
@@ -13,19 +16,19 @@ from ConvAssist.utilities.databaseutils.sqllite_ngram_dbconnector import SQLiteN
 
 class SmoothedNgramPredictor(Predictor):
     """
-    Calculates prediction from n-gram model in sqlite database. 
+    Calculates prediction from n-gram model in sqlite database.
 
     """
 
     def __init__(
-            self, 
-            config: ConfigParser, 
-            context_tracker: ContextTracker, 
-            predictor_name: str, 
+            self,
+            config: ConfigParser,
+            context_tracker: ContextTracker,
+            predictor_name: str,
             logger: logging.Logger | None = None
     ):
         super().__init__(
-            config, context_tracker, 
+            config, context_tracker,
             predictor_name, logger=logger
         )
 
@@ -43,7 +46,7 @@ class SmoothedNgramPredictor(Predictor):
     def generate_ngrams(self, token, n):
         n = n+1
         # Use the zip function to help us generate n-grams
-        # Concatentate the tokens into ngrams and return
+        # Concatenate the tokens into ngrams and return
         ngrams = zip(*[token[i:] for i in range(n)])
         returnobj = [" ".join(ngram) for ngram in ngrams]
         return returnobj
@@ -61,7 +64,7 @@ class SmoothedNgramPredictor(Predictor):
     # Override default behavior to trigger a db connection
     @Predictor.deltas.setter
     def deltas(self, value):
-        self._deltas = value        
+        self._deltas = value
         self.init_database_connector_if_ready()
 
     # Override default behavior to trigger a db connection
@@ -78,14 +81,14 @@ class SmoothedNgramPredictor(Predictor):
                 and self.cardinality and self.cardinality > 0
                 # and self.learn_enabled
         ):
-            self.ngram_db_conn = SQLiteNgramDatabaseConnector(self.database, 
+            self.ngram_db_conn = SQLiteNgramDatabaseConnector(self.database,
                             self.cardinality,
                             self.logger)
 
             self.ngram_db_conn.connect()
             return True
         return False
-    
+
 
     def predict(self, max_partial_prediction_size: int, filter):
 
@@ -156,7 +159,7 @@ class SmoothedNgramPredictor(Predictor):
             self.logger.error(f"No predictions from SmoothedNgramPredictor")
 
         self.logger.info(f"End prediction. got {len(word_prediction)} word suggestions and {len(sentence_prediction)} sentence suggestions")
-        
+
         return sentence_prediction, word_prediction
 
     def _count(self, tokens, offset, ngram_size):

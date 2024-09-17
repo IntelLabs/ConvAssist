@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -50,7 +53,7 @@ class PredictorRegistry(list):
 
     def _add_predictor(self, predictor_name, config: ConfigParser, context_tracker: ContextTracker, logger: logging.Logger):
         predictor: Any = None
-        
+
         predictor_class = config.get(predictor_name, "predictor_class")
 
         if predictor_class in predictor_mapping:
@@ -84,5 +87,3 @@ class PredictorRegistry(list):
             if predictor.predictor_name == predictor_name:
                 return predictor
         return None
-
-    

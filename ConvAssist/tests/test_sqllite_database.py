@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import sqlite3
 from pathlib import Path
 import unittest
@@ -23,7 +26,7 @@ class TestSQLiteDatabase(unittest.TestCase):
     def test_close(self):
         self.db.connect()
         self.db.close()
-        self.assertIsNone(self.db.conn)   
+        self.assertIsNone(self.db.conn)
 
     def test_execute_query(self):
         self.db.connect()

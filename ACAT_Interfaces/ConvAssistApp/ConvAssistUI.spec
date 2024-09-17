@@ -1,11 +1,19 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import copy_metadata, collect_data_files
 
+
+# Define the data files to be included
+data = [
+    ('Assets', 'Assets'),
+]
+
+data+= collect_data_files("sv_ttk")
 
 a = Analysis(
     ['ConvAssist\\ConvAssist.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    data=data,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -19,6 +27,8 @@ pyz = PYZ(a.pure)
 exe = EXE(
     pyz,
     a.scripts,
+    a.binaries,
+    a.data,
     [],
     exclude_binaries=True,
     name='ConvAssist',

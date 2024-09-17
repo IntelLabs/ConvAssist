@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -10,7 +13,7 @@ from ConvAssist.utilities.singleton import Singleton
 class NLP(metaclass=Singleton):
     def __init__(self):
         self.nlp = self.load_nlp()
-    
+
     def load_nlp(self):
         try:
             base_path = sys._MEIPASS
@@ -23,8 +26,8 @@ class NLP(metaclass=Singleton):
 
         except Exception as e:
             nlp = spacy.load("en_core_web_sm")
-        
+
         return nlp
-    
+
     def get_nlp(self):
         return self.nlp

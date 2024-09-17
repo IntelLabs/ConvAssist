@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -22,16 +25,16 @@ class SpellCorrectPredictor(Predictor):
     """
 
     def __init__(
-            self, 
-            config: ConfigParser, 
-            context_tracker: ContextTracker, 
-            predictor_name: str, 
+            self,
+            config: ConfigParser,
+            context_tracker: ContextTracker,
+            predictor_name: str,
             logger: logging.Logger | None = None
     ):
         super().__init__(
-            config, 
-            context_tracker, 
-            predictor_name, 
+            config,
+            context_tracker,
+            predictor_name,
             logger
         )
 

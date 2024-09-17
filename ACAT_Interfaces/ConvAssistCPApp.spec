@@ -6,18 +6,13 @@ from PyInstaller.utils.hooks import copy_metadata, collect_data_files
 sys.setrecursionlimit(5000)
 
 # Define the data files to be included
-datas = [
+data = [
     ('ConvAssistCPApp/Assets', 'Assets'),
 ]
 
 # Collect additional data files
-datas += collect_data_files("en_core_web_sm")
-datas += collect_data_files("sv_ttk")
-
-import pkg_resources
-for dist in pkg_resources.working_set:
-    datas += copy_metadata(dist.project_name)
-
+data += collect_data_files("en_core_web_sm")
+data+= collect_data_files("sv_ttk")
 
 excludes=['mypy', 'pytest', 'pytest-cov', 'pytest-runner', 'pytest-xdist', 
         'pytest-forked', 'pytest-asyncio', 'pytest-astropy', 
@@ -34,7 +29,7 @@ a = Analysis( # type: ignore
     ['ConvAssistCPApp/ConvAssistUI.py'],  # Replace with your main script
     pathex=['../', 'ConvAssistCPApp'],  # Replace with your project path
     binaries=[],
-    datas=datas,
+    data=data,
     exclude=excludes,
     hiddenimports=[
         'en_core_web_sm', 
@@ -44,47 +39,60 @@ a = Analysis( # type: ignore
     cipher=None,
     noarchive=True
 )
-
-# new_datas = []
-# for d in a.datas:
+# remove_data = []
+# for d in a.data:
 #     if 'dist-info' in d[0]:
-#         # new_datas.append(d)
-#         print(d)
+#         remove_data.append(d)
 
-# a.datas = new_datas
+# for r in remove_data:
+#     a.data.remove(r)
 
-# tqdmData = copy_metadata('tqdm')
-# a.datas += tqdmData[0]
-
+# a.data = new_data
 
 # # Uncomment the following lines if you need to include metadata for these packages
-# a.datas.append(copy_metadata('tqdm'))
-# # datas += copy_metadata('torch')
-# # datas += copy_metadata('regex')
-# # datas += copy_metadata('filelock')
-# # datas += copy_metadata('packaging')
-# # datas += copy_metadata('requests')
-# # datas += copy_metadata('numpy')
-# # datas += copy_metadata('tokenizers')
-# # datas += copy_metadata('transformers')
-# # datas += copy_metadata('huggingface-hub')
-# # datas += copy_metadata('pyyaml')
-# # datas += copy_metadata('blis')
-# # datas += copy_metadata('certifi')
-# # datas += copy_metadata('charset_normalizer')
-# # datas += copy_metadata('cymem')
-# # datas += copy_metadata('langcodes')
-# # datas += copy_metadata('markupsafe')
-# # datas += copy_metadata('murmurhash')
+# a.data += copy_metadata('tqdm')
+# # data += copy_metadata('torch')
+# # data += copy_metadata('regex')
+# # data += copy_metadata('filelock')
+# # data += copy_metadata('packaging')
+# # data += copy_metadata('requests')
+# # data += copy_metadata('numpy')
+# # data += copy_metadata('tokenizers')
+# # data += copy_metadata('transformers')
+# # data += copy_metadata('huggingface-hub')
+# # data += copy_metadata('pyyaml')
+# # data += copy_metadata('blis')
+# # data += copy_metadata('certifi')
+# # data += copy_metadata('charset_normalizer')
+# # data += copy_metadata('cymem')
+# # data += copy_metadata('langcodes')
+# # data += copy_metadata('markupsafe')
+# # data += copy_metadata('murmurhash')
 
-pyz = PYZ(a.pure) #type: ignore
+# print("Contents of a.zipfiles: ")
+# for item in a.zipfiles:
+#     print(item)
+
+# print("Contents of a.pure:")
+# for item in a.pure:
+#     print(item)
+
+# print("Contents of a.data:")
+# for item in a.data:
+#     print(item)
+
+import pkg_resources
+for dist in pkg_resources.working_set:
+    data += copy_metadata(dist.project_name)
+
+pyz = PYZ(a.pure)
 
 exe = EXE( # type: ignore
     pyz,
     a.scripts,
     a.binaries,
     a.zipfiles,
-    a.datas,
+    a.data,
 	[('W ignore', None, 'OPTION')],
     name='ConvAssistApp',
     debug=False,
@@ -105,7 +113,7 @@ exe = EXE( # type: ignore
 coll = COLLECT(exe, # type: ignore
     a.binaries,
     a.zipfiles,
-    a.datas,
+    a.data,
     strip=False,
     upx=True,
     upx_exclude=[],

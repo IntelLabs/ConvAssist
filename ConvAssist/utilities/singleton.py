@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -9,7 +12,7 @@ class Singleton(type):
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
 
         return cls._instances[cls]
-    
+
 class OptionalSingleton(type):
     """
     A metaclass that allows the class to be a singleton if the singleton attribute is set to True.
@@ -24,7 +27,7 @@ class OptionalSingleton(type):
             return cls._instances[cls]
         else:
             return super(OptionalSingleton, cls).__call__(*args, **kwargs)
-        
+
     @classmethod
     def enable_singleton(cls):
         cls._singleton_enabled = True
@@ -32,6 +35,3 @@ class OptionalSingleton(type):
     @classmethod
     def disable_singleton(cls):
         cls._singleton_enabled = False
-
-
-

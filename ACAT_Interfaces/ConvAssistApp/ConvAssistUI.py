@@ -1,4 +1,4 @@
-# Copyright 20204 Intel Corporation
+# Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # CHATGpt Generated Code
@@ -113,12 +113,12 @@ else:
             self.configure()
 
         @property
-        def tray_icon(self):     
+        def tray_icon(self):
             return self._tray_icon
-        
+
         @tray_icon.setter
         def tray_icon(self, value):
-            self._tray_icon = value 
+            self._tray_icon = value
             self._tray_icon.run_detached()
 
         @tray_icon.deleter
@@ -143,7 +143,7 @@ else:
         def configure(self):
             self.log_widget = ScrolledText(self, height=10)
             self.log_widget.pack(fill=BOTH, expand=True, pady=10, padx=10)
-            
+
             self.create_buttons()
 
             # self.withdraw()  # Hide the main window at startup
@@ -171,7 +171,7 @@ else:
             license_button.pack(side='right', expand=False, padx=5)
             close_button.pack(side='right', expand=False, padx=5)
             button_frame.pack(side='bottom', fill='x', expand=False, padx=10, pady=10)
-        
+
         def clear_action(self):
             self.log_widget.delete(1.0, END)
 

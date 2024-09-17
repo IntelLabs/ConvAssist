@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import logging
 import os
 import queue
@@ -13,7 +16,7 @@ class QueueHandler(logging.Handler):
     '''
     This class is a custom logging handler that sends log messages to a queue.
     args:
-        log_queue: queue.Queue - the queue to send log messages to 
+        log_queue: queue.Queue - the queue to send log messages to
     returns:
         None
     '''
@@ -35,7 +38,7 @@ class LoggingUtility(metaclass=Singleton):
     @property
     def formatter(self):
         return self._formatter
-    
+
     @property
     def central_log_queue(self):
         return self._central_log_queue
@@ -79,7 +82,7 @@ class LoggingUtility(metaclass=Singleton):
         queue_handler = QueueHandler(self.central_log_queue)
         queue_handler.setFormatter(self.formatter)
         logger.addHandler(queue_handler)
-    
+
     def add_stream_handler(self, logger:logging.Logger, textio: TextIO):
         stream_handler = logging.StreamHandler(textio)
         stream_handler.setFormatter(self.formatter)

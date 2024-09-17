@@ -1,4 +1,7 @@
 
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from abc import ABC, abstractmethod
 
 class MessageHandler(ABC):
@@ -30,7 +33,6 @@ class MessageHandler(ABC):
         elif config['type'] == "WebSocket":
             from message_handler.WebSocketHandler import WebSocketHandler
             return WebSocketHandler(config['url'])
-        
+
         else:
             raise Exception("Invalid message handler configuration")
-

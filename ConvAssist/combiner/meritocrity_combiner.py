@@ -1,11 +1,11 @@
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from typing import Any, Dict
 from ConvAssist.combiner.combiner import Combiner
 from ConvAssist.predictor.utilities.prediction import Prediction
 from ConvAssist.predictor.spell_correct_predictor import SpellCorrectPredictor
-from ConvAssist.predictor.sentence_completion_predictor import SentenceCompletionPredictor  
+from ConvAssist.predictor.sentence_completion_predictor import SentenceCompletionPredictor
 
 #TODO - this isn't the best way to combine the probs (from ngram db and deep
 # learning based model, just concat m,n predictions and take the top n
@@ -15,7 +15,7 @@ class MeritocracyCombiner(Combiner):
         pass
 
     """
-    Computes probabilities for the next letter - for BCI 
+    Computes probabilities for the next letter - for BCI
     """
     def computeLetterProbs(self, result:Prediction, context:str) -> list[tuple[str, float]]:
 

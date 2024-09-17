@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -34,10 +37,10 @@ class ConvAssist:
         Checks if models associated with a predictor are loaded.
     """
 
-    def __init__(self, name: str, 
+    def __init__(self, name: str,
                  ini_file: str | None = None,
-                 config:ConfigParser | None = None, 
-                 log_location:str | None = None, 
+                 config:ConfigParser | None = None,
+                 log_location:str | None = None,
                 log_level:int = logging.ERROR):
         """
         Initializes an instance of the class.
@@ -49,7 +52,7 @@ class ConvAssist:
             log_level (int | None, optional): The log level. Defaults to None.
         """
         self.config = config
-        self.log_level = log_level 
+        self.log_level = log_level
         self.log_location = log_location
         self.initialized = False
         self.name = name
@@ -68,10 +71,10 @@ class ConvAssist:
         """
         if not config:
             raise AttributeError("Config not provided.")
-        
+
         if not self.config:
             self.config = config
-            
+
         if log_level:
             self.log_level = log_level
 
@@ -79,13 +82,13 @@ class ConvAssist:
             self.log_location = log_location
 
         self.logger = LoggingUtility().get_logger(self.name, self.log_level, self.log_location, True)
-            
+
         lowercase_mode = self.config.getboolean("ContextTracker", "lowercase_mode", fallback=False)
         self.context_tracker = ContextTracker(lowercase_mode)
 
         self.predictor_registry = PredictorRegistry()
         self.predictor_registry.set_predictors(self.config, self.context_tracker, self.logger)
-    
+
         self.predictor_activator = PredictorActivator(
                 self.config, self.predictor_registry, self.context_tracker, self.logger
             )
@@ -105,7 +108,7 @@ class ConvAssist:
         multiplier = 1
         (wordprob, word, sentprob, sent) = self.predictor_activator.predict(multiplier)
         if word!=[]:
-            #### normalize word probabilites over 10 words. 
+            #### normalize word probabilities over 10 words.
             normalized_words = word[0:10]
             prob_sum_over10 = 0.0
             words = []
@@ -114,8 +117,8 @@ class ConvAssist:
                 words.append(w[1].word)
 
         return (wordprob,
-                [(p.word, p.probability/prob_sum_over10) for p in word], 
-                sentprob, 
+                [(p.word, p.probability/prob_sum_over10) for p in word],
+                sentprob,
                 [(p.word, p.probability) for p in sent])
 
     def update_params(self, test_gen_sentence_pred, retrieve_from_AAC):
@@ -124,7 +127,7 @@ class ConvAssist:
     def read_updated_toxicWords(self):
         if not self.initialized:
             raise AttributeError(f"ConvAssist {self.name} not initialized.")
-        
+
         self.predictor_activator.read_updated_toxicWords()
 
     # def setLogLocation(self, filename, pathLoc , level):
@@ -137,7 +140,7 @@ class ConvAssist:
         """
         if not self.initialized:
             raise AttributeError(f"ConvAssist {self.name} not initialized.")
-            
+
         self.predictor_activator.recreate_database()
 
     def learn_text(self, text):
@@ -148,7 +151,7 @@ class ConvAssist:
         """
         if not self.initialized:
             raise AttributeError(f"ConvAssist {self.name} not initialized.")
-        
+
         sentences = sent_tokenize(text)
         for eachSent in sentences:
             self.predictor_activator.learn_text(eachSent)
@@ -161,6 +164,6 @@ class ConvAssist:
         """
         if not self.initialized:
             raise AttributeError(f"ConvAssist {self.name} not initialized.")
-        
+
         status = self.predictor_registry.model_status()
         return status

@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import unittest
 from unittest.mock import MagicMock, patch
 from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATConvAssistInterface import ACATConvAssistInterface

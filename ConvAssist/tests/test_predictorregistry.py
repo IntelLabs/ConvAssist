@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import logging
 import unittest
 from unittest.mock import mock_open, patch
@@ -22,7 +25,7 @@ class TestPredictorRegistry(unittest.TestCase):
         self.config['ContextTracker'] = {
             'lowercase_mode': 'True'
         }
-        
+
         self.predictor_registry = PredictorRegistry()
         self.context_tracker = ContextTracker()
 

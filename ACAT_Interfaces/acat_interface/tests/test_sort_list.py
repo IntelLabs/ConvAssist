@@ -1,8 +1,11 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import unittest
 from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATConvAssistInterface import ACATConvAssistInterface
 
 class TestACATConvAssistInterface(unittest.TestCase):
-    
+
     def test_sort_List_empty(self):
         result = ACATConvAssistInterface.sort_List([], 5)
         self.assertEqual(result, [])

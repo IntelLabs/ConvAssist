@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -17,21 +20,21 @@ class Predictor(ABC):
         Initializes the Predictor object with the provided parameters.
     - predict(self, max_partial_prediction_size = None, filter = None) -> tuple[Prediction, Prediction]
         Predicts the next word and sentence based on the context.
-    - learn(self, change_tokens = None) -> None 
+    - learn(self, change_tokens = None) -> None
         Learns from the context.
     - _read_config(self) -> None
         Reads the configuration file.
     - load_model(*args, **kwargs) -> None
         Loads the model.
-    - read_personalized_toxic_words(self, *args, **kwargs) -> None 
+    - read_personalized_toxic_words(self, *args, **kwargs) -> None
         Reads the personalized toxic words.
     """
 
     def __init__(
-            self, 
-            config: ConfigParser, 
-            context_tracker: ContextTracker, 
-            predictor_name: str, 
+            self,
+            config: ConfigParser,
+            context_tracker: ContextTracker,
+            predictor_name: str,
             logger: logging.Logger | None = None
     ):
 
@@ -46,24 +49,24 @@ class Predictor(ABC):
         self._embedding_cache_path:str = ""                     #Path
         self._generic_phrases:str = ""                          #Path
         self._index_path:str = ""                               #Path
-        self._learn:bool = False 
-        self._modelname:str = ""                                #Path        
+        self._learn:bool = False
+        self._modelname:str = ""                                #Path
         self._personalized_allowed_toxicwords_file:str = ""     #Path
-        self._personalized_cannedphrases:str = ""               #Path  
-        self._personalized_resources_path:str = "" 
-        self._predictor_class:str = "" 
+        self._personalized_cannedphrases:str = ""               #Path
+        self._personalized_resources_path:str = ""
+        self._predictor_class:str = ""
         self._retrieve_database:str = ""                        #Path
-        self._retrieveaac:bool = True 
-        self._sbertmodel:str = "" 
+        self._retrieveaac:bool = True
+        self._sbertmodel:str = ""
         self._sent_database:str = ""                            #Path
         self._sentence_transformer_model:str = ""               #Path
         self._sentences_db:str = ""                             #Path
         self._spellingdatabase:str = ""                         #Path
         self._startsents:str = ""                               #Path
         self._startwords:str = ""                               #Path
-        self._static_resources_path:str = "" 
+        self._static_resources_path:str = ""
         self._stopwords:str = ""                                #Path
-        self._test_generalsentenceprediction:bool = False 
+        self._test_generalsentenceprediction:bool = False
         self._tokenizer:str = ""                                #Path
 
         #configure a logger
@@ -87,7 +90,7 @@ class Predictor(ABC):
     @property
     def database(self):
         return os.path.join(self._personalized_resources_path, self._database)
-    
+
     @property
     def deltas(self) -> list[float]:
         return [float(delta) for delta in self._deltas.split()]
@@ -103,11 +106,11 @@ class Predictor(ABC):
     @property
     def generic_phrases(self):
         return os.path.join(self._personalized_resources_path, self._generic_phrases)
-    
+
     @property
     def learn_enabled(self):
         return self._learn
-        
+
     @property
     def modelname(self):
         return os.path.join(self._static_resources_path, self._modelname)
@@ -115,7 +118,7 @@ class Predictor(ABC):
     @property
     def personalized_cannedphrases(self):
         return os.path.join(self._personalized_resources_path, self._personalized_cannedphrases)
-    
+
     @property
     def predictor_class(self):
         return self._predictor_class
@@ -123,31 +126,31 @@ class Predictor(ABC):
     @property
     def retrieveaac(self):
         return self._retrieveaac
-    
+
     @property
     def sbertmodel(self):
         return self._sbertmodel
-    
+
     @property
     def sentence_transformer_model(self):
         return os.path.join(self._personalized_resources_path, self._sentence_transformer_model)
-            
+
     @property
     def sent_database(self):
         return os.path.join(self._personalized_resources_path, self._sent_database)
-    
+
     @property
     def retrieve_database(self):
         return os.path.join(self._static_resources_path, self._retrieve_database)
-    
+
     @property
     def blacklist_file(self):
         return os.path.join(self._static_resources_path, self._blacklist_file)
-    
+
     @property
     def embedding_cache_path(self):
         return os.path.join(self._personalized_resources_path, self._embedding_cache_path)
-    
+
     @property
     def index_path(self):
         return os.path.join(self._personalized_resources_path, self._index_path)
@@ -155,33 +158,33 @@ class Predictor(ABC):
     @property
     def stopwordsFile(self):
         return os.path.join(self._static_resources_path, self._stopwords)
-    
+
     @property
     def personalized_allowed_toxicwords_file(self):
         return os.path.join(self._personalized_resources_path, self._personalized_allowed_toxicwords_file)
-    
+
     @property
     def startsents(self):
         return os.path.join(self._personalized_resources_path, self._startsents)
-    
+
     @property
     def tokenizer(self):
         return os.path.join(self._static_resources_path, self._tokenizer)
-    
+
     @property
     def startwords(self):
         return os.path.join(self._personalized_resources_path, self._startwords)
-        
+
     @property
     def test_generalsentenceprediction(self):
         return self._test_generalsentenceprediction
-    
+
     @test_generalsentenceprediction.setter
     def test_generalsentenceprediction(self, value):
         self._test_generalsentenceprediction = value
 
 
-    @abstractmethod # pragma: no cover 
+    @abstractmethod # pragma: no cover
     def predict(self, max_partial_prediction_size = None, filter = None)  -> tuple[Prediction, Prediction]:
         '''
         Predicts the next word and sentence based on the context
@@ -203,19 +206,19 @@ class Predictor(ABC):
 
         return corpus
 
-    def learn(self, change_tokens = None): # pragma: no cover 
+    def learn(self, change_tokens = None): # pragma: no cover
         # Not all predictors need this, but define it here for those that do
         pass
 
-    def recreate_database(self): # pragma: no cover 
+    def recreate_database(self): # pragma: no cover
         # Not all predictors need this, but define it here for those that do
         pass
 
-    def load_model(*args, **kwargs): # pragma: no cover 
+    def load_model(*args, **kwargs): # pragma: no cover
         # Not all predictors need this, but define it here for those that do
         pass
 
-    def read_personalized_toxic_words(self, *args, **kwargs): # pragma: no cover 
+    def read_personalized_toxic_words(self, *args, **kwargs): # pragma: no cover
         # Not all predictors need this, but define it here for those that do
         pass
 
@@ -242,10 +245,10 @@ class Predictor(ABC):
                                 new_value = self.config.get(self.predictor_name, option,fallback=default)
 
                         setattr(self, attr, new_value )
-            
+
         except Exception as e:
             self.logger.error(f"Exception in SentenceCompletionPredictor._read_config = {e}")
             raise e
-        
+
     def __repr__(self):
         return f"{self.__class__.__name__}({self.predictor_name})"

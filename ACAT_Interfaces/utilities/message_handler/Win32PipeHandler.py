@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import time
 from typing import Any
 import sys
@@ -19,7 +22,7 @@ if not sys.platform == 'win32':
 
         def connect(self):
             raise Exception("Win32PipeMessageHandler is only supported on Windows")
-            
+
         def disconnect(self) -> None:
             raise Exception("Win32PipeMessageHandler is only supported on Windows")
 
@@ -28,7 +31,7 @@ if not sys.platform == 'win32':
 
         def receive_message(self) -> str:
             raise Exception("Win32PipeMessageHandler is only supported on Windows")
-        
+
         def create_connection(self) -> None:
             raise Exception("Win32PipeMessageHandler is only supported on Windows")
 else:
@@ -39,7 +42,7 @@ else:
 
         def connect(self):
             return self._ConnectToNamedPipe(self.pipe_name, 5)
-            
+
         def disconnect(self) -> None:
             self._DisconnectNamedPipe(self.pipe_handle)
 
@@ -88,7 +91,7 @@ else:
 
                     # Create an event for the OVERLAPPED structure
                     overlapped.hEvent = win32event.CreateEvent(None, True, False, None)
-                    
+
                     # Start the overlapped read operation
                     err_code, _ = win32file.ReadFile(Pipehandle.handle, read_buffer, overlapped)
 
@@ -96,23 +99,23 @@ else:
                     if err_code == winerror.ERROR_IO_PENDING:
                         timeout = 100 # milliseconds
                         win32event.WaitForSingleObject(overlapped.hEvent, timeout)
-                        
+
                         # Get the result of the overlapped operation
                         n_bytes_read = win32file.GetOverlappedResult(Pipehandle.handle, overlapped, True)
 
                         # Extract the data from the buffer
                         data = (bytes(read_buffer[:n_bytes_read]).decode('utf-8')) # type: ignore
-                    
+
                     elif err_code == win32event.WAIT_TIMEOUT:
                         raise TimeoutError("Timeout waiting for overlapped operation to complete")
-                
+
                 else:
                     # Read the data from the pipe
                     _, data =  win32file.ReadFile(Pipehandle.handle, buffer_size)
-                
+
                 # Load the data as json and return
                 return json.loads(data)
-            
+
             except pywintypes.error as e:
                 raise BrokenPipeError(f"Error receiving message from named pipe: {e}") from e
 
@@ -141,7 +144,7 @@ else:
 
             clientConnected = False
             handle = None
-            
+
             while retries > 0:
                 try:
                     handle = win32file.CreateFile(
