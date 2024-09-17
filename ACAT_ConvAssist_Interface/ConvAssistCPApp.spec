@@ -12,7 +12,12 @@ datas = [
 
 # Collect additional data files
 datas += collect_data_files("en_core_web_sm")
-datas+= collect_data_files("sv_ttk")
+datas += collect_data_files("sv_ttk")
+
+import pkg_resources
+for dist in pkg_resources.working_set:
+    datas += copy_metadata(dist.project_name)
+
 
 excludes=['mypy', 'pytest', 'pytest-cov', 'pytest-runner', 'pytest-xdist', 
         'pytest-forked', 'pytest-asyncio', 'pytest-astropy', 
@@ -20,6 +25,8 @@ excludes=['mypy', 'pytest', 'pytest-cov', 'pytest-runner', 'pytest-xdist',
         'pytest-doctestplus',
         'pyinstaller','pyinstaller-hooks-contrib','setuptools','pytest',
         'pytest-cov','pytest-cover','pytest-coverage','pytest-timeout',
+        'pyinstaller-hooks-contrib','pyinstaller-hooks-contrib-hooks','pyinstaller-hooks-contrib-hooks-data',
+        'pyinstaller', 'setuptools',
 ]
 
 # Define the PyInstaller spec
@@ -34,23 +41,24 @@ a = Analysis( # type: ignore
     ],
     hookspath=[],
     runtime_hooks=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
     cipher=None,
-    noarchive=False
+    noarchive=True
 )
-# remove_datas = []
+
+# new_datas = []
 # for d in a.datas:
 #     if 'dist-info' in d[0]:
-#         remove_datas.append(d)
-
-# for r in remove_datas:
-#     a.datas.remove(r)
+#         # new_datas.append(d)
+#         print(d)
 
 # a.datas = new_datas
 
+# tqdmData = copy_metadata('tqdm')
+# a.datas += tqdmData[0]
+
+
 # # Uncomment the following lines if you need to include metadata for these packages
-# a.datas += copy_metadata('tqdm')
+# a.datas.append(copy_metadata('tqdm'))
 # # datas += copy_metadata('torch')
 # # datas += copy_metadata('regex')
 # # datas += copy_metadata('filelock')
@@ -69,25 +77,9 @@ a = Analysis( # type: ignore
 # # datas += copy_metadata('markupsafe')
 # # datas += copy_metadata('murmurhash')
 
-# print("Contents of a.zipfiles: ")
-# for item in a.zipfiles:
-#     print(item)
+pyz = PYZ(a.pure) #type: ignore
 
-# print("Contents of a.pure:")
-# for item in a.pure:
-#     print(item)
-
-# print("Contents of a.datas:")
-# for item in a.datas:
-#     print(item)
-
-import pkg_resources
-for dist in pkg_resources.working_set:
-    datas += copy_metadata(dist.project_name)
-
-pyz = PYZ(a.pure)
-
-exe = EXE(
+exe = EXE( # type: ignore
     pyz,
     a.scripts,
     a.binaries,
@@ -110,7 +102,7 @@ exe = EXE(
     icon='ConvAssistCPApp/Assets/icon_tray.ico',
 )
 
-coll = COLLECT(exe,
+coll = COLLECT(exe, # type: ignore
     a.binaries,
     a.zipfiles,
     a.datas,
