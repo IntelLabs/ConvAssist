@@ -1,5 +1,5 @@
 # Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 from configparser import ConfigParser
@@ -34,7 +34,8 @@ class ConvAssist:
         Checks if models associated with a predictor are loaded.
     """
 
-    def __init__(self, name: str, ini_file: str,
+    def __init__(self, name: str, 
+                 ini_file: str | None = None,
                  config:ConfigParser | None = None, 
                  log_location:str | None = None, 
                 log_level:int = logging.ERROR):
