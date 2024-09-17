@@ -7,6 +7,7 @@ from ConvAssist.predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
 from ConvAssist.predictor.utilities.nlp import NLP
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 from ConvAssist.predictor.utilities.ngram_map import NgramMap
+from ConvAssist.utilities.databaseutils.sqllite_ngram_dbconnector import SQLiteNgramDatabaseConnector
 
 
 class CannedWordPredictor(SmoothedNgramPredictor):
@@ -31,9 +32,15 @@ class CannedWordPredictor(SmoothedNgramPredictor):
         # tags that define wether the word is wh-
         self.WH_WORDS = {"WP", "WP$", "WRB"}
         self.stopwordsList = []
-        stoplist = open(self.stopwordsFile,"r").readlines()
-        for s in stoplist:
-            self.stopwordsList.append(s.strip())
+
+        with open(self.stopwordsFile, 'r') as f:
+            self.stopwordsList = f.read().splitlines()
+            
+            # strip each word in stopwordsList
+            self.stopwordsList = [word.strip() for word in self.stopwordsList]
+
+        if self.init_database_connector_if_ready():
+            self.recreate_database()
 
 # Override default properties
     @property
@@ -67,6 +74,19 @@ class CannedWordPredictor(SmoothedNgramPredictor):
                 if(token.text.lower() not in self.stopwordsList and token.text.lower() not in imp_tokens):
                     imp_tokens.append(token.text.lower())
         return " ".join(imp_tokens).strip().lower()
+
+    def init_database_connector_if_ready(self):
+
+        # Canned Word Predictor database is dynamically created.
+        # Only check if cardinality is set.
+        if (self.cardinality and self.cardinality > 0):
+            self.ngram_db_conn = SQLiteNgramDatabaseConnector(self.database, 
+                self.cardinality,
+                self.logger)
+
+            self.ngram_db_conn.connect()
+            return True
+        return False
 
     def recreate_database(self):
 
