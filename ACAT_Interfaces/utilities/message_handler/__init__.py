@@ -18,6 +18,10 @@ class MessageHandler(ABC):
     def disconnect(self) -> None:
         pass
 
+    @abstractmethod
+    def create_connection(self) -> None:
+        pass
+
     @staticmethod
     def getMessageHandler(config):
         if config['type'] == "win32":

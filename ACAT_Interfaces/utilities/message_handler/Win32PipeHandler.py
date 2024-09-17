@@ -28,6 +28,9 @@ if not sys.platform == 'win32':
 
         def receive_message(self) -> str:
             raise Exception("Win32PipeMessageHandler is only supported on Windows")
+        
+        def create_connection(self) -> None:
+            raise Exception("Win32PipeMessageHandler is only supported on Windows")
 else:
     class Win32PipeMessageHandler(MessageHandler):
         def __init__(self, pipe_name: str):
@@ -46,6 +49,8 @@ else:
         def receive_message(self) -> str:
             return self._get_incoming_message(self.pipe_handle)
 
+        def create_connection(self) -> None:
+            pass
 
         def _is_pipe_overlapped(self, pipe_handle) -> bool:
             """

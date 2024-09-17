@@ -1,25 +1,21 @@
 import warnings
-from websocket import create_connection
+from websockets.server import serve
+from websockets.sync.client import connect
 from message_handler import MessageHandler
 
-
-class InsecureWarning(Warning):
-    pass
-
-def insecure_class_warning(cls):
-    class Wrapped(cls):
-        def __init__(self, *args, **kwargs):
-            warnings.warn(f"{cls.__name__} is insecure and should be used with caution.", InsecureWarning, stacklevel=2)
-            super().__init__(*args, **kwargs)
-    return Wrapped
-
-@insecure_class_warning
 class WebSocketHandler(MessageHandler):
     def __init__(self, config):
         self.config = config
 
     def connect(self) -> bool:
-        self.ws = create_connection(self.config['url'])
+        if not self.config['use_tls']:
+            warnings.warn(f"{self.__class__.__name__} is being used in an insecure manner, and should be used with caution.", RuntimeWarning, stacklevel=2)
+
+        else:
+            #TODO Implement TLS Support
+            pass
+
+        self.ws = connect(self.config['url'])
         return True
 
     def send_message(self, message: str) -> None:
@@ -30,3 +26,6 @@ class WebSocketHandler(MessageHandler):
 
     def disconnect(self) -> None:
         self.ws.close()
+
+    def create_connection(self) -> None:
+        return super().create_connection()
