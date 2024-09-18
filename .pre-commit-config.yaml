@@ -102,4 +102,4 @@ repos:
   #         - --skip=logs/**,data/**
   #         - --ignore-words-list=abc,def,gard,fo
 
-exclude: "3rd_party_resources/"
+exclude: 3rd_party_resources/|Demos/resources|.*\.md$|.*\.json$
