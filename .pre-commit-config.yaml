@@ -101,3 +101,5 @@ repos:
   #       args:
   #         - --skip=logs/**,data/**
   #         - --ignore-words-list=abc,def,gard,fo
+
+exclude: "3rd_party_resources/"
