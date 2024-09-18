@@ -1,18 +1,12 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""
-Data classes for serializable json strings
-"""
-
-"""
-Imports
-"""
 import dataclasses
 import json
+from dataclasses import dataclass
 from enum import IntEnum
 from typing import Any
-from dataclasses import dataclass
+
 
 class ConvAssistMessageTypes(IntEnum):
     NONE = 0
@@ -26,6 +20,7 @@ class ConvAssistMessageTypes(IntEnum):
     LEARNSHORTHAND = 8
     LEARNSENTENCES = 9
     FORCEQUITAPP = 10
+
 
 class ConvAssistPredictionTypes(IntEnum):
     NONE = 0
@@ -46,6 +41,7 @@ class ParameterType(IntEnum):
     PATHLOG = 7
     ENABLELOGS = 8
 
+
 @dataclass
 class ConvAssistMessage:
     MessageType: int
@@ -53,7 +49,7 @@ class ConvAssistMessage:
     Data: str
 
     @staticmethod
-    def jsonDeserialize(obj: Any) -> 'ConvAssistMessage':
+    def jsonDeserialize(obj: Any) -> "ConvAssistMessage":
         _MessageType = int(obj.get("MessageType"))
         _PredictionType = int(obj.get("PredictionType"))
         _Data = str(obj.get("Data"))
@@ -63,9 +59,11 @@ class ConvAssistMessage:
         return json.dumps(dataclasses.asdict(self))
 
     def __repr__(self) -> str:
-        return f"MessageType: {ConvAssistMessageTypes(self.MessageType).name}, " \
-               f"PredictionType: {ConvAssistPredictionTypes(self.PredictionType).name}, " \
-               f"Data: {self.Data}"
+        return (
+            f"MessageType: {ConvAssistMessageTypes(self.MessageType).name}, "
+            f"PredictionType: {ConvAssistPredictionTypes(self.PredictionType).name}, "
+            f"Data: {self.Data}"
+        )
 
 
 @dataclass
@@ -89,9 +87,9 @@ class ConvAssistSetParam:
         return obj
 
     @staticmethod
-    def jsonDeserialize(json_str: str) -> 'ConvAssistSetParam':
-        #TODO: REMOVE THIS HACK!!!
-        json_str = json_str.replace("\'", "\"")
+    def jsonDeserialize(json_str: str) -> "ConvAssistSetParam":
+        # TODO: REMOVE THIS HACK!!!
+        json_str = json_str.replace("'", '"')
 
         data = json.loads(json_str, object_hook=ConvAssistSetParam.custom_parser)
         _Parameter = ParameterType(int(data.get("Parameter")))
@@ -115,7 +113,7 @@ class WordAndCharacterPredictionResponse:
     PredictedSentence: str = ""
 
     @staticmethod
-    def jsonDeserialize(json_str: str) -> 'WordAndCharacterPredictionResponse':
+    def jsonDeserialize(json_str: str) -> "WordAndCharacterPredictionResponse":
         data = json.loads(json_str)
         return WordAndCharacterPredictionResponse(**data)
 
@@ -123,9 +121,11 @@ class WordAndCharacterPredictionResponse:
         return json.dumps(dataclasses.asdict(self))
 
     def __repr__(self) -> str:
-        return f"MessageType: {ConvAssistMessageTypes(self.MessageType).name}, " \
-               f"PredictionType: {ConvAssistPredictionTypes(self.PredictionType).name}, " \
-               f"PredictedWords: {self.PredictedWords}, " \
-               f"NextCharacters: {self.NextCharacters}, " \
-               f"NextCharactersSentence: {self.NextCharactersSentence}, " \
-               f"PredictedSentence: {self.PredictedSentence}"
+        return (
+            f"MessageType: {ConvAssistMessageTypes(self.MessageType).name}, "
+            f"PredictionType: {ConvAssistPredictionTypes(self.PredictionType).name}, "
+            f"PredictedWords: {self.PredictedWords}, "
+            f"NextCharacters: {self.NextCharacters}, "
+            f"NextCharactersSentence: {self.NextCharactersSentence}, "
+            f"PredictedSentence: {self.PredictedSentence}"
+        )

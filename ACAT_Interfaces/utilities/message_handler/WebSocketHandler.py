@@ -2,23 +2,29 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import warnings
+
+from message_handler import MessageHandler
 from websockets.server import serve
 from websockets.sync.client import connect
-from message_handler import MessageHandler
+
 
 class WebSocketHandler(MessageHandler):
     def __init__(self, config):
         self.config = config
 
     def connect(self) -> bool:
-        if not self.config['use_tls']:
-            warnings.warn(f"{self.__class__.__name__} is being used in an insecure manner, and should be used with caution.", RuntimeWarning, stacklevel=2)
+        if not self.config["use_tls"]:
+            warnings.warn(
+                f"{self.__class__.__name__} is being used in an insecure manner, and should be used with caution.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
 
         else:
-            #TODO Implement TLS Support
+            # TODO Implement TLS Support
             pass
 
-        self.ws = connect(self.config['url'])
+        self.ws = connect(self.config["url"])
         return True
 
     def send_message(self, message: str) -> None:

@@ -1,21 +1,23 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import sys
 import time
 from typing import Any
-import sys
 
-if sys.platform == 'win32':
+if sys.platform == "win32":
     import win32file
     import win32pipe
     import win32event
     import pywintypes
     import winerror
+
 import json
 
 from message_handler import MessageHandler
 
-if not sys.platform == 'win32':
+if not sys.platform == "win32":
+
     class Win32PipeMessageHandler(MessageHandler):
         def __init__(self, pipe_name: str):
             raise Exception("Win32PipeMessageHandler is only supported on Windows")
@@ -34,7 +36,9 @@ if not sys.platform == 'win32':
 
         def create_connection(self) -> None:
             raise Exception("Win32PipeMessageHandler is only supported on Windows")
+
 else:
+
     class Win32PipeMessageHandler(MessageHandler):
         def __init__(self, pipe_name: str):
             self.pipe_name = pipe_name
@@ -97,21 +101,23 @@ else:
 
                     # If the operation is pending, wait for it to complete
                     if err_code == winerror.ERROR_IO_PENDING:
-                        timeout = 100 # milliseconds
+                        timeout = 100  # milliseconds
                         win32event.WaitForSingleObject(overlapped.hEvent, timeout)
 
                         # Get the result of the overlapped operation
-                        n_bytes_read = win32file.GetOverlappedResult(Pipehandle.handle, overlapped, True)
+                        n_bytes_read = win32file.GetOverlappedResult(
+                            Pipehandle.handle, overlapped, True
+                        )
 
                         # Extract the data from the buffer
-                        data = (bytes(read_buffer[:n_bytes_read]).decode('utf-8')) # type: ignore
+                        data = bytes(read_buffer[:n_bytes_read]).decode("utf-8")  # type: ignore
 
                     elif err_code == win32event.WAIT_TIMEOUT:
                         raise TimeoutError("Timeout waiting for overlapped operation to complete")
 
                 else:
                     # Read the data from the pipe
-                    _, data =  win32file.ReadFile(Pipehandle.handle, buffer_size)
+                    _, data = win32file.ReadFile(Pipehandle.handle, buffer_size)
 
                 # Load the data as json and return
                 return json.loads(data)
@@ -128,7 +134,7 @@ else:
             :return: void
             """
             try:
-                win32file.WriteFile(Pipehandle.handle, message.encode('utf-8')) # type: ignore
+                win32file.WriteFile(Pipehandle.handle, message.encode("utf-8"))  # type: ignore
             except pywintypes.error as e:
                 raise BrokenPipeError(f"Error sending message to named pipe: {e}") from e
 
@@ -154,7 +160,7 @@ else:
                         None,
                         win32file.OPEN_EXISTING,
                         win32file.FILE_FLAG_OVERLAPPED,
-                        None
+                        None,
                     )
                     # handle = win32file.CreateFile(
                     #     pipeName,
@@ -195,5 +201,5 @@ else:
                 win32file.FlushFileBuffers(handle)
                 win32file.CloseHandle(handle)
             except Exception as e:
-                # raise Exception(f"Error disconnecting named pipe: {e}") from e
-                pass
+                raise Exception(f"Error disconnecting named pipe: {e}") from e
+                # pass

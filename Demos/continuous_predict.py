@@ -1,10 +1,10 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import os
 import configparser
 import json
 import logging
+import os
 from pathlib import Path
 
 from ConvAssist.ConvAssist import ConvAssist
@@ -29,8 +29,9 @@ ContinuousPreidictor = ConvAssist("CONT_PREDICT", config=config, log_level=loggi
 
 convAssists = [ContinuousPreidictor]
 
+
 def main():
-    while (True):
+    while True:
         buffer = input("Enter text ('close' to exit): ")
         if buffer == "close":
             print("Closing CLI.")
@@ -44,16 +45,19 @@ def main():
             context = convAssist.context_tracker.context
             print("PREFIX = ", prefix, " CONTEXT = ", context)
 
-            word_nextLetterProbs, \
-                word_predictions, \
-                sentence_nextLetterProbs, \
-                sentence_predictions = convAssist.predict()
+            (
+                word_nextLetterProbs,
+                word_predictions,
+                sentence_nextLetterProbs,
+                sentence_predictions,
+            ) = convAssist.predict()
 
             print("word_nextLetterProbs ----", json.dumps(word_nextLetterProbs))
             print("word_predictions: ----- ", json.dumps(word_predictions))
             print("sentence_nextLetterProbs ---- ", json.dumps(sentence_nextLetterProbs))
             print("sentence_predictions: ----- ", json.dumps(sentence_predictions))
             print("---------------------------------------------------")
+
 
 if __name__ == "__main__":
     main()

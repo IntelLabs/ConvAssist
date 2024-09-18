@@ -4,7 +4,11 @@
 import logging
 import unittest
 from unittest.mock import MagicMock
-from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATConvAssistInterface import ACATConvAssistInterface
+
+from ACAT_Interfaces.acat_interface.ACATConvAssistInterface import (
+    ACATConvAssistInterface,
+)
+
 
 class TestACATConvAssistInterface(unittest.TestCase):
     def test_init(self):

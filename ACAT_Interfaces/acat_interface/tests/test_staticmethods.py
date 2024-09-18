@@ -3,7 +3,11 @@
 
 import unittest
 from unittest.mock import MagicMock, patch
-from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATConvAssistInterface import ACATConvAssistInterface
+
+from ACAT_Interfaces.acat_interface.ACATConvAssistInterface import (
+    ACATConvAssistInterface,
+)
+
 
 class testStaticMethods(unittest.TestCase):
     def setUp(self):

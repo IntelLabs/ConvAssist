@@ -5,37 +5,35 @@
 import sys
 
 if not sys.platform == "win32":
+
     def main():
         raise RuntimeError("This script is only supported on Windows.")
 
 else:
     import glob
+    import logging
     import os
+    import queue
     import shutil
     import sys
     import tempfile
     import threading
     import time
-    import queue
-    import logging
+    import tkinter as tk
+    from tkinter import BOTH, END, LEFT, messagebox, ttk
+    from tkinter.scrolledtext import ScrolledText
+    from tkinter.ttk import Button
 
     import psutil
     import pystray
-    from pystray import MenuItem as item
-    from PIL import Image
-
-    import tkinter as tk
-    from tkinter import ttk
-    from tkinter import messagebox
-    from tkinter.scrolledtext import ScrolledText
-    from tkinter.ttk import Button
-    from tkinter import BOTH, END, LEFT
-
     import sv_ttk
+    from ACAT_Interface.acat_interface.ACATConvAssistInterface import (
+        ACATConvAssistInterface,
+    )
+    from PIL import Image
+    from pystray import MenuItem as item
 
-    from ACAT_Interface.acat_interface.ACATConvAssistInterface import ACATConvAssistInterface
     from ConvAssist.utilities.logging_utility import LoggingUtility
-
 
     license_text_string = "Copyright (C) 2024 Intel Corporation\n"
     license_text_string += "SPDX-License-Identifier: GPL 3.0\n\n"
@@ -81,7 +79,7 @@ else:
             # Search all MEIPASS folders...
             mei_folders = glob.glob(os.path.join(temp_path, "_MEI*"))
             count_list = len(mei_folders)
-            for item in mei_folders:
+            for item in mei_folders:  # noqa: F402
                 try:
                     if (
                         time.time() - os.path.getctime(item)
@@ -100,13 +98,15 @@ else:
         def __init__(self):
             super().__init__()
 
-            self._tray_icon:SysTrayIcon
+            self._tray_icon: SysTrayIcon
 
             self.title("ConvAssist")
             self.iconbitmap(os.path.join(working_dir, "Assets", "icon_tray.ico"))
 
             # Set up logging
-            self.logger = LoggingUtility().get_logger(name="CONVASSISTUI", log_level=logging.DEBUG, queue_handler=True)
+            self.logger = LoggingUtility().get_logger(
+                name="CONVASSISTUI", log_level=logging.DEBUG, queue_handler=True
+            )
             self.logger.info("Application started")
 
             # Set up the GUI components
@@ -148,8 +148,7 @@ else:
 
             # self.withdraw()  # Hide the main window at startup
 
-            sv_ttk.set_theme('light')
-
+            sv_ttk.set_theme("light")
 
         def create_buttons(self):
             button_frame = ttk.Frame(self, height=50)
@@ -167,10 +166,10 @@ else:
             close_button = ttk.Button(button_frame, text="Close", command=self.close_action)
 
             # Pack the buttons into the frame
-            clear_button.pack(side='right', expand=False, padx=5)
-            license_button.pack(side='right', expand=False, padx=5)
-            close_button.pack(side='right', expand=False, padx=5)
-            button_frame.pack(side='bottom', fill='x', expand=False, padx=10, pady=10)
+            clear_button.pack(side="right", expand=False, padx=5)
+            license_button.pack(side="right", expand=False, padx=5)
+            close_button.pack(side="right", expand=False, padx=5)
+            button_frame.pack(side="bottom", fill="x", expand=False, padx=10, pady=10)
 
         def clear_action(self):
             self.log_widget.delete(1.0, END)
@@ -186,7 +185,7 @@ else:
             try:
                 while True:
                     message = LoggingUtility().central_log_queue.get_nowait()
-                    self.log_widget.insert(tk.END, message + '\n')
+                    self.log_widget.insert(tk.END, message + "\n")
                     self.log_widget.see(tk.END)  # Auto-scroll to the end
             except queue.Empty:
                 pass
@@ -237,7 +236,7 @@ else:
             self.menu = (
                 item("Show", self.show_window),
                 item("About", self.about_message),
-                item("Quit", self.on_quit)
+                item("Quit", self.on_quit),
             )
 
         def check_for_exit(self):
@@ -250,7 +249,11 @@ else:
         @staticmethod
         def create_image():
             """Create an image for the systray icon."""
-            image = Image.open(os.path.join(r"C:\Users\mbeale\source\repos\ConvAssist\ACAT_ConvAssist_Interface\ConvAssistCPApp\Assets\icon_tray.png"))
+            image = Image.open(
+                os.path.join(
+                    r"C:\Users\mbeale\source\repos\ConvAssist\ACAT_ConvAssist_Interface\ConvAssistCPApp\Assets\icon_tray.png"
+                )
+            )
             return image
 
         def on_quit(self, icon, item):
@@ -266,21 +269,21 @@ else:
             self.tk_window.about_action()
 
     def main():
+        # Create the main window
+        tk_window = ConvAssistWindow()
 
-    # Create the main window
-    tk_window = ConvAssistWindow()
+        # Create the system tray icon
+        systray_icon = SysTrayIcon(tk_window, "Tkinter App")
 
-    # Create the system tray icon
-    systray_icon = SysTrayIcon(tk_window, "Tkinter App")
+        # Set the tray icon
+        tk_window.tray_icon = systray_icon
 
-    # Set the tray icon
-    tk_window.tray_icon = systray_icon
+        # Start the system tray icon
+        # systray_icon.run_detached()
 
-    # Start the system tray icon
-    # systray_icon.run_detached()
+        # Start the Tkinter main loop
+        tk_window.mainloop()
 
-    # Start the Tkinter main loop
-    tk_window.mainloop()
 
 if __name__ == "__main__":
     main()

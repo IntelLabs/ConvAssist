@@ -1,8 +1,8 @@
-
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from abc import ABC, abstractmethod
+
 
 class MessageHandler(ABC):
     @abstractmethod
@@ -27,12 +27,14 @@ class MessageHandler(ABC):
 
     @staticmethod
     def getMessageHandler(config):
-        if config['type'] == "win32":
+        if config["type"] == "win32":
             from message_handler.Win32PipeHandler import Win32PipeMessageHandler
-            return Win32PipeMessageHandler(config['pipe_name'])
-        elif config['type'] == "WebSocket":
+
+            return Win32PipeMessageHandler(config["pipe_name"])
+        elif config["type"] == "WebSocket":
             from message_handler.WebSocketHandler import WebSocketHandler
-            return WebSocketHandler(config['url'])
+
+            return WebSocketHandler(config["url"])
 
         else:
             raise Exception("Invalid message handler configuration")

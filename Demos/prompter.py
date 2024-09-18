@@ -18,8 +18,8 @@ Check that wxPython is properly installed.
     sys.exit(1)
 
 try:
-    import ConvAssist.utilities.callback
     import ConvAssist
+    import ConvAssist.utilities.callback
 except ImportError as ex:
     print(
         """
@@ -38,7 +38,7 @@ accordingly).
     sys.exit(1)
 
 
-##########
+#
 # Prompter
 #
 class Prompter(wx.App):
@@ -61,7 +61,7 @@ class Prompter(wx.App):
         return True
 
 
-###############
+#
 # PrompterFrame
 #
 class PrompterFrame(wx.Frame):
@@ -97,23 +97,17 @@ class PrompterFrame(wx.Frame):
             self.OnFileMenuSaveAs,
         )
         self.fileMenu.AppendSeparator()
-        BindMenu(
-            self.fileMenu.Append(wx.ID_CLOSE, "&Close\tCTRL+W"), self.OnFileMenuClose
-        )
+        BindMenu(self.fileMenu.Append(wx.ID_CLOSE, "&Close\tCTRL+W"), self.OnFileMenuClose)
         BindMenu(self.fileMenu.Append(wx.ID_EXIT, "&Quit\tCTRL+Q"), self.OnFileMenuQuit)
 
         # edit menu
         self.editMenu = wx.Menu()
         BindMenu(self.editMenu.Append(wx.ID_UNDO, "&Undo\tCTRL+Z"), self.OnEditMenuUndo)
-        BindMenu(
-            self.editMenu.Append(wx.ID_REDO, "&Redo\tSHIFT+CTRL+Z"), self.OnEditMenuRedo
-        )
+        BindMenu(self.editMenu.Append(wx.ID_REDO, "&Redo\tSHIFT+CTRL+Z"), self.OnEditMenuRedo)
         self.editMenu.AppendSeparator()
         BindMenu(self.editMenu.Append(wx.ID_CUT, "Cu&t\tCTRL+X"), self.OnEditMenuCut)
         BindMenu(self.editMenu.Append(wx.ID_COPY, "&Copy\tCTRL+C"), self.OnEditMenuCopy)
-        BindMenu(
-            self.editMenu.Append(wx.ID_PASTE, "&Paste\tCTRL+V"), self.OnEditMenuPaste
-        )
+        BindMenu(self.editMenu.Append(wx.ID_PASTE, "&Paste\tCTRL+V"), self.OnEditMenuPaste)
         self.editMenu.AppendSeparator()
         BindMenu(
             self.editMenu.Append(wx.ID_SELECTALL, "Select &All\tCTRL+A"),
@@ -166,9 +160,7 @@ class PrompterFrame(wx.Frame):
             wx.ITEM_CHECK,
         )
         self.presageMenu.Check(self.ID_TOGGLE_FUNCTION_KEYS_MODE, True)
-        BindMenu(
-            self.function_mode_presage_menu_item, self.OnPresageMenuToggleFunctionMode
-        )
+        BindMenu(self.function_mode_presage_menu_item, self.OnPresageMenuToggleFunctionMode)
 
         self.ID_TOGGLE_AUTOPUNCTUATION_MODE = wx.NewId()
         self.autopunctuation_mode_presage_menu_item = self.presageMenu.Append(
@@ -343,14 +335,14 @@ class PrompterFrame(wx.Frame):
             print("Opening %s\n" % path)
 
             try:
-                fsock = open(path, "r")
+                fsock = open(path)
                 contents = fsock.read()
                 fsock.close()
                 self.editor.SetText(contents)
                 self.editor.file = path  # remember file we're editing
                 self.fileMenu.Enable(wx.ID_SAVE, False)
                 self.fileMenu.Enable(wx.ID_SAVEAS, True)
-            except IOError:
+            except OSError:
                 dialog = wx.MessageDialog(
                     self, "Error opening file %s" % path, "Error opening file", wx.OK
                 )
@@ -363,7 +355,7 @@ class PrompterFrame(wx.Frame):
 
     def OnFileMenuSave(self, event):
         print("Save file")
-        if self.editor.file == None:
+        if self.editor.file is None:
             self.OnFileMenuSaveAs(event)
         else:
             self.__SaveFile(self.editor.file)
@@ -539,7 +531,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
             fp = open(path, "w")  # Create file anew
             fp.write(self.editor.GetText())
             fp.close()
-        except IOError:
+        except OSError:
             dialog = wx.MessageDialog(
                 self, "Error saving file %s" % path, "Error saving file", wx.OK
             )
@@ -547,7 +539,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
             dialog.Destroy()
 
 
-################
+#
 # PrompterEditor
 #
 class PrompterEditor(wx.stc.StyledTextCtrl):
@@ -669,7 +661,7 @@ class PrompterEditor(wx.stc.StyledTextCtrl):
             # context_change = self.prsg.context_change()
             context_change = self.prsg.context_tracker.context_change()
 
-            #### modified the below line to include next letter probability output
+            # modified the below line to include next letter probability output
             # self.prediction = self.prsg.predict()
             (wordprob, words, sentprob, sent) = self.prsg.predict()
             self.prediction = sent
