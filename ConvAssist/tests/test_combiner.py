@@ -1,13 +1,11 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Copyright (C) 2024 Intel Corporation
-#SPDX-License-Identifier: GPL-3.0-or-later
-
 import unittest
+
 from ConvAssist.combiner.meritocrity_combiner import MeritocracyCombiner
-from ConvAssist.predictor.utilities.suggestion import Suggestion
 from ConvAssist.predictor.utilities.prediction import Prediction
+from ConvAssist.predictor.utilities.suggestion import Suggestion
 
 
 class TestMeritocracyCombiner(unittest.TestCase):
@@ -57,7 +55,9 @@ class TestMeritocracyCombiner(unittest.TestCase):
     def test_combine_with_sentence_prediction(self):
         predictions = [self._create_prediction2()]
         prediction2 = self._create_prediction2("SentenceCompletionPredictor")
-        prediction2.add_suggestion(Suggestion("test is a sentence", 0.1, "SentenceCompletionPredictor"))
+        prediction2.add_suggestion(
+            Suggestion("test is a sentence", 0.1, "SentenceCompletionPredictor")
+        )
         predictions.append(prediction2)
         _, result = self.combiner.combine(predictions, "")
 
@@ -65,6 +65,8 @@ class TestMeritocracyCombiner(unittest.TestCase):
         correct.add_suggestion(Suggestion("Test2", 0.6, "test_predictor"))
         correct.add_suggestion(Suggestion("Test3", 0.4, "test_predictor"))
         correct.add_suggestion(Suggestion("Test", 0.2, "test_predictor"))
-        correct.add_suggestion(Suggestion("test is a sentence", 0.1, "SentenceCompletionPredictor"))
+        correct.add_suggestion(
+            Suggestion("test is a sentence", 0.1, "SentenceCompletionPredictor")
+        )
 
         assert result == correct

@@ -11,7 +11,8 @@ Class for context tracker.
 """
 from nltk import RegexpTokenizer
 
-class ContextTracker(object):
+
+class ContextTracker:
     """
     Tracks the current context.
 

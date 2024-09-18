@@ -4,10 +4,11 @@
 import unittest
 from configparser import ConfigParser
 from unittest.mock import MagicMock
+
 from ConvAssist.context_tracker import ContextTracker
 
-class TestContextTracker(unittest.TestCase):
 
+class TestContextTracker(unittest.TestCase):
     def test_token(self):
         tracker = ContextTracker()
         tracker.context = "example token "
@@ -38,7 +39,11 @@ class TestContextTracker(unittest.TestCase):
         tracker.context = "tokens with punctuation's and hypenated-words "
         count, tokens = tracker.get_tokens(10)
         assert count == 10
-        self.assertEqual(tokens, ['tokens', ' ', 'with', ' ', 'punctuation\'s', ' ', 'and', ' ', 'hypenated-words', ' '])
+        self.assertEqual(
+            tokens,
+            ["tokens", " ", "with", " ", "punctuation's", " ", "and", " ", "hypenated-words", " "],
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

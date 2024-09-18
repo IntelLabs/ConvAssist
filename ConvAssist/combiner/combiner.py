@@ -7,7 +7,9 @@
 Combiner classes to merge results from several predictors.
 """
 import abc
-from ConvAssist.predictor.utilities.prediction import Prediction, MAX_PROBABILITY
+
+from ConvAssist.predictor.utilities.prediction import MAX_PROBABILITY, Prediction
+
 
 class Combiner(metaclass=abc.ABCMeta):
     """
@@ -17,7 +19,7 @@ class Combiner(metaclass=abc.ABCMeta):
     def __init__(self):
         pass
 
-    def filter(self, prediction:Prediction) -> Prediction:
+    def filter(self, prediction: Prediction) -> Prediction:
         seen_tokens = set()
         result = Prediction()
         for i, suggestion in enumerate(prediction):

@@ -4,16 +4,16 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from configparser import ConfigParser
 import logging
-import re
 import os
+import re
 from collections import Counter
+from configparser import ConfigParser
 
 from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.predictor import Predictor
-from ConvAssist.predictor.utilities.suggestion import Suggestion
 from ConvAssist.predictor.utilities.prediction import Prediction
+from ConvAssist.predictor.utilities.suggestion import Suggestion
 
 
 class SpellCorrectPredictor(Predictor):
@@ -25,18 +25,13 @@ class SpellCorrectPredictor(Predictor):
     """
 
     def __init__(
-            self,
-            config: ConfigParser,
-            context_tracker: ContextTracker,
-            predictor_name: str,
-            logger: logging.Logger | None = None
+        self,
+        config: ConfigParser,
+        context_tracker: ContextTracker,
+        predictor_name: str,
+        logger: logging.Logger | None = None,
     ):
-        super().__init__(
-            config,
-            context_tracker,
-            predictor_name,
-            logger
-        )
+        super().__init__(config, context_tracker, predictor_name, logger)
 
         if os.path.exists(self.spellingdatabase):
             with open(self.spellingdatabase) as file:
@@ -48,11 +43,12 @@ class SpellCorrectPredictor(Predictor):
     def spellingdatabase(self):
         return os.path.join(self._static_resources_path, self._spellingdatabase)
 
-    def _words(self, text): return re.findall(r'\w+', text.lower())
+    def _words(self, text):
+        return re.findall(r"\w+", text.lower())
 
     def _P(self, word):
-        """ Probability of `word`."""
-        N=sum(self.WORDS.values())
+        """Probability of `word`."""
+        N = sum(self.WORDS.values())
         return self.WORDS[word] / N
 
     def _correction(self, word):
@@ -61,15 +57,20 @@ class SpellCorrectPredictor(Predictor):
 
     def _candidates(self, word):
         """Generate possible spelling corrections for word."""
-        return (self._known([word]) or self._known(self._edits1(word)) or self._known(self._edits2(word)) or [word])
+        return (
+            self._known([word])
+            or self._known(self._edits1(word))
+            or self._known(self._edits2(word))
+            or [word]
+        )
 
     def _known(self, words):
         """The subset of `words` that appear in the dictionary of WORDS."""
-        return set(w for w in words if w in self.WORDS)
+        return {w for w in words if w in self.WORDS}
 
     def _edits1(self, word):
         """All edits that are one edit away from `word`."""
-        letters = 'abcdefghijklmnopqrstuvwxyz'
+        letters = "abcdefghijklmnopqrstuvwxyz"
         splits = [(word[:i], word[i:]) for i in range(len(word) + 1)]
         deletes = [L + R[1:] for L, R in splits if R]
         transposes = [L + R[1] + R[0] + R[2:] for L, R in splits if len(R) > 1]
@@ -81,7 +82,7 @@ class SpellCorrectPredictor(Predictor):
         """All edits that are two edits away from `word`."""
         return (e2 for e1 in self._edits1(word) for e2 in self._edits1(e1))
 
-    def predict(self, max_partial_prediction_size = None, filter = None):
+    def predict(self, max_partial_prediction_size=None, filter=None):
         super().predict(max_partial_prediction_size, filter)
 
         token = self.context_tracker.token(0)
@@ -98,6 +99,6 @@ class SpellCorrectPredictor(Predictor):
                 )
 
         if len(word_prediction) == 0:
-            self.logger.error(f"No predictions from SpellCorrectPredictor")
+            self.logger.error(f"No predictions from {self.predictor_name}")
 
         return setence_prediction, word_prediction

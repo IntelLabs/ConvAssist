@@ -6,11 +6,14 @@
 
 import logging
 from configparser import ConfigParser
+
 from nltk import sent_tokenize
+
 from ConvAssist.context_tracker import ContextTracker
-from ConvAssist.predictor_registry import PredictorRegistry
 from ConvAssist.predictior_activator import PredictorActivator
+from ConvAssist.predictor_registry import PredictorRegistry
 from ConvAssist.utilities.logging_utility import LoggingUtility
+
 
 class ConvAssist:
     """
@@ -37,11 +40,14 @@ class ConvAssist:
         Checks if models associated with a predictor are loaded.
     """
 
-    def __init__(self, name: str,
-                 ini_file: str | None = None,
-                 config:ConfigParser | None = None,
-                 log_location:str | None = None,
-                log_level:int = logging.ERROR):
+    def __init__(
+        self,
+        name: str,
+        ini_file: str | None = None,
+        config: ConfigParser | None = None,
+        log_location: str | None = None,
+        log_level: int = logging.ERROR,
+    ):
         """
         Initializes an instance of the class.
         Args:
@@ -61,7 +67,9 @@ class ConvAssist:
         if self.config:
             self.initialize(self.config, self.log_location, self.log_level)
 
-    def initialize(self, config:ConfigParser, log_location:str|None = None, log_level:int|None = None):
+    def initialize(
+        self, config: ConfigParser, log_location: str | None = None, log_level: int | None = None
+    ):
         """
         Initializes the ConvAssist object with the provided configuration, log location, and log level.
         Args:
@@ -81,7 +89,9 @@ class ConvAssist:
         if log_location:
             self.log_location = log_location
 
-        self.logger = LoggingUtility().get_logger(self.name, self.log_level, self.log_location, True)
+        self.logger = LoggingUtility().get_logger(
+            self.name, self.log_level, self.log_location, True
+        )
 
         lowercase_mode = self.config.getboolean("ContextTracker", "lowercase_mode", fallback=False)
         self.context_tracker = ContextTracker(lowercase_mode)
@@ -90,8 +100,8 @@ class ConvAssist:
         self.predictor_registry.set_predictors(self.config, self.context_tracker, self.logger)
 
         self.predictor_activator = PredictorActivator(
-                self.config, self.predictor_registry, self.context_tracker, self.logger
-            )
+            self.config, self.predictor_registry, self.context_tracker, self.logger
+        )
         self.predictor_activator.combination_policy = "meritocracy"
 
         self.initialized = True
@@ -107,8 +117,8 @@ class ConvAssist:
 
         multiplier = 1
         (wordprob, word, sentprob, sent) = self.predictor_activator.predict(multiplier)
-        if word!=[]:
-            #### normalize word probabilities over 10 words.
+        if word != []:
+            # normalize word probabilities over 10 words.
             normalized_words = word[0:10]
             prob_sum_over10 = 0.0
             words = []
@@ -116,10 +126,12 @@ class ConvAssist:
                 prob_sum_over10 += w[1].probability
                 words.append(w[1].word)
 
-        return (wordprob,
-                [(p.word, p.probability/prob_sum_over10) for p in word],
-                sentprob,
-                [(p.word, p.probability) for p in sent])
+        return (
+            wordprob,
+            [(p.word, p.probability / prob_sum_over10) for p in word],
+            sentprob,
+            [(p.word, p.probability) for p in sent],
+        )
 
     def update_params(self, test_gen_sentence_pred, retrieve_from_AAC):
         self.predictor_activator.update_params(test_gen_sentence_pred, retrieve_from_AAC)

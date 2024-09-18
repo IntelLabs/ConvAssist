@@ -6,10 +6,12 @@
 
 from enum import Enum
 
+
 class PredictorNames(Enum):
     """
     Define names of all predictors
     """
+
     SentenceComp = "SentenceCompletionPredictor"
     CannedWord = "CannedWordPredictor"
     GeneralWord = "DefaultSmoothedNgramPredictor"

@@ -2,11 +2,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import sqlite3
-from pathlib import Path
 import unittest
+from pathlib import Path
+
+from ConvAssist.tests.utils import safe_check_folder, safe_delete_file
+
 # from unittest.mock import MagicMock
-from ConvAssist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
-from ConvAssist.tests.utils import safe_delete_file, safe_check_folder
+from ConvAssist.utilities.databaseutils.sqllite_dbconnector import (
+    SQLiteDatabaseConnector,
+)
+
 
 class TestSQLiteDatabase(unittest.TestCase):
     def setUp(self):
@@ -32,7 +37,9 @@ class TestSQLiteDatabase(unittest.TestCase):
         self.db.connect()
         query = "CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, name TEXT)"
         self.db.execute_query(query)
-        result = self.db.fetch_all("SELECT name FROM sqlite_master WHERE type='table' AND name='test_table'")
+        result = self.db.fetch_all(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='test_table'"
+        )
 
     def test_begin_transaction(self):
         self.db.connect()
@@ -50,6 +57,7 @@ class TestSQLiteDatabase(unittest.TestCase):
         self.db.begin_transaction()
         self.db.rollback()
         self.assertIsNotNone(self.db.conn)
+
 
 class TestSQLiteFetchCommands(unittest.TestCase):
     def setUp(self):
@@ -75,6 +83,7 @@ class TestSQLiteFetchCommands(unittest.TestCase):
         query = "SELECT * FROM test_table"
         result = self.db.fetch_all(query)
         self.assertIsInstance(result, list)
+
 
 if __name__ == "__main__":
     unittest.main()

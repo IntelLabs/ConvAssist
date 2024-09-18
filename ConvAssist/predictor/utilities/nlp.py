@@ -1,14 +1,13 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: GPL-3.0-or-later
-
 import os
 import sys
+
 import spacy
 
 from ConvAssist.utilities.singleton import Singleton
+
 
 class NLP(metaclass=Singleton):
     def __init__(self):
@@ -17,7 +16,7 @@ class NLP(metaclass=Singleton):
     def load_nlp(self):
         try:
             base_path = sys._MEIPASS
-            en_core_path = base_path+"/en_core_web_sm/"
+            en_core_path = base_path + "/en_core_web_sm/"
             files = os.listdir(en_core_path)
             for file in files:
                 if file.lower().startswith("en_core_web_sm"):

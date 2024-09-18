@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
+
 from ConvAssist.predictor.utilities.suggestion import Suggestion, SuggestionException
+
 
 class TestSuggestion(unittest.TestCase):
     def test_init(self):
@@ -50,6 +52,7 @@ class TestSuggestion(unittest.TestCase):
         del suggestion.probability
         with self.assertRaises(AttributeError):
             _ = suggestion.probability
+
 
 if __name__ == "__main__":
     unittest.main()

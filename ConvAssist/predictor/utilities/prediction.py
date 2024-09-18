@@ -4,13 +4,15 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from ConvAssist.predictor.utilities.suggestion import Suggestion
+
 MIN_PROBABILITY = 0.0
 MAX_PROBABILITY = 1.0
 
-from ConvAssist.predictor.utilities.suggestion import Suggestion
 
 class UnknownCombinerException(Exception):
     pass
+
 
 class Prediction(list):
     """
@@ -36,6 +38,6 @@ class Prediction(list):
             if s.word == token:
                 return s
 
-    def add_suggestion(self, suggestion:Suggestion):
+    def add_suggestion(self, suggestion: Suggestion):
         self.append(suggestion)
         self.sort(key=lambda x: x.probability, reverse=True)

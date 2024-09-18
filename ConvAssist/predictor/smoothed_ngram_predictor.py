@@ -1,18 +1,21 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from configparser import ConfigParser
 import logging
 import os
 import string
+from configparser import ConfigParser
 from typing import List
 
 from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.predictor import Predictor
 from ConvAssist.predictor.utilities.ngram_map import NgramMap
-from ConvAssist.predictor.utilities.suggestion import Suggestion
 from ConvAssist.predictor.utilities.prediction import Prediction
-from ConvAssist.utilities.databaseutils.sqllite_ngram_dbconnector import SQLiteNgramDatabaseConnector
+from ConvAssist.predictor.utilities.suggestion import Suggestion
+from ConvAssist.utilities.databaseutils.sqllite_ngram_dbconnector import (
+    SQLiteNgramDatabaseConnector,
+)
+
 
 class SmoothedNgramPredictor(Predictor):
     """
@@ -21,16 +24,13 @@ class SmoothedNgramPredictor(Predictor):
     """
 
     def __init__(
-            self,
-            config: ConfigParser,
-            context_tracker: ContextTracker,
-            predictor_name: str,
-            logger: logging.Logger | None = None
+        self,
+        config: ConfigParser,
+        context_tracker: ContextTracker,
+        predictor_name: str,
+        logger: logging.Logger | None = None,
     ):
-        super().__init__(
-            config, context_tracker,
-            predictor_name, logger=logger
-        )
+        super().__init__(config, context_tracker, predictor_name, logger=logger)
 
         if self.init_database_connector_if_ready():
             self.recreate_database()
@@ -44,7 +44,7 @@ class SmoothedNgramPredictor(Predictor):
     #     pass
 
     def generate_ngrams(self, token, n):
-        n = n+1
+        n = n + 1
         # Use the zip function to help us generate n-grams
         # Concatenate the tokens into ngrams and return
         ngrams = zip(*[token[i:] for i in range(n)])
@@ -73,22 +73,22 @@ class SmoothedNgramPredictor(Predictor):
         self._learn = value
         self.init_database_connector_if_ready()
 
-
     def init_database_connector_if_ready(self):
         database = self.database
         if (
-                database and os.path.exists(database)
-                and self.cardinality and self.cardinality > 0
-                # and self.learn_enabled
+            database
+            and os.path.exists(database)
+            and self.cardinality
+            and self.cardinality > 0
+            # and self.learn_enabled
         ):
-            self.ngram_db_conn = SQLiteNgramDatabaseConnector(self.database,
-                            self.cardinality,
-                            self.logger)
+            self.ngram_db_conn = SQLiteNgramDatabaseConnector(
+                self.database, self.cardinality, self.logger
+            )
 
             self.ngram_db_conn.connect()
             return True
         return False
-
 
     def predict(self, max_partial_prediction_size: int, filter):
 
@@ -108,7 +108,7 @@ class SmoothedNgramPredictor(Predictor):
             for k in reversed(range(actual_tokens)):
                 if len(prefix_completion_candidates) >= max_partial_prediction_size:
                     break
-                prefix_ngram = tokens[(len(tokens) - k - 1):]
+                prefix_ngram = tokens[(len(tokens) - k - 1) :]
 
                 if prefix_ngram:
                     partial = self.ngram_db_conn.ngram_fetch_like(
@@ -120,7 +120,7 @@ class SmoothedNgramPredictor(Predictor):
                     for p in partial:
                         if len(prefix_completion_candidates) > max_partial_prediction_size:
                             break
-                        #TODO explain why -2
+                        # TODO explain why -2
                         candidate = p[-2]
                         if candidate not in prefix_completion_candidates:
                             prefix_completion_candidates.append(candidate)
@@ -146,26 +146,37 @@ class SmoothedNgramPredictor(Predictor):
                         frequency = float(numerator) / denominator
                     probability += float(self.deltas[k]) * frequency
                 if probability > 0:
-                    if all(char in string.punctuation for char in candidate_tokens[self.cardinality - 1]):
-                        self.logger.debug(candidate_tokens[self.cardinality - 1]+ " contains punctuations ")
+                    if all(
+                        char in string.punctuation
+                        for char in candidate_tokens[self.cardinality - 1]
+                    ):
+                        self.logger.debug(
+                            candidate_tokens[self.cardinality - 1] + " contains punctuations "
+                        )
                     else:
                         word_prediction.add_suggestion(
-                            Suggestion(candidate_tokens[self.cardinality - 1], probability, self.predictor_name)
+                            Suggestion(
+                                candidate_tokens[self.cardinality - 1],
+                                probability,
+                                self.predictor_name,
+                            )
                         )
         except Exception as e:
-            self.logger.error(f"Exception in SmoothedNgramPredictor predict function: {e}")
+            self.logger.error(f"Exception in {self.predictor_name} predict function: {e}")
 
         if len(word_prediction) == 0:
-            self.logger.error(f"No predictions from SmoothedNgramPredictor")
+            self.logger.error(f"No predictions from {self.predictor_name}")
 
-        self.logger.info(f"End prediction. got {len(word_prediction)} word suggestions and {len(sentence_prediction)} sentence suggestions")
+        self.logger.info(
+            f"End prediction. got {len(word_prediction)} word suggestions and {len(sentence_prediction)} sentence suggestions"
+        )
 
         return sentence_prediction, word_prediction
 
     def _count(self, tokens, offset, ngram_size):
         result = 0
         if ngram_size > 0:
-            ngram = tokens[len(tokens) - ngram_size + offset: len(tokens) + offset]
+            ngram = tokens[len(tokens) - ngram_size + offset : len(tokens) + offset]
             result = self.ngram_db_conn.ngram_count(ngram)
         else:
             result = self.ngram_db_conn.unigram_counts_sum()
@@ -176,9 +187,11 @@ class SmoothedNgramPredictor(Predictor):
         # i.e. learn all ngrams and counts in memory
         if self.learn_enabled:
             try:
-                self.logger.debug("learning ..."+ str(change_tokens))
-                change_tokens = change_tokens.lower().translate(str.maketrans('', '', string.punctuation))
-                self.logger.debug("after removing punctuations, change_tokens = "+change_tokens)
+                self.logger.debug("learning ..." + str(change_tokens))
+                change_tokens = change_tokens.lower().translate(
+                    str.maketrans("", "", string.punctuation)
+                )
+                self.logger.debug("after removing punctuations, change_tokens = " + change_tokens)
 
                 change_tokens = self.extract_svo(change_tokens)
 
