@@ -1,7 +1,8 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from ConvAssist.predictor.utilities.prediction import MAX_PROBABILITY, MIN_PROBABILITY
+MIN_PROBABILITY = 0.0
+MAX_PROBABILITY = 1.0
 
 
 class SuggestionException(Exception):

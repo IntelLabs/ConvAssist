@@ -6,9 +6,6 @@
 
 from ConvAssist.predictor.utilities.suggestion import Suggestion
 
-MIN_PROBABILITY = 0.0
-MAX_PROBABILITY = 1.0
-
 
 class UnknownCombinerException(Exception):
     pass

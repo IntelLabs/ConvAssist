@@ -9,7 +9,8 @@ from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from typing import TextIO
 
-import pydebugstring
+if sys.platform == "win32":
+    import pydebugstring
 
 from ConvAssist.utilities.singleton import Singleton
 
@@ -69,8 +70,10 @@ class LoggingUtility(metaclass=Singleton):
         if queue_handler:
             self.add_queue_handler(logger)
 
-        # if log_level is logging.DEBUG add a pydebugstring handler
-        logger.addHandler(pydebugstring.OutputDebugStringHandler())
+        if sys.platform == "win32":
+            # if log_level is logging.DEBUG add a pydebugstring handler
+            logger.addHandler(pydebugstring.OutputDebugStringHandler())
+
         return logger
 
     def add_file_handler(self, logger: logging.Logger, log_location: str):

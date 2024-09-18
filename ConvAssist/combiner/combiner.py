@@ -8,7 +8,8 @@ Combiner classes to merge results from several predictors.
 """
 import abc
 
-from ConvAssist.predictor.utilities.prediction import MAX_PROBABILITY, Prediction
+from ConvAssist.predictor.utilities.prediction import Prediction
+from ConvAssist.predictor.utilities.suggestion import MAX_PROBABILITY
 
 
 class Combiner(metaclass=abc.ABCMeta):
