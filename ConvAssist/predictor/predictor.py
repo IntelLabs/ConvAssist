@@ -72,16 +72,19 @@ class Predictor(ABC):
         self._tokenizer: str = ""  # Path
 
         # configure a logger
-        if logger:
-            self.logger = logger
+        if logger is None:
+            self.logger = LoggingUtility().get_logger(
+                f"{self.predictor_name}", log_level=logging.DEBUG, queue_handler=True
+            )
         else:
             self.logger = LoggingUtility().get_logger(
-                self.predictor_name, log_level=logging.DEBUG, queue_handler=True
+                f"{logger.name}-{self.predictor_name}", log_level=logging.DEBUG, queue_handler=True
             )
 
         self.logger.info(f"Initializing {self.predictor_name} predictor")
 
         self._read_config()
+        self.configure()
 
     @property
     def predictor_name(self):
@@ -190,6 +193,10 @@ class Predictor(ABC):
         self._test_generalsentenceprediction = value
 
     @abstractmethod  # pragma: no cover
+    def configure(self) -> None:
+        raise NotImplementedError(f"Configure not implemented in {self.predictor_name}")
+
+    @abstractmethod  # pragma: no cover
     def predict(
         self, max_partial_prediction_size=None, filter=None
     ) -> tuple[Prediction, Prediction]:
@@ -202,7 +209,7 @@ class Predictor(ABC):
         returns:
             tuple[Prediction, Prediction]       # The predicted next word and sentence
         """
-        self.logger.info(f"{self.predictor_name} - Predicting next word and sentence")
+        raise NotImplementedError(f"Configure not implemented in {self.predictor_name}")
 
     def read_personalized_corpus(self):
         corpus = []

@@ -4,7 +4,7 @@
 import os
 import sys
 
-import spacy
+from spacy import load
 
 from ConvAssist.utilities.singleton import Singleton
 
@@ -14,17 +14,13 @@ class NLP(metaclass=Singleton):
         self.nlp = self.load_nlp()
 
     def load_nlp(self):
-        try:
-            base_path = sys._MEIPASS
-            en_core_path = base_path + "/en_core_web_sm/"
-            files = os.listdir(en_core_path)
-            for file in files:
-                if file.lower().startswith("en_core_web_sm"):
-                    file_path = os.path.join(en_core_path, file)
-                    nlp = spacy.load(file_path)
+        nlp_loc = "en_core_web_sm"
+        # spacy model is in _MEIPASS when running as a pyinstaller executable
+        if hasattr(sys, "_MEIPASS"):
+            base_path = sys._MEIPASS  # type: ignore
+            nlp_loc = os.path.join(base_path, nlp_loc)
 
-        except Exception as e:
-            nlp = spacy.load("en_core_web_sm")
+        nlp = load(nlp_loc)
 
         return nlp
 

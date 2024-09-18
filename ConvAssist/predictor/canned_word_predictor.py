@@ -18,17 +18,13 @@ from ConvAssist.utilities.databaseutils.sqllite_ngram_dbconnector import (
 
 
 class CannedWordPredictor(SmoothedNgramPredictor):
-    def __init__(
-        self,
-        config: ConfigParser,
-        context_tracker: ContextTracker,
-        predictor_name: str,
-        logger: logging.Logger | None = None,
-    ):
-        super().__init__(config, context_tracker, predictor_name, logger=logger)
-
+    def configure(self):
         # load the natural language processing model
         self.nlp = NLP().get_nlp()
+
+        self.ngram_db_conn = SQLiteNgramDatabaseConnector(
+            self.database, self.cardinality, self.logger
+        )
 
         # object and subject constants
         self.OBJECT_DEPS = {
@@ -53,8 +49,7 @@ class CannedWordPredictor(SmoothedNgramPredictor):
             # strip each word in stopwordsList
             self.stopwordsList = [word.strip() for word in self.stopwordsList]
 
-        if self.init_database_connector_if_ready():
-            self.recreate_database()
+        self.recreate_database()
 
     # Override default properties
     @property
@@ -98,32 +93,44 @@ class CannedWordPredictor(SmoothedNgramPredictor):
                     imp_tokens.append(token.text.lower())
         return " ".join(imp_tokens).strip().lower()
 
-    def init_database_connector_if_ready(self):
+    # def init_database_connector_if_ready(self):
 
-        # Canned Word Predictor database is dynamically created.
-        # Only check if cardinality is set.
-        if self.cardinality and self.cardinality > 0:
-            self.ngram_db_conn = SQLiteNgramDatabaseConnector(
-                self.database, self.cardinality, self.logger
-            )
+    #     # Canned Word Predictor database is dynamically created.
+    #     # Only check if cardinality is set.
+    #     if (self.cardinality and self.cardinality > 0):
+    #         self.ngram_db_conn = SQLiteNgramDatabaseConnector(self.database,
+    #             self.cardinality,
+    #             self.logger)
 
-            self.ngram_db_conn.connect()
-            return True
-        return False
+    #         self.ngram_db_conn.connect()
+    #         return True
+    #     return False
 
     def recreate_database(self):
+        sentence_db = SQLiteDatabaseConnector(self.sentences_db)
+
+        # STEP 1: Check if sentences_db exists
+        if not os.path.exists(self.sentences_db):
+            self.logger.error(f"sentences_db does not exist: {self.sentences_db}")
+
+            sentence_db.connect()
+            columns = ["sentence TEXT PRIMARY KEY", "count INTEGER"]
+            sentence_db.create_table("sentences", columns)
+            sentence_db.close()
 
         # STEP 1: Update personalized_corups if it is not None
         personalized_corpus = self.read_personalized_corpus()
 
-        if personalized_corpus and self.init_database_connector_if_ready():
+        if personalized_corpus:
             try:
 
                 # STEP 2: CREATE CANNED_NGRAM DATABASE IF IT DOES NOT EXIST
                 try:
-                    self.ngram_db_conn.create_ngram_table(cardinality=1)
-                    self.ngram_db_conn.create_ngram_table(cardinality=2)
-                    self.ngram_db_conn.create_ngram_table(cardinality=3)
+                    assert self.ngram_db_conn
+                    self.ngram_db_conn.connect()
+                    for i in range(self.cardinality):
+                        self.ngram_db_conn.create_ngram_table(cardinality=i + 1)
+
                 except Exception as e:
                     self.logger.error(f"exception in creating personalized db : {e}")
 
@@ -197,3 +204,4 @@ class CannedWordPredictor(SmoothedNgramPredictor):
                 self.logger.error(f"= {e}")
             finally:
                 sentence_db.close()
+                self.ngram_db_conn.close()

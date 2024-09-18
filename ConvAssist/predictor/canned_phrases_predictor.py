@@ -32,14 +32,7 @@ class CannedPhrasesPredictor(Predictor):
     Searches the canned phrase database for matching next words and sentences
     """
 
-    def __init__(
-        self,
-        config: ConfigParser,
-        context_tracker: ContextTracker,
-        predictor_name: str,
-        logger: logging.Logger | None = None,
-    ):
-        super().__init__(config, context_tracker, predictor_name, logger)
+    def configure(self):
 
         if torch.cuda.is_available():
             self.device = "cuda"
@@ -51,20 +44,20 @@ class CannedPhrasesPredictor(Predictor):
             self.device = "cpu"
             self.n_gpu = 0
 
-        self._model_loaded = False
         self.seed = 42
         self.cannedPhrases_counts = {}
         self.stemmer = PorterStemmer()
         self.embedder = SentenceTransformer(self.sbertmodel, device=self.device)
 
-        self.pers_cannedphrasesLines = open(self.personalized_cannedphrases).readlines()
-        self.pers_cannedphrasesLines = [s.strip() for s in self.pers_cannedphrasesLines]
+        with open(self.personalized_cannedphrases) as f:
+            self.pers_cannedphrasesLines = [s.strip() for s in f.readlines()]
 
-        if not os.path.isfile(self.sentences_db_path):
-            self.logger.debug(f"{self.sentences_db_path} does not exist, creating.")
-            self.recreate_database()
-        else:
-            self.logger.debug(f"{self.sentences_db_path} exists, not creating.")
+        # if(not os.path.isfile(self.sentences_db_path)):
+        #     self.logger.debug(f"{self.sentences_db_path} does not exist, creating.")
+        #     self.recreate_database()
+        # else:
+        #     self.logger.debug(f"{self.sentences_db_path} exists, not creating.")
+        self.recreate_database()
 
         if not os.path.isfile(self.embedding_cache_path):
             self.logger.info(f"{self.embedding_cache_path} does not exist, creating")
@@ -97,7 +90,6 @@ class CannedPhrasesPredictor(Predictor):
             self.index = self._create_index(self.index)
         self.index.set_ef(50)
 
-        self._model_loaded = True
         self.logger.debug(f"cannedPhrases count: {len(self.cannedPhrases_counts)}")
 
     def _create_index(self, ind):
@@ -110,11 +102,6 @@ class CannedPhrasesPredictor(Predictor):
     def sentences_db_path(self):
         return os.path.join(self._personalized_resources_path, self._sentences_db)
 
-    @property
-    def model_loaded(self):
-        return self._model_loaded
-
-    # base class method
     def recreate_database(self):
 
         self.pers_cannedphrasesLines = self.read_personalized_corpus()
@@ -256,7 +243,6 @@ class CannedPhrasesPredictor(Predictor):
 
     # base class method
     def predict(self, max_partial_prediction_size, filter):
-        super().predict(max_partial_prediction_size, filter)
 
         sent_prediction = Prediction()
         word_prediction = Prediction()  # Not used in this predictor
