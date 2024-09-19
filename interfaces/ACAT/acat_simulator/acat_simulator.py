@@ -18,7 +18,7 @@ if sys.platform == "win32":
         pass
 
 
-from ACAT_Interfaces.utilities.ACATMessageTypes import (
+from interfaces.ACAT.utilities.ACATMessageTypes import (
     ConvAssistMessage,
     ConvAssistMessageTypes,
     ConvAssistPredictionTypes,

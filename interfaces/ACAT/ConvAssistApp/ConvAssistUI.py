@@ -27,7 +27,7 @@ else:
     import psutil
     import pystray
     import sv_ttk
-    from ..acat_interface.ACATConvAssistInterface import (
+    from interfaces.ACAT.acat_interface.ACATConvAssistInterface import (
         ACATConvAssistInterface,
     )
     from PIL import Image
@@ -251,8 +251,8 @@ else:
             """Create an image for the systray icon."""
             image = Image.open(
                 os.path.join(
-                    r"C:\Users\mbeale\source\repos\ConvAssist\ACAT_ConvAssist_Interface\ConvAssistCPApp\Assets\icon_tray.png"
-                )
+                    working_dir, "Assets", "icon_tray.ico"
+                )   
             )
             return image
 

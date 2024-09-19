@@ -4,7 +4,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from ACAT_Interfaces.acat_interface.ACATConvAssistInterface import (
+from ..ACATConvAssistInterface import (
     ACATConvAssistInterface,
 )
 

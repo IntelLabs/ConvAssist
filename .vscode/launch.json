@@ -28,12 +28,12 @@
             "name": "ConvAssistUI",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/ACAT_Interfaces/ConvAssistApp/ConvAssistUI.py",
+            "program": "${workspaceFolder}/interfaces/ACAT/ConvAssistApp/ConvAssistUI.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "redirectOutput": true,
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}/interfaces/ACAT"
             },
         },
         {

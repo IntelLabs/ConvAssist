@@ -3,7 +3,7 @@
 
 import unittest
 
-from ACAT_Interfaces.acat_interface.ACATConvAssistInterface import (
+from ..ACATConvAssistInterface import (
     ACATConvAssistInterface,
 )
 

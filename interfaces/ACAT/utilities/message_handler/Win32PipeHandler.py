@@ -44,21 +44,21 @@ else:
             self.pipe_handle = None
 
         def connect(self):
-            return self._ConnectToNamedPipe(self.pipe_name, 5)
+            return self._ConnectToNamedPipe(50)
 
         def disconnect(self) -> None:
-            self._DisconnectNamedPipe(self.pipe_handle)
+            self._DisconnectNamedPipe()
 
         def send_message(self, message: str) -> None:
-            self._send_message(self.pipe_handle, message)
+            self._send_message(message)
 
         def receive_message(self) -> str:
-            return self._get_incoming_message(self.pipe_handle)
+            return self._get_incoming_message()
 
         def create_connection(self) -> None:
             pass
 
-        def _is_pipe_overlapped(self, pipe_handle) -> bool:
+        def _is_pipe_overlapped(self) -> bool:
             """
             Check if the pipe is overlapped
 
@@ -66,7 +66,8 @@ else:
             :return: True if overlapped, False otherwise
             """
             try:
-                _, _, pipe_mode, _ = win32pipe.GetNamedPipeInfo(pipe_handle)
+                assert self.pipe_handle is not None
+                _, _, pipe_mode, _ = win32pipe.GetNamedPipeInfo(self.pipe_handle.handle)
                 if pipe_mode & win32pipe.PIPE_NOWAIT:
                     return True
                 else:
@@ -75,7 +76,7 @@ else:
             except pywintypes.error as e:
                 raise Exception(f"Error checking if pipe is overlapped: {e}") from e
 
-        def _get_incoming_message(self, Pipehandle) -> Any:
+        def _get_incoming_message(self) -> Any:
             """
             Get the incoming message from the pipe
 
@@ -83,9 +84,10 @@ else:
             :return: message received
             """
             try:
+                assert self.pipe_handle is not None
 
                 buffer_size = 4096  # For example, 4 KB
-                if self._is_pipe_overlapped(Pipehandle.handle):
+                if self._is_pipe_overlapped():
                     # Allocate a buffer for the data
                     read_buffer = win32file.AllocateReadBuffer(buffer_size)
 
@@ -96,7 +98,7 @@ else:
                     overlapped.hEvent = win32event.CreateEvent(None, True, False, None)
 
                     # Start the overlapped read operation
-                    err_code, _ = win32file.ReadFile(Pipehandle.handle, read_buffer, overlapped)
+                    err_code, _ = win32file.ReadFile(self.pipe_handle.handle, read_buffer, overlapped)
 
                     # If the operation is pending, wait for it to complete
                     if err_code == winerror.ERROR_IO_PENDING:
@@ -105,7 +107,7 @@ else:
 
                         # Get the result of the overlapped operation
                         n_bytes_read = win32file.GetOverlappedResult(
-                            Pipehandle.handle, overlapped, True
+                            self.pipe_handle.handle, overlapped, True
                         )
 
                         # Extract the data from the buffer
@@ -116,7 +118,7 @@ else:
 
                 else:
                     # Read the data from the pipe
-                    _, data = win32file.ReadFile(Pipehandle.handle, buffer_size)
+                    _, data = win32file.ReadFile(self.pipe_handle.handle, buffer_size)
 
                 # Load the data as json and return
                 return json.loads(data)
@@ -124,7 +126,7 @@ else:
             except pywintypes.error as e:
                 raise BrokenPipeError(f"Error receiving message from named pipe: {e}") from e
 
-        def _send_message(self, Pipehandle, message: Any) -> None:
+        def _send_message(self, message: Any) -> None:
             """
             Send the message to the pipe
 
@@ -133,11 +135,11 @@ else:
             :return: void
             """
             try:
-                win32file.WriteFile(Pipehandle.handle, message.encode("utf-8"))  # type: ignore
+                win32file.WriteFile(self.pipe_handle, message.encode("utf-8"))  # type: ignore
             except pywintypes.error as e:
                 raise BrokenPipeError(f"Error sending message to named pipe: {e}") from e
 
-        def _ConnectToNamedPipe(self, PipeServerName, retries) -> bool:
+        def _ConnectToNamedPipe(self, retries) -> bool:
             """
             Set the Pipe as Client
 
@@ -145,14 +147,12 @@ else:
             :return: tuple of clientConnected and handle
             """
 
-            pipeName = rf"\\.\pipe\{PipeServerName}"
+            pipeName = rf"\\.\pipe\{self.pipe_name}"
 
             clientConnected = False
-            handle = None
-
             while retries > 0:
                 try:
-                    handle = win32file.CreateFile(
+                    self.pipe_handle = win32file.CreateFile(
                         pipeName,
                         win32file.GENERIC_READ | win32file.GENERIC_WRITE,
                         0,
@@ -161,9 +161,9 @@ else:
                         win32file.FILE_FLAG_OVERLAPPED,
                         None,
                     )
-                    if handle:
+                    if self.pipe_handle:
                         win32pipe.SetNamedPipeHandleState(
-                            handle.handle, win32pipe.PIPE_READMODE_MESSAGE, None, None
+                            self.pipe_handle.handle, win32pipe.PIPE_READMODE_MESSAGE, None, None
                         )
 
                         clientConnected = True
@@ -180,7 +180,7 @@ else:
 
             return clientConnected
 
-        def _DisconnectNamedPipe(self, handle) -> None:
+        def _DisconnectNamedPipe(self) -> None:
             """
             Disconnect the named pipe
 
@@ -188,8 +188,10 @@ else:
             :return: void
             """
             try:
-                win32file.FlushFileBuffers(handle)
-                win32file.CloseHandle(handle)
+                if self.pipe_handle:
+                    win32file.FlushFileBuffers(self.pipe_handle.handle)
+                    win32file.CloseHandle(self.pipe_handle.handle)
+
             except Exception as e:
-                raise Exception(f"Error disconnecting named pipe: {e}") from e
-                # pass
+                # raise Exception(f"Error disconnecting named pipe: {e}") from e
+                pass

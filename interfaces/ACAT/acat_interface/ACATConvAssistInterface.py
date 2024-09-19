@@ -23,7 +23,7 @@ from ..utilities.ACATMessageTypes import (
     ParameterType,
     WordAndCharacterPredictionResponse,
 )
-from ..utilities.message_handler.MessageHandler import MessageHandler
+from interfaces.ACAT.utilities.message_handler.MessageHandler import MessageHandler
 
 from convassist.ConvAssist import ConvAssist
 from convassist.utilities.logging_utility import LoggingUtility
@@ -459,12 +459,12 @@ class ACATConvAssistInterface(threading.Thread):
             self.logger.error(f"Error connecting to named pipe: {e}")
 
         finally:
-            return connected
+            return self.clientConnected
 
     def DisconnectFromACAT(self):
         if self.clientConnected:
             self.messageHandler.disconnect()
-            self.clientConnected
+            self.clientConnected = False
 
     def run(self):
         """

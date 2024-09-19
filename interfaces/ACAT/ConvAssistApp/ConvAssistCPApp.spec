@@ -85,7 +85,7 @@ import pkg_resources
 for dist in pkg_resources.working_set:
     data += copy_metadata(dist.project_name)
 
-pyz = PYZ(a.pure)
+pyz = PYZ(a.pure) # type: ignore
 
 exe = EXE( # type: ignore
     pyz,
