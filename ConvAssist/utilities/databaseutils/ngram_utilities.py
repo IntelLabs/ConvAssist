@@ -219,7 +219,7 @@ class NGramUtilities(DatabaseConnector):
         query_insert = f"INSERT INTO _{len(ngram)}_gram {values};"
 
         try:
-            if self.fetch_all(query_check) is None:
+            if not self.fetch_all(query_check):
                 self.execute_query(query_insert)
             else:
                 self.logger.info(f"Word '{ngram[0]}' already exists in the database.")

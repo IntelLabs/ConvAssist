@@ -32,9 +32,43 @@ convAssists = [ContinuousPreidictor]
 
 def main():
     while True:
-        buffer = input("Enter text ('close' to exit): ")
-        if buffer == "close":
-            print("Closing CLI.")
+        buffer = input("Enter text to start predictions.\n('help:' for more commands.)\n")
+        command = buffer.split(":")
+        if command[0] == "help":
+            print(
+                "Commands: \n"
+                "learn:<text> - Learn a sentence, word, or phrase. \n"
+                "loglevel:<level> - Set the log level. \n"
+                "\t'level' can be one of the following: \n"
+                "\tDEBUG, INFO, WARNING, ERROR, CRITICAL \n"
+                "exit: - Exit the CLI. \n"
+                "help: - Display this help message."
+            )
+            continue
+
+        elif command[0] == "loglevel":
+            if len(command) == 2:
+                level = command[1].upper()
+                if level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+                    for convAssist in convAssists:
+                        convAssist.setLogLevel(level)
+                    print(f"Log level set to: {level}\n")
+                else:
+                    print("Invalid log level. Please try again.")
+            else:
+                print("Invalid log level command. Please try again.")
+            continue
+
+        elif command[0] == "learn":
+            if len(command) == 2:
+                print("Learning: ", command[1])
+                for convAssist in convAssists:
+                    convAssist.learn_text(command[1])
+            else:
+                print("Invalid learn command. Please try again.")
+            continue
+        elif command[0] == "exit":
+            print("Exiting CLI.")
             break
 
         print("GOING INTO PREDICTION MODE")

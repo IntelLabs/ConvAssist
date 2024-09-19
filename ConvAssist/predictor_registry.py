@@ -10,12 +10,18 @@ from typing import Any
 
 from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
-from ConvAssist.predictor.canned_word_predictor import CannedWordPredictor
-from ConvAssist.predictor.general_word_predictor import GeneralWordPredictor
 from ConvAssist.predictor.sentence_completion_predictor import (
     SentenceCompletionPredictor,
 )
-from ConvAssist.predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
+from ConvAssist.predictor.smoothed_ngram_predictor.canned_word_predictor import (
+    CannedWordPredictor,
+)
+from ConvAssist.predictor.smoothed_ngram_predictor.general_word_predictor import (
+    GeneralWordPredictor,
+)
+from ConvAssist.predictor.smoothed_ngram_predictor.smoothed_ngram_predictor import (
+    SmoothedNgramPredictor,
+)
 from ConvAssist.predictor.spell_correct_predictor import SpellCorrectPredictor
 
 # from ConvAssist.predictor.utilities.predictor_names import PredictorNames

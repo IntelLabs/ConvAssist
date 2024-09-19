@@ -142,10 +142,6 @@ class ConvAssist:
 
         self.predictor_activator.read_updated_toxicWords()
 
-    # def setLogLocation(self, filename, pathLoc , level):
-    #     # self.predictor_activator.set_log(filename, pathLoc, level)
-    #     pass
-
     def recreate_database(self):
         """
         Recreates the databases for the cannedPhrases predictor.
@@ -179,3 +175,6 @@ class ConvAssist:
 
         status = self.predictor_registry.model_status()
         return status
+
+    def setLogLevel(self, log_level):
+        self.logger.setLevel(log_level)

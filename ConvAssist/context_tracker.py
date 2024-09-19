@@ -27,7 +27,7 @@ class ContextTracker:
         # tokenize the context into words with punctuation and spaces
         # reg = r"\w+('\w+)?|\w+(-\w+)?|\s+"
         # reg = r'\w+(?:-\w+)*|\s|\w+(?:\'\w+)?'
-        reg = r"\w+(?:['-]\w+)*|\s"
+        reg = r"\w+(?:['-]\w+)*"
         tokenizer = RegexpTokenizer(reg)
         self.tokens = tokenizer.tokenize(self._context)
 

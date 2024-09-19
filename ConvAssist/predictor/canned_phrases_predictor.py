@@ -1,13 +1,8 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: GPL-3.0-or-later
-
 import collections
-import logging
 import os
-from configparser import ConfigParser
 
 import hnswlib
 import joblib
@@ -18,10 +13,8 @@ from nltk import word_tokenize
 from nltk.stem import PorterStemmer
 from sentence_transformers import SentenceTransformer
 
-from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.predictor import Predictor
-from ConvAssist.predictor.utilities.prediction import Prediction
-from ConvAssist.predictor.utilities.suggestion import Suggestion
+from ConvAssist.predictor.utilities.prediction import Prediction, Suggestion
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import (
     SQLiteDatabaseConnector,
 )
@@ -44,6 +37,7 @@ class CannedPhrasesPredictor(Predictor):
             self.device = "cpu"
             self.n_gpu = 0
 
+        self._model_loaded = False
         self.seed = 42
         self.cannedPhrases_counts = {}
         self.stemmer = PorterStemmer()
@@ -52,11 +46,6 @@ class CannedPhrasesPredictor(Predictor):
         with open(self.personalized_cannedphrases) as f:
             self.pers_cannedphrasesLines = [s.strip() for s in f.readlines()]
 
-        # if(not os.path.isfile(self.sentences_db_path)):
-        #     self.logger.debug(f"{self.sentences_db_path} does not exist, creating.")
-        #     self.recreate_database()
-        # else:
-        #     self.logger.debug(f"{self.sentences_db_path} exists, not creating.")
         self.recreate_database()
 
         if not os.path.isfile(self.embedding_cache_path):
@@ -90,6 +79,7 @@ class CannedPhrasesPredictor(Predictor):
             self.index = self._create_index(self.index)
         self.index.set_ef(50)
 
+        self._model_loaded = True
         self.logger.debug(f"cannedPhrases count: {len(self.cannedPhrases_counts)}")
 
     def _create_index(self, ind):
@@ -101,6 +91,10 @@ class CannedPhrasesPredictor(Predictor):
     @property
     def sentences_db_path(self):
         return os.path.join(self._personalized_resources_path, self._sentences_db)
+
+    @property
+    def model_loaded(self):
+        return self._model_loaded
 
     def recreate_database(self):
 

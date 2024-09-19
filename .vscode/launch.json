@@ -15,7 +15,17 @@
             },
         },
         {
-            "name": "Python Debugger: ConvAssistUI",
+            "name": "Continuous Predict Util",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/continuous_predict.py",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+        },
+        {
+            "name": "ConvAssistUI",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/ACAT_ConvAssist_Interface/ConvAssistCPApp/ConvAssistUI.py",

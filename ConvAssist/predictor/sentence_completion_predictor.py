@@ -6,10 +6,6 @@ import logging
 import os
 import re
 import time
-
-# Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: GPL-3.0-or-later
-from configparser import ConfigParser
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -20,15 +16,12 @@ import numpy
 import torch
 from nltk import sent_tokenize, word_tokenize
 from nltk.stem.porter import PorterStemmer
-from numpy import shape
 from sentence_transformers import SentenceTransformer
 from transformers import Pipeline, pipeline
 
-from ConvAssist.context_tracker import ContextTracker
 from ConvAssist.predictor.predictor import Predictor
 from ConvAssist.predictor.utilities.nlp import NLP
-from ConvAssist.predictor.utilities.prediction import Prediction
-from ConvAssist.predictor.utilities.suggestion import Suggestion
+from ConvAssist.predictor.utilities.prediction import Prediction, Suggestion
 from ConvAssist.utilities.databaseutils.sqllite_dbconnector import (
     SQLiteDatabaseConnector,
 )
@@ -39,18 +32,7 @@ class SentenceCompletionPredictor(Predictor):
     Calculates prediction from n-gram model using gpt-2.
     """
 
-    def __init__(
-        self,
-        config: ConfigParser,
-        context_tracker: ContextTracker,
-        predictor_name: str,
-        logger: logging.Logger | None = None,
-    ):
-        super().__init__(config, context_tracker, predictor_name, logger)
-
-        self.context_tracker = context_tracker
-        self.name = predictor_name
-
+    def configure(self):
         self._model_loaded = False
         self.corpus_sentences = []
         self.generator: Pipeline
@@ -73,7 +55,9 @@ class SentenceCompletionPredictor(Predictor):
 
         # CREATE INDEX TO QUERY DATABASE
         self.embedder = SentenceTransformer(
-            str(self._sentence_transformer_model), device=self.device
+            str(self._sentence_transformer_model),
+            device=self.device,
+            tokenizer_kwargs={"clean_up_tokenization_spaces": "True"},
         )
         self.embedding_size = 384  # Size of embeddings
         self.top_k_hits = 2  # Output k hits
@@ -297,7 +281,7 @@ class SentenceCompletionPredictor(Predictor):
                     break
                 k = k[len(context) :]
                 if k not in addedcompletions:
-                    pred.add_suggestion(Suggestion(k, v, self.name))
+                    pred.add_suggestion(Suggestion(k, v, self.predictor_name))
                     addedcompletions.append(k)
                     count = count + 1
         except Exception as e:
@@ -327,7 +311,7 @@ class SentenceCompletionPredictor(Predictor):
             return True
         return False
 
-    def _generate(self, context: str, num_gen: int, predi: Prediction) -> Prediction:
+    def _generate(self, context: str, num_gen: int) -> Prediction:
         """
         _generate: generates completions for the given context
         Args:
@@ -338,7 +322,7 @@ class SentenceCompletionPredictor(Predictor):
             predi: Prediction: object with generated completions
         """
         try:
-            start = time.perf_counter()
+            predictions = Prediction()
             result = self.generator(
                 context,
                 do_sample=False,
@@ -429,14 +413,13 @@ class SentenceCompletionPredictor(Predictor):
                 if count == num_gen:
                     break
                 self.logger.debug(f"sentence = {k} score = {v}")
-                predi.add_suggestion(Suggestion(k, v, self.name))
+                predictions.add_suggestion(Suggestion(k, v, self.predictor_name))
                 count = count + 1
 
-            self.logger.debug(f"latency in generation = {time.perf_counter() - start}")
         except Exception as e:
             self.logger.error(f"Exception in SentenceCompletionPredictor.{e}")
 
-        return predi
+        return predictions
 
     # Base class method
     def load_model(self, test_generalsentenceprediction: bool, retrieve: bool) -> None:
@@ -464,7 +447,6 @@ class SentenceCompletionPredictor(Predictor):
                         model=self.modelname,
                         tokenizer=self.tokenizer,
                         device=self.device,
-                        clean_up_tokenization_spaces=True,
                     )
                     self._model_loaded = True
                 except Exception as e:
@@ -481,62 +463,57 @@ class SentenceCompletionPredictor(Predictor):
     def model_loaded(self):
         return self._model_loaded
 
-    # Base class method
-    def predict(
-        self, max_partial_prediction_size: int, filter: Optional[str] = None
-    ) -> tuple[Prediction, Prediction]:
-        super().predict(max_partial_prediction_size, filter)
-
-        sentence_prediction = Prediction()
-        word_prediction = Prediction()  # not used in this predictor
+    def predict(self, max_partial_prediction_size: int, filter: Optional[str] = None):
+        sentence_predictions = Prediction()
+        word_predictions = Prediction()  # not used in this predictor
 
         context = self.context_tracker.context.lstrip()
-        if context == "" or context == " ":
+        self.logger.debug(f"context inside predictor predict = {context}")
+
+        if not context:
+            # TODO: Fix this
             self.logger.debug(f"context is empty, loading top sentences from {self._startsents}")
-            if not Path.is_file(Path(self.startsents)):
-                self.logger.error(f"{self.startsents} not found!!!")
 
-            # retrieve top5 from startsentFile
-            data = open(self.startsents).readlines()
-            for k in data:
-                sentence_prediction.add_suggestion(
-                    Suggestion(k.strip(), float(1 / len(data)), self.name)
-                )
-            return sentence_prediction, word_prediction
-        start = time.perf_counter()
-        self.logger.debug("context inside predictor predict = {context}")
+            with open(self.startsents) as f:
+                data = f.readlines()
+                for k in data:
+                    sentence_predictions.add_suggestion(
+                        Suggestion(k.strip(), float(1 / len(data)), self.predictor_name)
+                    )
 
-        # If we are testing generation models
-        if self.test_generalsentenceprediction:
-            sentence_prediction = self._generate(
-                "<bos> " + context.strip(), 5, sentence_prediction
-            )
+            if not sentence_predictions:
+                self.logger.warning("No start sentences found.  File may be missing or corrupted.")
 
-        # if we want to Only retrieve from AAC dataset
-        elif self.retrieve:
-            self.logger.debug("retrieve is True - retrieving from database")
-            sentence_prediction = self._retrieve_fromDataset(context)
-
-        # Hybrid retrieve mode  elif(self.retrieve=="hybrid"):
-        elif self.retrieve == "False":
-            self.logger.debug("Hybrid retrieval - AAC dataset + model generation")
-            sentence_prediction = self._retrieve_fromDataset(context)
-            self.logger.debug(
-                f"retrieved {len(sentence_prediction)} sentences in {str(sentence_prediction)}"
-            )
-
-            # ONLY IF THE GENERATION MODEL IS LOADED, GENERATE MODEL BASED PREDICTIONS
-            if len(sentence_prediction) < 5 and self.model_loaded:
-                self.logger.debug(f"generating {5 - len(sentence_prediction)} more predictions")
-                sentence_prediction = self._generate(
-                    "<bos> " + context.strip(), 5 - len(sentence_prediction), sentence_prediction
+        else:
+            # If we are testing generation models
+            if self.test_generalsentenceprediction:
+                self.logger.warning("Testing general sentence prediction")
+                sentence_predictions = self._generate(
+                    "<bos> " + context.strip(), max_partial_prediction_size
                 )
 
-        latency = time.perf_counter() - start
-        self.logger.debug(f"latency = {latency}")
-        self.logger.debug(f"prediction = {sentence_prediction}")
+            else:
+                sentence_predictions = self._retrieve_fromDataset(context)
+                self.logger.debug(
+                    f"retrieved {len(sentence_predictions)} sentences in {str(sentence_predictions)}"
+                )
+                remaining_predicitions_needed = max_partial_prediction_size - len(
+                    sentence_predictions
+                )
+                self.logger.debug(
+                    f"remaining_predicitions_needed = {remaining_predicitions_needed}"
+                )
 
-        return sentence_prediction, word_prediction
+                # ONLY IF THE GENERATION MODEL IS LOADED, GENERATE MODEL BASED PREDICTIONS
+                if not self.retrieve and self.model_loaded and remaining_predicitions_needed > 0:
+                    self.logger.debug(
+                        f"generating {remaining_predicitions_needed} more predictions"
+                    )
+                    sentence_predictions = self._generate(
+                        "<bos> " + context.strip(), remaining_predicitions_needed
+                    )
+
+        return sentence_predictions, word_predictions
 
     # Base class method
     def learn(self, change_tokens):

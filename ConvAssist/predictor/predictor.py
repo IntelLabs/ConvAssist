@@ -15,23 +15,6 @@ from ConvAssist.utilities.logging_utility import LoggingUtility
 
 
 class Predictor(ABC):
-    """
-    Abstract class for predictors
-    Methods:
-    - __init__(self, config: ConfigParser, context_tracker: ContextTracker, predictor_name: str, short_desc: str | None = None, long_desc: str | None = None, logger: logging.Logger | None = None)
-        Initializes the Predictor object with the provided parameters.
-    - predict(self, max_partial_prediction_size = None, filter = None) -> tuple[Prediction, Prediction]
-        Predicts the next word and sentence based on the context.
-    - learn(self, change_tokens = None) -> None
-        Learns from the context.
-    - _read_config(self) -> None
-        Reads the configuration file.
-    - load_model(*args, **kwargs) -> None
-        Loads the model.
-    - read_personalized_toxic_words(self, *args, **kwargs) -> None
-        Reads the personalized toxic words.
-    """
-
     def __init__(
         self,
         config: ConfigParser,
@@ -236,6 +219,17 @@ class Predictor(ABC):
         # Not all predictors need this, but define it here for those that do
         pass
 
+    def _find_option_in_section(self, option: str, section: str) -> str:
+        if self.config.has_option(section, option):
+            return section
+
+        # TODO: Document this behavior
+        elif self.config.has_option("Common", option):
+            return "Common"
+
+        else:
+            return ""
+
     def _read_config(self):
         try:
             self.logger.debug(f"Reading config for {self.predictor_name}")
@@ -248,23 +242,19 @@ class Predictor(ABC):
 
                 for attr, default in properties.items():
                     option = attr[1:]
-                    if option in self.config.options(self.predictor_name):
-                        new_value = default
+                    section = self._find_option_in_section(option, self.predictor_name)
+
+                    new_value = default
+                    if section:
                         try:
-                            new_value = self.config.getboolean(
-                                self.predictor_name, option, fallback=default
-                            )
+                            new_value = self.config.getboolean(section, option, fallback=default)
                         except ValueError:
                             try:
-                                new_value = self.config.getint(
-                                    self.predictor_name, option, fallback=default
-                                )
+                                new_value = self.config.getint(section, option, fallback=default)
                             except ValueError:
-                                new_value = self.config.get(
-                                    self.predictor_name, option, fallback=default
-                                )
+                                new_value = self.config.get(section, option, fallback=default)
 
-                        setattr(self, attr, new_value)
+                    setattr(self, attr, new_value)
 
         except Exception as e:
             self.logger.error(f"Exception in SentenceCompletionPredictor._read_config = {e}")
