@@ -14,7 +14,7 @@ if sys.platform == "win32":
 
 import json
 
-from message_handler import MessageHandler
+from .MessageHandler import MessageHandler
 
 if not sys.platform == "win32":
 
@@ -38,7 +38,6 @@ if not sys.platform == "win32":
             raise Exception("Win32PipeMessageHandler is only supported on Windows")
 
 else:
-
     class Win32PipeMessageHandler(MessageHandler):
         def __init__(self, pipe_name: str):
             self.pipe_name = pipe_name
@@ -162,15 +161,6 @@ else:
                         win32file.FILE_FLAG_OVERLAPPED,
                         None,
                     )
-                    # handle = win32file.CreateFile(
-                    #     pipeName,
-                    #     win32file.GENERIC_READ | win32file.GENERIC_WRITE,
-                    #     0,
-                    #     None,
-                    #     win32file.OPEN_EXISTING,
-                    #     0,
-                    #     None,
-                    # )
                     if handle:
                         win32pipe.SetNamedPipeHandleState(
                             handle.handle, win32pipe.PIPE_READMODE_MESSAGE, None, None

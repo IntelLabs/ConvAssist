@@ -3,7 +3,7 @@
 
 import warnings
 
-from message_handler import MessageHandler
+from .MessageHandler import MessageHandler
 from websockets.server import serve
 from websockets.sync.client import connect
 

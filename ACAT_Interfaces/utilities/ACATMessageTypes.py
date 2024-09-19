@@ -88,9 +88,6 @@ class ConvAssistSetParam:
 
     @staticmethod
     def jsonDeserialize(json_str: str) -> "ConvAssistSetParam":
-        # TODO: REMOVE THIS HACK!!!
-        json_str = json_str.replace("'", '"')
-
         data = json.loads(json_str, object_hook=ConvAssistSetParam.custom_parser)
         _Parameter = ParameterType(int(data.get("Parameter")))
         _Value = data.get("Value")

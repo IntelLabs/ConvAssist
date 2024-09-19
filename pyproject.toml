@@ -9,6 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.14"
 pywin32 = { version = "^306", optional = true, markers = "sys_platform == 'win32'" }
+pydebugstring = { version = "^1.0.0", optional = true, markers = "sys_platform == 'win32'" }
 spacy = "^3.7.6"
 sentence-transformers = "^3.1.0"
 torch = "^2.4.1"
@@ -17,10 +18,14 @@ hnswlib = "^0.8.0"
 pandas = "^2.2.2"
 en-core-web-sm = {url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl#sha256=86cc141f63942d4b2c5fcee06630fd6f904788d2f0ab005cce45aadb8fb73889"}
 pyspellchecker = "^0.8.1"
+pystray = "^0.19.5"
+psutil = "^6.0.0"
+sv-ttk = "^2.6.0"
+websockets = "^13.0.1"
 
 [tool.poetry.extras]
 dev = ["pytest", "pytest-timeout", "pytest-cov", "pyinstaller"]
-windows = ["pywin32"]
+windows = ["pywin32", "pydebugstring"]
 linux = []
 macos = []
 
