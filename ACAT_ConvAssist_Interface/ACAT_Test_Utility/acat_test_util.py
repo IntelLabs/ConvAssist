@@ -21,10 +21,14 @@ if current_path not in sys.path:
 from ACAT_ConvAssist_Interface.ConvAssistCPApp.ACATMessageTypes import ConvAssistSetParam, ParameterType, ConvAssistMessage, ConvAssistMessageTypes, ConvAssistPredictionTypes
 # from ACAT_ConvAssist_Interface.message_handler.Win32PipeHandler import get_incoming_message
 
-set_path_param = ConvAssistSetParam(ParameterType.PATH, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources")
-set_static_path_param = ConvAssistSetParam(ParameterType.PATHSTATIC, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/static_resources") 
-set_personalized_path_param = ConvAssistSetParam(ParameterType.PATHPERSONALIZED, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/personalized")
-set_log_param = ConvAssistSetParam(ParameterType.PATHLOG, "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/logs")
+# base_path = "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources"
+base_path = "C:\\Users\\mbeale\\source\\repos\\convassist_clean\\ACAT_ConvAssist_Interface"
+   #         C:\Users\mbeale\source\repos\convassist_clean\ACAT_ConvAssist_Interface\wordPredMode.ini
+
+set_path_param = ConvAssistSetParam(ParameterType.PATH, base_path)
+set_static_path_param = ConvAssistSetParam(ParameterType.PATHSTATIC, base_path + "\\resources\\static_resources") 
+set_personalized_path_param = ConvAssistSetParam(ParameterType.PATHPERSONALIZED, base_path + "\\resources\\personalized")
+set_log_param = ConvAssistSetParam(ParameterType.PATHLOG, base_path + "\\logs")
 set_enable_logs_param = ConvAssistSetParam(ParameterType.ENABLELOGS, True)
 set_suggestions_param = ConvAssistSetParam(ParameterType.SUGGESTIONS, 10)
 set_test_general_sentence_prediction_param = ConvAssistSetParam(ParameterType.TESTGENSENTENCEPRED, False)
@@ -32,7 +36,7 @@ set_retrieve_aac_param = ConvAssistSetParam(ParameterType.RETRIEVEAAC, True)
 
 params = [set_log_param, set_enable_logs_param, set_suggestions_param, \
         set_test_general_sentence_prediction_param, set_retrieve_aac_param, \
-        set_path_param, set_static_path_param, set_personalized_path_param, \
+         set_static_path_param, set_personalized_path_param, set_path_param,\
         ]
 
 
