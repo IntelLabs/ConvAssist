@@ -1,11 +1,9 @@
 {
     "python.testing.pytestArgs": [
         "ConvAssist/tests",
-        "ACAT_ConvAssist_Interface/ConvAssistCPApp/tests"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    // "codeQL.createQuery.qlPackLocation": "/Users/mbeale/projects/ConvAssist",
     "python.REPL.enableREPLSmartSend": false,
     "python.analysis.typeCheckingMode": "basic",
     "codeQL.githubDatabase.download": "never"

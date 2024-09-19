@@ -1,77 +1,97 @@
-# Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import configparser
+import json
+import logging
+import os
 from pathlib import Path
 
-from ConvAssist import ConvAssist
-from ConvAssist.utilities.callback import BufferedCallback
+from ConvAssist.ConvAssist import ConvAssist
 
-SCRIPT_DIR = Path(__file__).resolve().parent
+SCRIPT_DIR = str(Path(__file__).resolve().parent)
 
-class CPCallback(BufferedCallback):
-    def update(self, character):
-        super().update(character)
-        print("updated stream = ", self.buffer)
-        print("past stream = ", self.past_stream())
+# config file for continuous predictions
+config_file = os.path.join(SCRIPT_DIR, "resources/continuous_prediction.ini")
+config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
 
-# config file for shorthand mode
-shorthand_config_file = Path(SCRIPT_DIR) / ("resources/shortHandMode.ini")
-sh_config = configparser.ConfigParser()
-sh_config.read(shorthand_config_file)
+success_count = config.read(config_file)
 
-# config file for sentence completion mode
-sentence_config_file = Path(SCRIPT_DIR) / ("resources/sentenceMode.ini")
-sent_config = configparser.ConfigParser()
-sent_config.read(sentence_config_file)
+if not success_count:
+    print("Config file not found. Exiting.")
+    exit(1)
 
-# config file for word prediction mode
-wordpred_config_file = Path(SCRIPT_DIR) / ("resources/wordPredMode.ini")
-wordpred_config = configparser.ConfigParser()
-wordpred_config.read(wordpred_config_file)
+# Customize file paths
+config["Common"]["home_dir"] = SCRIPT_DIR
 
-# config file for canned phrases mode
-canned_config_file = Path(SCRIPT_DIR) / ("resources/cannedPhrasesMode.ini")
-canned_config = configparser.ConfigParser()
-canned_config.read(canned_config_file)
+# Create an instance of ConvAssist
+ContinuousPreidictor = ConvAssist("CONT_PREDICT", config=config, log_level=logging.DEBUG)
 
-###### Define the shorthand ConvAssist objects
-callback = CPCallback("")
-shortHandConvAssist = ConvAssist(callback, sh_config)
+convAssists = [ContinuousPreidictor]
 
-# Define the word prediction and sentence completion ConvAssist objects
-sentCompleteConvAssist = ConvAssist(callback, sent_config)
-if(sentCompleteConvAssist.check_model()==1):
-    print("SENTENCE COMPLETION MODEL LOADED")
 
-wordCompleteConvAssist = ConvAssist(callback, wordpred_config)
-if(wordCompleteConvAssist.check_model()==1):
-    print("WORD PREDICTION MODEL LOADED")
-    
 def main():
-    while (True):
-        ConvAssist = wordCompleteConvAssist
-        buffer = input("Enter text ('close' to exit): ")
-        if buffer == "close":
-            print("Closing CLI.")
-            break
-        ConvAssist.callback.update(buffer)
-        prefix = ConvAssist.context_tracker.prefix()
-        context = ConvAssist.context_tracker.past_stream()
-        print("PREFIX = ", prefix, " CONTEXT = ", context)
-        word_nextLetterProbs, word_predictions , sentence_nextLetterProbs, sentence_predictions = ConvAssist.predict()
-        print("word_nextLetterProbs ----", word_nextLetterProbs)
-        print("word_predictions: ----- ", word_predictions)
-        print("sentence_nextLetterProbs ---- ", sentence_nextLetterProbs)
-        print("sentence_predictions: ----- ", sentence_predictions)
+    while True:
+        buffer = input("Enter text to start predictions.\n('help:' for more commands.)\n")
+        command = buffer.split(":")
+        if command[0] == "help":
+            print(
+                "Commands: \n"
+                "learn:<text> - Learn a sentence, word, or phrase. \n"
+                "loglevel:<level> - Set the log level. \n"
+                "\t'level' can be one of the following: \n"
+                "\tDEBUG, INFO, WARNING, ERROR, CRITICAL \n"
+                "exit: - Exit the CLI. \n"
+                "help: - Display this help message."
+            )
+            continue
 
-        print("GOING INTO SENTENCE COMPLETION MODE")
-        ConvAssist = sentCompleteConvAssist
-        word_nextLetterProbs, word_predictions , sentence_nextLetterProbs, sentence_predictions = ConvAssist.predict()
-        print("word_nextLetterProbs ----", word_nextLetterProbs)
-        print("word_predictions: ----- ", word_predictions)
-        print("sentence_nextLetterProbs ---- ", sentence_nextLetterProbs)
-        print("sentence_predictions: ----- ", sentence_predictions)
+        elif command[0] == "loglevel":
+            if len(command) == 2:
+                level = command[1].upper()
+                if level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+                    for convAssist in convAssists:
+                        convAssist.setLogLevel(level)
+                    print(f"Log level set to: {level}\n")
+                else:
+                    print("Invalid log level. Please try again.")
+            else:
+                print("Invalid log level command. Please try again.")
+            continue
+
+        elif command[0] == "learn":
+            if len(command) == 2:
+                print("Learning: ", command[1])
+                for convAssist in convAssists:
+                    convAssist.learn_text(command[1])
+            else:
+                print("Invalid learn command. Please try again.")
+            continue
+        elif command[0] == "exit":
+            print("Exiting CLI.")
+            break
+
+        print("GOING INTO PREDICTION MODE")
+
+        for convAssist in convAssists:
+            convAssist.context_tracker.context = buffer
+            prefix = convAssist.context_tracker.token(0)
+            context = convAssist.context_tracker.context
+            print("PREFIX = ", prefix, " CONTEXT = ", context)
+
+            (
+                word_nextLetterProbs,
+                word_predictions,
+                sentence_nextLetterProbs,
+                sentence_predictions,
+            ) = convAssist.predict()
+
+            print("word_nextLetterProbs ----", json.dumps(word_nextLetterProbs))
+            print("word_predictions: ----- ", json.dumps(word_predictions))
+            print("sentence_nextLetterProbs ---- ", json.dumps(sentence_nextLetterProbs))
+            print("sentence_predictions: ----- ", json.dumps(sentence_predictions))
+            print("---------------------------------------------------")
+
 
 if __name__ == "__main__":
     main()

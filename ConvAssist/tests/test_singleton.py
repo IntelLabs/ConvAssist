@@ -1,8 +1,12 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import unittest
-from ConvAssist.utilities.singleton import Singleton, OptionalSingleton
+
+from ConvAssist.utilities.singleton import OptionalSingleton, Singleton
+
 
 class TestSingleton(unittest.TestCase):
-
     def test_singleton(self):
         class TestClass(metaclass=Singleton):
             pass

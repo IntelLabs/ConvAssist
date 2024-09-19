@@ -1,7 +1,7 @@
-import sys
+import configparser
 import getopt
 import os
-import configparser
+import sys
 
 PROGRAM_NAME = "pyprompter"
 config = None

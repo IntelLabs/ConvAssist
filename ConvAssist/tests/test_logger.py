@@ -1,12 +1,15 @@
-import unittest
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import logging
 import sys
+import unittest
 from io import StringIO
-from ConvAssist.utilities.logging_utility import QueueHandler
-from ConvAssist.utilities.logging_utility import LoggingUtility
+
+from ConvAssist.utilities.logging_utility import LoggingUtility, QueueHandler
+
 
 class TestLoggingUtility(unittest.TestCase):
-
     def setUp(self):
         self.logging_utility = LoggingUtility()
 
@@ -21,7 +24,9 @@ class TestLoggingUtility(unittest.TestCase):
         logger = self.logging_utility.get_logger(logger_name, log_level)
 
         # Test if logger has a stream handler
-        self.assertTrue(any(isinstance(handler, logging.StreamHandler) for handler in logger.handlers))
+        self.assertTrue(
+            any(isinstance(handler, logging.StreamHandler) for handler in logger.handlers)
+        )
 
         # Test if logger logs at the correct level
         logger.debug("This is a debug message")
@@ -42,5 +47,6 @@ class TestLoggingUtility(unittest.TestCase):
         log_record = self.logging_utility.central_log_queue.get()
         self.assertIn("This is an info message", log_record)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

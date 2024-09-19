@@ -1,10 +1,16 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 """
 Combiner classes to merge results from several predictors.
 """
 import abc
-from ConvAssist.predictor.utilities.prediction import Prediction, MAX_PROBABILITY
+
+from ConvAssist.predictor.utilities.prediction import Prediction
+from ConvAssist.predictor.utilities.suggestion import MAX_PROBABILITY
+
 
 class Combiner(metaclass=abc.ABCMeta):
     """
@@ -14,7 +20,7 @@ class Combiner(metaclass=abc.ABCMeta):
     def __init__(self):
         pass
 
-    def filter(self, prediction:Prediction) -> Prediction:
+    def filter(self, prediction: Prediction) -> Prediction:
         seen_tokens = set()
         result = Prediction()
         for i, suggestion in enumerate(prediction):
@@ -33,5 +39,3 @@ class Combiner(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def combine(self):
         raise NotImplementedError("Method must be implemented")
-
-

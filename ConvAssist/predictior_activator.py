@@ -1,15 +1,20 @@
-# Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
-from configparser import ConfigParser
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import logging
 
+# Copyright (C) 2023 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+from configparser import ConfigParser
+
+from ConvAssist.combiner.meritocrity_combiner import MeritocracyCombiner
 from ConvAssist.predictor.spell_correct_predictor import SpellCorrectPredictor
 from ConvAssist.predictor.utilities.prediction import UnknownCombinerException
-from ConvAssist.combiner.meritocrity_combiner import MeritocracyCombiner
 from ConvAssist.predictor_registry import PredictorRegistry
 from ConvAssist.utilities.logging_utility import LoggingUtility
 
-class PredictorActivator(object):
+
+class PredictorActivator:
     """
     PredictorActivator starts the execution of the active predictors,
     monitors their execution and collects the predictions returned, or
@@ -21,19 +26,23 @@ class PredictorActivator(object):
 
     """
 
-    def __init__(self, config, registry:PredictorRegistry, context_tracker=None, logger=None):
-        self.config:ConfigParser = config
+    def __init__(self, config, registry: PredictorRegistry, context_tracker=None, logger=None):
+        self.config: ConfigParser = config
         self.registry = registry
         self.context_tracker = context_tracker
         self.combiner: MeritocracyCombiner
-        self.max_partial_prediction_size = self.config.getint("Selector", "suggestions", fallback=10)
+        self.max_partial_prediction_size = self.config.getint(
+            "Selector", "suggestions", fallback=10
+        )
         self.predict_time = None
         self._combination_policy = None
 
         if logger:
             self.logger = logger
         else:
-            self.logger = LoggingUtility().get_logger("predictor_activator", log_level=logging.DEBUG, queue_handler=True)
+            self.logger = LoggingUtility().get_logger(
+                "predictor_activator", log_level=logging.DEBUG, queue_handler=True
+            )
 
     @property
     def combination_policy(self):
@@ -50,16 +59,20 @@ class PredictorActivator(object):
 
     @combination_policy.deleter
     def combination_policy(self):
-            del self._combination_policy
+        del self._combination_policy
 
     def predict(self, multiplier=1, prediction_filter=None):
-        sentence_predictions = []           # Store the predictions from the sentence predictor
-        sentence_nextLetterProbs = []       # Store the combined next letter probabilities from the sentence predictor
-        sentence_result = []                # Store the combined results from the sentence predictor
+        sentence_predictions = []  # Store the predictions from the sentence predictor
+        sentence_nextLetterProbs = (
+            []
+        )  # Store the combined next letter probabilities from the sentence predictor
+        sentence_result = []  # Store the combined results from the sentence predictor
 
-        word_predictions = []               # Store the predictions from the word predictor(s)
-        word_nextLetterProbs = []           # Store the combined next letter probabilities from the word predictor(s)
-        word_result = []                    # Store the combined results from the word predictor(s)
+        word_predictions = []  # Store the predictions from the word predictor(s)
+        word_nextLetterProbs = (
+            []
+        )  # Store the combined next letter probabilities from the word predictor(s)
+        word_result = []  # Store the combined results from the word predictor(s)
 
         if self.context_tracker:
             context = self.context_tracker.get_last_token()
@@ -72,9 +85,13 @@ class PredictorActivator(object):
             if type(predictor).__name__ == SpellCorrectPredictor.__name__:
                 continue
             try:
-                self.logger.info(f"Predictor {predictor.predictor_name} - Predicting next words and sentences")
+                self.logger.info(
+                    f"Predictor {predictor.predictor_name} - Predicting next words and sentences"
+                )
                 # Get sentences and/or words from the predictor
-                sentences, words = predictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter)
+                sentences, words = predictor.predict(
+                    self.max_partial_prediction_size * multiplier, prediction_filter
+                )
 
                 # Append the sentences to the sentence_predictions list
                 if sentences:
@@ -84,8 +101,10 @@ class PredictorActivator(object):
                 if words:
                     word_predictions.append(words)
 
-                self.logger.info(f"Predictor {predictor.predictor_name} - Predicted {len(sentences)} sentences and {len(words)} words")
-            
+                self.logger.info(
+                    f"Predictor {predictor.predictor_name} - Predicted {len(sentences)} sentences and {len(words)} words"
+                )
+
             except Exception as e:
                 self.logger.critical(f"Predictor {predictor.predictor_name}: {e}")
                 continue
@@ -95,27 +114,33 @@ class PredictorActivator(object):
 
             spellingPredictor = self.registry.get_predictor(SpellCorrectPredictor.__name__)
             if spellingPredictor:
-                _, words = spellingPredictor.predict(self.max_partial_prediction_size * multiplier, prediction_filter)
+                _, words = spellingPredictor.predict(
+                    self.max_partial_prediction_size * multiplier, prediction_filter
+                )
 
                 if words:
                     word_predictions.append(words)
 
         # Combine the sentence predictions and get the next sentence letter probabilities
-        sentence_nextLetterProbs, sentence_result = self.combiner.combine(sentence_predictions, context)
+        sentence_nextLetterProbs, sentence_result = self.combiner.combine(
+            sentence_predictions, context
+        )
 
         # Combine the word predictions and get the next word letter probabilities
         word_nextLetterProbs, word_result = self.combiner.combine(word_predictions, context)
 
-        self.logger.info(f"Predictions completed. Returning {len(word_result)} words and {len(sentence_result)} sentences.")
+        self.logger.info(
+            f"Predictions completed. Returning {len(word_result)} words and {len(sentence_result)} sentences."
+        )
         return (word_nextLetterProbs, word_result, sentence_nextLetterProbs, sentence_result)
 
     def recreate_database(self):
         for predictor in self.registry:
             predictor.recreate_database()
 
-    def update_params(self, test_gen_sentence_pred,retrieve_from_AAC):
+    def update_params(self, test_gen_sentence_pred, retrieve_from_AAC):
         for predictor in self.registry:
-            predictor.load_model(test_gen_sentence_pred,retrieve_from_AAC)
+            predictor.load_model(test_gen_sentence_pred, retrieve_from_AAC)
 
     def read_updated_toxicWords(self):
         for predictor in self.registry:

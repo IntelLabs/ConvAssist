@@ -1,5 +1,8 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 
 """
@@ -8,7 +11,8 @@ Class for context tracker.
 """
 from nltk import RegexpTokenizer
 
-class ContextTracker(object):
+
+class ContextTracker:
     """
     Tracks the current context.
 
@@ -23,7 +27,7 @@ class ContextTracker(object):
         # tokenize the context into words with punctuation and spaces
         # reg = r"\w+('\w+)?|\w+(-\w+)?|\s+"
         # reg = r'\w+(?:-\w+)*|\s|\w+(?:\'\w+)?'
-        reg = r"\w+(?:['-]\w+)*|\s"
+        reg = r"\w+(?:['-]\w+)*"
         tokenizer = RegexpTokenizer(reg)
         self.tokens = tokenizer.tokenize(self._context)
 
@@ -33,9 +37,9 @@ class ContextTracker(object):
             return self.tokens[index]
         else:
             return ""
-        
+
     def get_tokens(self, count: int):
-        actual_tokens = count if len(self.tokens) >= count else len(self.tokens)   
+        actual_tokens = count if len(self.tokens) >= count else len(self.tokens)
         return actual_tokens, self.tokens[-count:]
 
     def get_last_token(self):
@@ -44,7 +48,7 @@ class ContextTracker(object):
     @property
     def context(self):
         return self._context
-    
+
     @context.setter
     def context(self, value):
         self._context = value

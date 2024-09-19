@@ -1,16 +1,22 @@
-from ConvAssist.predictor.utilities.prediction import MAX_PROBABILITY, MIN_PROBABILITY
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+MIN_PROBABILITY = 0.0
+MAX_PROBABILITY = 1.0
+
 
 class SuggestionException(Exception):
     pass
 
-class Suggestion(object):
+
+class Suggestion:
     """
     Class for a simple suggestion, consists of a string and a probility for that
     string.
 
     """
 
-    def __init__(self, word:str, probability:float, predictor_name:str):
+    def __init__(self, word: str, probability: float, predictor_name: str):
         self._word = word
         self._probability = probability
         self._predictor_name = predictor_name
@@ -28,12 +34,12 @@ class Suggestion(object):
         return False
 
     def __repr__(self):
-        return "Suggestion: {0} - Probability: {1}".format(self.word, self.probability)
+        return f"Suggestion: {self.word} - Probability: {self.probability}"
 
     @property
     def word(self):
         return self._word
-    
+
     @property
     def predictor_name(self):
         return self._predictor_name
@@ -51,5 +57,4 @@ class Suggestion(object):
 
     @probability.deleter
     def probability(self):
-            del self._probability
-
+        del self._probability
