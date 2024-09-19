@@ -12,7 +12,7 @@ from typing import TextIO
 if sys.platform == "win32":
     import pydebugstring
 
-from ConvAssist.utilities.singleton import Singleton
+from .singleton import Singleton
 
 
 class QueueHandler(logging.Handler):

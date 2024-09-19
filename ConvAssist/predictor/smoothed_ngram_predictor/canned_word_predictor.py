@@ -1,22 +1,12 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import logging
 import os
-from configparser import ConfigParser
 
-from ConvAssist.context_tracker import ContextTracker
-from ConvAssist.predictor.smoothed_ngram_predictor.ngram_map import NgramMap
-from ConvAssist.predictor.smoothed_ngram_predictor.smoothed_ngram_predictor import (
-    SmoothedNgramPredictor,
-)
-from ConvAssist.predictor.utilities.nlp import NLP
-from ConvAssist.utilities.databaseutils.sqllite_dbconnector import (
-    SQLiteDatabaseConnector,
-)
-from ConvAssist.utilities.databaseutils.sqllite_ngram_dbconnector import (
-    SQLiteNgramDatabaseConnector,
-)
+from ...utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
+from ..utilities.nlp import NLP
+from .ngram_map import NgramMap
+from .smoothed_ngram_predictor import SmoothedNgramPredictor
 
 
 class CannedWordPredictor(SmoothedNgramPredictor):

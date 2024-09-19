@@ -1,14 +1,6 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: GPL-3.0-or-later
-
-
-"""
-Class for context tracker.
-
-"""
 from nltk import RegexpTokenizer
 
 
@@ -25,8 +17,6 @@ class ContextTracker:
 
     def _update_context(self):
         # tokenize the context into words with punctuation and spaces
-        # reg = r"\w+('\w+)?|\w+(-\w+)?|\s+"
-        # reg = r'\w+(?:-\w+)*|\s|\w+(?:\'\w+)?'
         reg = r"\w+(?:['-]\w+)*"
         tokenizer = RegexpTokenizer(reg)
         self.tokens = tokenizer.tokenize(self._context)

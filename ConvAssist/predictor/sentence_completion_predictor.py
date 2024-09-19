@@ -2,10 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import collections
-import logging
 import os
 import re
-import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -19,12 +17,10 @@ from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
 from transformers import Pipeline, pipeline
 
-from ConvAssist.predictor.predictor import Predictor
-from ConvAssist.predictor.utilities.nlp import NLP
-from ConvAssist.predictor.utilities.prediction import Prediction, Suggestion
-from ConvAssist.utilities.databaseutils.sqllite_dbconnector import (
-    SQLiteDatabaseConnector,
-)
+from ..utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
+from .predictor import Predictor
+from .utilities.nlp import NLP
+from .utilities.prediction import Prediction, Suggestion
 
 
 class SentenceCompletionPredictor(Predictor):

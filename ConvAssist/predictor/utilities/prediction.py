@@ -4,7 +4,7 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from ConvAssist.predictor.utilities.suggestion import Suggestion
+from .suggestion import Suggestion
 
 
 class UnknownCombinerException(Exception):

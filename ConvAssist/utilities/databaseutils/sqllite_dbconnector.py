@@ -4,10 +4,7 @@
 import sqlite3
 from typing import Any, List, Optional, Tuple
 
-from ConvAssist.utilities.databaseutils.dbconnector import (
-    DatabaseConnector,
-    DatabaseError,
-)
+from .dbconnector import DatabaseConnector, DatabaseError
 
 
 class SQLiteDatabaseConnector(DatabaseConnector):

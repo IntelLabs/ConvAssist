@@ -4,13 +4,12 @@
 import string
 from typing import List
 
-from ConvAssist.predictor.predictor import Predictor
-from ConvAssist.predictor.smoothed_ngram_predictor.ngram_map import NgramMap
-from ConvAssist.predictor.utilities.prediction import Prediction
-from ConvAssist.predictor.utilities.suggestion import Suggestion
-from ConvAssist.utilities.databaseutils.sqllite_ngram_dbconnector import (
+from ...utilities.databaseutils.sqllite_ngram_dbconnector import (
     SQLiteNgramDatabaseConnector,
 )
+from ..predictor import Predictor
+from ..utilities.prediction import Prediction, Suggestion
+from .ngram_map import NgramMap
 
 
 class SmoothedNgramPredictor(Predictor):

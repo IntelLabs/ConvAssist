@@ -1,13 +1,8 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: GPL-3.0-or-later
-
-from ConvAssist.utilities.databaseutils.ngram_utilities import NGramUtilities
-from ConvAssist.utilities.databaseutils.sqllite_dbconnector import (
-    SQLiteDatabaseConnector,
-)
+from .ngram_utilities import NGramUtilities
+from .sqllite_dbconnector import SQLiteDatabaseConnector
 
 
 class SQLiteNgramDatabaseConnector(SQLiteDatabaseConnector, NGramUtilities):

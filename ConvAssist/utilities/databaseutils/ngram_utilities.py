@@ -5,10 +5,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional, Tuple
 
-from ConvAssist.utilities.databaseutils.dbconnector import (
-    DatabaseConnector,
-    DatabaseError,
-)
+from .dbconnector import DatabaseConnector, DatabaseError
 
 re_escape_singlequote = re.compile("'")
 

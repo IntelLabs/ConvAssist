@@ -3,16 +3,10 @@
 
 import collections
 import json
-import logging
 import os
-from configparser import ConfigParser
 
-from ConvAssist.context_tracker import ContextTracker
-from ConvAssist.predictor.smoothed_ngram_predictor.smoothed_ngram_predictor import (
-    SmoothedNgramPredictor,
-)
-from ConvAssist.predictor.utilities.prediction import Prediction
-from ConvAssist.predictor.utilities.suggestion import Suggestion
+from ..utilities.prediction import Prediction, Suggestion
+from .smoothed_ngram_predictor import SmoothedNgramPredictor
 
 
 class GeneralWordPredictor(SmoothedNgramPredictor):

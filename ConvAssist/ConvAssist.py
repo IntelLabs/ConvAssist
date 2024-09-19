@@ -1,18 +1,15 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: GPL-3.0-or-later
-
 import logging
 from configparser import ConfigParser
 
 from nltk import sent_tokenize
 
-from ConvAssist.context_tracker import ContextTracker
-from ConvAssist.predictior_activator import PredictorActivator
-from ConvAssist.predictor_registry import PredictorRegistry
-from ConvAssist.utilities.logging_utility import LoggingUtility
+from .context_tracker import ContextTracker
+from .predictor_activator import PredictorActivator
+from .predictor_registry import PredictorRegistry
+from .utilities.logging_utility import LoggingUtility
 
 
 class ConvAssist:

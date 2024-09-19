@@ -6,7 +6,7 @@ import sys
 
 from spacy import load
 
-from ConvAssist.utilities.singleton import Singleton
+from ...utilities.singleton import Singleton
 
 
 class NLP(metaclass=Singleton):

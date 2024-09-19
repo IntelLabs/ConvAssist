@@ -9,9 +9,9 @@ import os
 from abc import ABC, abstractmethod
 from configparser import ConfigParser
 
-from ConvAssist.context_tracker import ContextTracker
-from ConvAssist.predictor.utilities.prediction import Prediction
-from ConvAssist.utilities.logging_utility import LoggingUtility
+from ..context_tracker import ContextTracker
+from ..utilities.logging_utility import LoggingUtility
+from .utilities.prediction import Prediction
 
 
 class Predictor(ABC):

@@ -1,39 +1,29 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: GPL-3.0-or-later
-
 import logging
 from configparser import ConfigParser
 from typing import Any
 
-from ConvAssist.context_tracker import ContextTracker
-from ConvAssist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
-from ConvAssist.predictor.sentence_completion_predictor import (
+from .context_tracker import ContextTracker
+from .predictor import (
+    CannedPhrasesPredictor,
     SentenceCompletionPredictor,
+    SpellCorrectPredictor,
 )
-from ConvAssist.predictor.smoothed_ngram_predictor.canned_word_predictor import (
+from .predictor.smoothed_ngram_predictor import (
     CannedWordPredictor,
-)
-from ConvAssist.predictor.smoothed_ngram_predictor.general_word_predictor import (
     GeneralWordPredictor,
-)
-from ConvAssist.predictor.smoothed_ngram_predictor.smoothed_ngram_predictor import (
     SmoothedNgramPredictor,
 )
-from ConvAssist.predictor.spell_correct_predictor import SpellCorrectPredictor
-
-# from ConvAssist.predictor.utilities.predictor_names import PredictorNames
-
 
 predictor_mapping = {
     "SmoothedNgramPredictor": SmoothedNgramPredictor,
+    "CannedWordPredictor": CannedWordPredictor,
+    "GeneralWordPredictor": GeneralWordPredictor,
     "SpellCorrectPredictor": SpellCorrectPredictor,
     "SentenceCompletionPredictor": SentenceCompletionPredictor,
     "CannedPhrasesPredictor": CannedPhrasesPredictor,
-    "CannedWordPredictor": CannedWordPredictor,
-    "GeneralWordPredictor": GeneralWordPredictor,
 }
 
 

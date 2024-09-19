@@ -3,8 +3,8 @@
 
 from spellchecker import SpellChecker
 
-import ConvAssist.predictor.utilities.prediction as prediction
-from ConvAssist.predictor.predictor import Predictor
+from .predictor import Predictor
+from .utilities import Prediction, Suggestion
 
 
 class SpellCorrectPredictor(Predictor):
@@ -13,8 +13,8 @@ class SpellCorrectPredictor(Predictor):
 
     def predict(self, max_partial_prediction_size=None, filter=None):
         token = self.context_tracker.get_last_token()
-        setence_predictions = prediction.Prediction()
-        word_predictions = prediction.Prediction()
+        setence_predictions = Prediction()
+        word_predictions = Prediction()
 
         if token:
             spell = SpellChecker()
@@ -23,7 +23,7 @@ class SpellCorrectPredictor(Predictor):
                 for suggestion in suggestions:
                     prob = spell.word_usage_frequency(suggestion)
                     word_predictions.add_suggestion(
-                        prediction.Suggestion(suggestion, prob, self.predictor_name)
+                        Suggestion(suggestion, prob, self.predictor_name)
                     )
 
         return setence_predictions, word_predictions[:max_partial_prediction_size]

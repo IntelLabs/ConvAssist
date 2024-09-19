@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "ConvAssist"
+version = "0.1.0"
+description = ""
+authors = ["Intel Corporation"]
+license = "GPL-3.0-or-later"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.14"
+pywin32 = { version = "^306", optional = true, markers = "sys_platform == 'win32'" }
+spacy = "^3.7.6"
+sentence-transformers = "^3.1.0"
+torch = "^2.4.1"
+nltk = "^3.9.1"
+hnswlib = "^0.8.0"
+pandas = "^2.2.2"
+en-core-web-sm = {url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl#sha256=86cc141f63942d4b2c5fcee06630fd6f904788d2f0ab005cce45aadb8fb73889"}
+pyspellchecker = "^0.8.1"
+
+[tool.poetry.extras]
+dev = ["pytest", "pytest-timeout", "pytest-cov", "pyinstaller"]
+windows = ["pywin32"]
+linux = []
+macos = []
+
+[tool.poetry.group.dev.dependencies]
+pytest = { version = "8.3.2", optional = true }
+pytest-timeout = {version = "^2.3.1",  optional = true }
+pytest-cov = {version = "^5.0.0",  optional = true }
+pyinstaller = "^6.10.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

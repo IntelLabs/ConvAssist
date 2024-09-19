@@ -1,14 +1,11 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: GPL-3.0-or-later
-
 import logging
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional, Tuple
 
-from ConvAssist.utilities.logging_utility import LoggingUtility
+from ..logging_utility import LoggingUtility
 
 
 class DatabaseError(Exception):

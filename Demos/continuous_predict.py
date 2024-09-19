@@ -7,7 +7,7 @@ import logging
 import os
 from pathlib import Path
 
-from ConvAssist.ConvAssist import ConvAssist
+from convassist.ConvAssist import ConvAssist
 
 SCRIPT_DIR = str(Path(__file__).resolve().parent)
 

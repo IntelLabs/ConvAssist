@@ -13,11 +13,9 @@ from nltk import word_tokenize
 from nltk.stem import PorterStemmer
 from sentence_transformers import SentenceTransformer
 
-from ConvAssist.predictor.predictor import Predictor
-from ConvAssist.predictor.utilities.prediction import Prediction, Suggestion
-from ConvAssist.utilities.databaseutils.sqllite_dbconnector import (
-    SQLiteDatabaseConnector,
-)
+from ..utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
+from .predictor import Predictor
+from .utilities.prediction import Prediction, Suggestion
 
 
 class CannedPhrasesPredictor(Predictor):

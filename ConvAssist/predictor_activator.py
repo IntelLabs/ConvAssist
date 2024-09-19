@@ -2,16 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
-
-# Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: GPL-3.0-or-later
 from configparser import ConfigParser
 
-from ConvAssist.combiner.meritocrity_combiner import MeritocracyCombiner
-from ConvAssist.predictor.spell_correct_predictor import SpellCorrectPredictor
-from ConvAssist.predictor.utilities.prediction import UnknownCombinerException
-from ConvAssist.predictor_registry import PredictorRegistry
-from ConvAssist.utilities.logging_utility import LoggingUtility
+from .combiner.meritocrity_combiner import MeritocracyCombiner
+from .predictor.spell_correct_predictor import SpellCorrectPredictor
+from .predictor.utilities.prediction import UnknownCombinerException
+from .predictor_registry import PredictorRegistry
+from .utilities.logging_utility import LoggingUtility
 
 
 class PredictorActivator:
