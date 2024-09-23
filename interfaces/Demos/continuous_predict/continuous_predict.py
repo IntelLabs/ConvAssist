@@ -29,7 +29,22 @@ ContinuousPreidictor = ConvAssist("CONT_PREDICT", config=config, log_level=loggi
 
 convAssists = [ContinuousPreidictor]
 
+# output results as a simple table
+def print_table(data, header=None):
+    col_widths = [30, 12]
+    if header:
+        header = [f"{header[i]:<{col_widths[i]}}" for i in range(len(header))]
+        print(" | ".join(header))
+        print("-" * (sum(col_widths) + 3 * (len(header) - 1)))
 
+    for row in data:
+        # format the probability to 2 decimal places as a string
+        formatted_row = (row[0], "{:.2f}".format(row[1]))
+        formatted_row = [f"{formatted_row[i]:<{col_widths[i]}}" for i in range(len(formatted_row))]
+        print(" | ".join(formatted_row))
+
+    print("\n")
+    
 def main():
     while True:
         buffer = input("Enter text to start predictions.\n('help:' for more commands.)\n")
@@ -86,12 +101,15 @@ def main():
                 sentence_predictions,
             ) = convAssist.predict()
 
-            print("word_nextLetterProbs ----", json.dumps(word_nextLetterProbs))
-            print("word_predictions: ----- ", json.dumps(word_predictions))
-            print("sentence_nextLetterProbs ---- ", json.dumps(sentence_nextLetterProbs))
-            print("sentence_predictions: ----- ", json.dumps(sentence_predictions))
-            print("---------------------------------------------------")
-
+            # print("word_nextLetterProbs ----", json.dumps(word_nextLetterProbs))
+            # print("word_predictions: ----- ", json.dumps(word_predictions))
+            # print("sentence_nextLetterProbs ---- ", json.dumps(sentence_nextLetterProbs))
+            # print("sentence_predictions: ----- ", json.dumps(sentence_predictions))
+            # print("---------------------------------------------------")
+            print ("Word Predictions")
+            print_table(word_predictions, header=["Word", "Probability"])
+            print ("Sentence Predictions")
+            print_table(sentence_predictions, header=["Sentence", "Probability"])
 
 if __name__ == "__main__":
     main()

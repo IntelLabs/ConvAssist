@@ -22,37 +22,45 @@ Short-Hand Mode can be used by users for quick communication - in situations whe
 ConvAssist can be used with ACAT for the best user-experience. But ConvAssist can also be used as a standalone application for research and development. To install, run and use ConvAssist, follow the below steps. 
 
 ### Install
-ConvAssist works with Python 3.11.5. Create a virtual environment and install the required packages. 
+ConvAssist works with Python 3.12.x or greater. Create a virtual environment and install the required packages.  We provide a pyproject.toml file to assist, and use Poetry for package management.
 
-Clone the project. 
-```
-cd ConvAssist
-pip install -r requirements.txt
-```
-In the ConvAssist folder, 
-```
-pip install -e .
-```
-Now you are ready to run the project. 
+#### Create a Virtual Environment with Poetry
+
+1. **Clone the Repository**:
+    ```sh
+    git clone https://github.com/IntelLabs/ConvAssist.git
+    cd ConvAssist
+    ```
+
+2. **Install Poetry**:
+    If you don't have Poetry installed, you can install it by following the instructions on the [Poetry website](https://python-poetry.org/docs/#installation).
+
+3. **Install Dependencies and Create Virtual Environment**:
+    ```sh
+    poetry install
+    ```
+
+    This command will create a virtual environment, install the dependencies specified in the `pyproject.toml` file, and set up the environment for you.
+
+4. **Activate the Virtual Environment**:
+    ```sh
+    poetry shell
+    ```
+
+    This command activates the virtual environment created by Poetry.
 
 ### Run
-The different modes can be accessed using the ini files: 
-sentenceMode.ini
+We provide several demonstration apps to showcase how to use ConvAssist
 
-ShortHandMode.ini and 
+#### DEMO - Continuous Predict
 
-CannedPhrasesMode.ini
-
-```
-cd ACAT_ConvAssist_Interface
+``` sh
+cd interfaces/Demos/continuous_predict
 python pyprompter.py
 ```
-You can change the modes in the pyprompter.py script, by pointing to the appropriate ini file. 
 
-## Documentation
-
-For more details on the modes and usage, please visit the user-guide page:
-TBD 
+The `continuous_prediction.ini` file defines which predictors are enable.  See documentation 
+for details on how to use the configuration file.
 
 ## License
-ConvAssist source code is distributed under the Apache 2.0 License.
+ConvAssist source code is distributed under the GPL-3.0 or later license.
