@@ -39,7 +39,7 @@ python-dateutil==2.9.0.post0
 pytz==2024.1
 pywin32==306
 pywin32-ctypes==0.2.2
-PyYAML==6.0.1
+PyYAML==6.0.2
 regex==2023.12.25
 requests==2.32.2
 safetensors==0.4.2
