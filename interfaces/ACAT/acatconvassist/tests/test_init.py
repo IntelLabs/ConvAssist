@@ -5,7 +5,7 @@ import logging
 import unittest
 from unittest.mock import MagicMock
 
-from ..ACATConvAssistInterface import (
+from ..acatconvassist import (
     ACATConvAssistInterface,
 )
 

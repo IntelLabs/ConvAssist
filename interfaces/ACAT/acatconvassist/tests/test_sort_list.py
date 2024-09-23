@@ -3,7 +3,7 @@
 
 import unittest
 
-from ..ACATConvAssistInterface import (
+from ..acatconvassist import (
     ACATConvAssistInterface,
 )
 

@@ -27,13 +27,11 @@ else:
     import psutil
     import pystray
     import sv_ttk
-    from interfaces.ACAT.acat_interface.ACATConvAssistInterface import (
-        ACATConvAssistInterface,
-    )
     from PIL import Image
     from pystray import MenuItem as item
 
     from convassist.utilities.logging_utility import LoggingUtility
+    from interfaces.ACAT.acatconvassist.acatconvassist import ACATConvAssistInterface
 
     license_text_string = "Copyright (C) 2024 Intel Corporation\n"
     license_text_string += "SPDX-License-Identifier: GPL 3.0\n\n"
@@ -277,9 +275,6 @@ else:
 
         # Set the tray icon
         tk_window.tray_icon = systray_icon
-
-        # Start the system tray icon
-        # systray_icon.run_detached()
 
         # Start the Tkinter main loop
         tk_window.mainloop()
