@@ -33,7 +33,7 @@ psutil==5.9.8
 pydantic==2.6.4
 pydantic_core==2.16.3
 pyinstaller==6.5.0
-pyinstaller-hooks-contrib==2024.3
+pyinstaller-hooks-contrib==2024.8
 pystray==0.19.5
 python-dateutil==2.9.0.post0
 pytz==2024.1
