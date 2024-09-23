@@ -13,6 +13,7 @@ import os
 import sys
 import threading
 from configparser import ConfigParser
+import time
 from typing import Any
 
 from ..utilities.ACATMessageTypes import (
@@ -443,17 +444,16 @@ class ACATConvAssistInterface(threading.Thread):
             self.logger.info(f"convassist {convassist.name} updated.")
 
     def ConnectToACAT(self, connection_type=None) -> bool:
-
-        # success = False
-        # handle = None
-        # Try to connect to ACAT server.  Give up after #retries
+        retries = 5
         self.logger.info("Trying to connect to ACAT server.")
         try:
-            connected = self.messageHandler.connect()
+            while not self.clientConnected and not self.app_quit_event.is_set() and retries > 0:
+                self.clientConnected, msg = self.messageHandler.connect()
 
-            if connected:
-                self.logger.info("Connected to ACAT server.")
-                self.clientConnected = True
+                self.logger.info(f"Connection Status: {msg}")
+                if not self.clientConnected:
+                    retries -= 1
+                    time.sleep(5)
 
         except Exception as e:
             self.logger.error(f"Error connecting to named pipe: {e}")

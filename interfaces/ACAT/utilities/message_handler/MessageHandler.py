@@ -14,7 +14,7 @@ class MessageHandler(ABC):
         pass
 
     @abstractmethod
-    def connect(self) -> bool:
+    def connect(self) -> tuple[bool, str]:
         pass
 
     @abstractmethod

@@ -43,8 +43,8 @@ else:
             self.pipe_name = pipe_name
             self.pipe_handle = None
 
-        def connect(self):
-            return self._ConnectToNamedPipe(50)
+        def connect(self) -> tuple[bool, str]:
+            return self._ConnectToNamedPipe()
 
         def disconnect(self) -> None:
             self._DisconnectNamedPipe()
@@ -139,7 +139,7 @@ else:
             except pywintypes.error as e:
                 raise BrokenPipeError(f"Error sending message to named pipe: {e}") from e
 
-        def _ConnectToNamedPipe(self, retries) -> bool:
+        def _ConnectToNamedPipe(self) -> tuple[bool, str]:
             """
             Set the Pipe as Client
 
@@ -150,36 +150,35 @@ else:
             pipeName = rf"\\.\pipe\{self.pipe_name}"
 
             clientConnected = False
-            while retries > 0:
-                try:
-                    self.pipe_handle = win32file.CreateFile(
-                        pipeName,
-                        win32file.GENERIC_READ | win32file.GENERIC_WRITE,
-                        0,
-                        None,
-                        win32file.OPEN_EXISTING,
-                        win32file.FILE_FLAG_OVERLAPPED,
-                        None,
+            statusMessage = "Unable to connect."
+
+            try:
+                self.pipe_handle = win32file.CreateFile(
+                    pipeName,
+                    win32file.GENERIC_READ | win32file.GENERIC_WRITE,
+                    0,
+                    None,
+                    win32file.OPEN_EXISTING,
+                    win32file.FILE_FLAG_OVERLAPPED,
+                    None,
+                )
+                if self.pipe_handle:
+                    win32pipe.SetNamedPipeHandleState(
+                        self.pipe_handle.handle, win32pipe.PIPE_READMODE_MESSAGE, None, None
                     )
-                    if self.pipe_handle:
-                        win32pipe.SetNamedPipeHandleState(
-                            self.pipe_handle.handle, win32pipe.PIPE_READMODE_MESSAGE, None, None
-                        )
 
-                        clientConnected = True
-                        break
-                except pywintypes.error as e:
-                    if e.args[0] == winerror.ERROR_PIPE_BUSY:
-                        retries -= 1
-                    elif e.args[0] == winerror.ERROR_FILE_NOT_FOUND:
-                        retries -= 1
-                    else:
-                        raise Exception(f"Error connecting to named pipe: {e}") from e
+                    clientConnected = True
+                    statusMessage = "Connection successful."
+            except pywintypes.error as e:
+                if e.args[0] == winerror.ERROR_PIPE_BUSY:
+                    statusMessage = "Pipe busy."
+                elif e.args[0] == winerror.ERROR_FILE_NOT_FOUND:
+                    statusMessage = "Pipe not found."
+                else:
+                    statusMessage = f"Error connecting to named pipe: {e}"
 
-                    time.sleep(5)
-
-            return clientConnected
-
+            return clientConnected, statusMessage
+        
         def _DisconnectNamedPipe(self) -> None:
             """
             Disconnect the named pipe

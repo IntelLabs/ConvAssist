@@ -12,7 +12,7 @@ class WebSocketHandler(MessageHandler):
     def __init__(self, config):
         self.config = config
 
-    def connect(self) -> bool:
+    def connect(self) -> tuple[bool, str]:
         if not self.config["use_tls"]:
             warnings.warn(
                 f"{self.__class__.__name__} is being used in an insecure manner, and should be used with caution.",
@@ -25,7 +25,7 @@ class WebSocketHandler(MessageHandler):
             pass
 
         self.ws = connect(self.config["url"])
-        return True
+        return True, ""
 
     def send_message(self, message: str) -> None:
         self.ws.send(message)
