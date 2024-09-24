@@ -238,10 +238,11 @@ class NGramUtilities(DatabaseConnector):
             The count for the given n-gram.
 
         """
-        query = f"UPDATE _{len(ngram)}_gram SET count = {count}"
+        query = f"UPDATE _{len(ngram)}_gram SET count = ?"
         query += self._build_where_clause(ngram)
         query += ";"
-        self.execute_query(query)
+        params = (count,) + tuple(ngram)
+        self.execute_query(query, params)
 
     def remove_ngram(self, ngram):
         """
@@ -265,7 +266,18 @@ class NGramUtilities(DatabaseConnector):
             ngram_escaped.append(re_escape_singlequote.sub("''", n))
 
         values_clause = "VALUES('{}', {})".format("', '".join(ngram_escaped), count)
+
         return values_clause
+
+    def _build_update_where_clause(self, ngram):
+        where_clause = " WHERE"
+        for i in range(len(ngram)):
+            if i < (len(ngram) - 1):
+                where_clause += f" word_{len(ngram) - i - 1} = {ngram[i]} AND"
+            else:
+                where_clause += f" word = {ngram[i]}"
+        return where_clause
+    
 
     def _build_where_clause(self, ngram):
         where_clause = " WHERE"

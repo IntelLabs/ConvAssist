@@ -80,8 +80,6 @@ class SQLiteDatabaseConnector(DatabaseConnector):
         self.conn.rollback()
 
     def create_table(self, tablename: str, columns: List[str]) -> None:
-        if not self.conn:
-            raise DatabaseError("Database connection is not established.")
         try:
             self.connect()
 

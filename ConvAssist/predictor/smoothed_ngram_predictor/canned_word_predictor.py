@@ -127,8 +127,7 @@ class CannedWordPredictor(SmoothedNgramPredictor):
                 # Add phrases_toAdd to the database and ngram
                 for phrase in phrases_toAdd:
                     # Add to
-                    query = """INSERT INTO sentences (sentence, count)
-                                    VALUES (?,?)"""
+                    query = """INSERT INTO sentences (sentence, count) VALUES (?,?)"""
                     phraseToInsert = (phrase, 1)
                     sentence_db.execute_query(query, phraseToInsert)
 
