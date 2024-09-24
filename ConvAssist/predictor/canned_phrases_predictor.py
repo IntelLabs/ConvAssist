@@ -7,7 +7,6 @@ import os
 import hnswlib
 import joblib
 import numpy
-import pandas as pd
 import torch
 from nltk import word_tokenize
 from nltk.stem import PorterStemmer
@@ -204,9 +203,8 @@ class CannedPhrasesPredictor(Predictor):
                     "probability": float(cannedph[k] / total_sent),
                 }
                 rows.append(new_row)
-            scores = pd.DataFrame.from_records(rows)
-            sorted_df = scores.sort_values(by=["matches", "probability"], ascending=[False, False])
-            for index, row in sorted_df.iterrows():
+            sorted_rows = sorted(rows, key=lambda x: (x["matches"], x["probability"]), reverse=True)
+            for row in sorted_rows:
                 if row["matches"] > 0:
                     sent_prediction.add_suggestion(
                         Suggestion(
@@ -266,9 +264,9 @@ class CannedPhrasesPredictor(Predictor):
             self.logger.error("No canned phrases found")
 
         self.logger.info(
-            f"End prediction. got {len(word_prediction)} word suggestions and {len(sent_prediction)} sentence suggestions"
+            f"Got {len(sent_prediction)} sentence suggestions."
         )
-        return sent_prediction, word_prediction
+        return sent_prediction[:max_partial_prediction_size], word_prediction
 
     # base class method
     def learn(self, change_tokens):
