@@ -31,7 +31,8 @@ else:
     from pystray import MenuItem as item
 
     from convassist.utilities.logging_utility import LoggingUtility
-    from interfaces.ACAT.acatconvassist.acatconvassist import ACATConvAssistInterface
+    
+    from acatconvassist import ACATConvAssistInterface
 
     license_text_string = "Copyright (C) 2024 Intel Corporation\n"
     license_text_string += "SPDX-License-Identifier: GPL 3.0\n\n"

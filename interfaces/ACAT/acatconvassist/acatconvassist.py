@@ -16,7 +16,7 @@ from configparser import ConfigParser
 import time
 from typing import Any
 
-from ..utilities.ACATMessageTypes import (
+from utilities.ACATMessageTypes import (
     ConvAssistMessage,
     ConvAssistMessageTypes,
     ConvAssistPredictionTypes,
@@ -24,7 +24,7 @@ from ..utilities.ACATMessageTypes import (
     ParameterType,
     WordAndCharacterPredictionResponse,
 )
-from ..utilities.message_handler.MessageHandler import MessageHandler
+from utilities.message_handler.MessageHandler import MessageHandler
 
 from convassist.ConvAssist import ConvAssist
 from convassist.utilities.logging_utility import LoggingUtility
@@ -477,7 +477,7 @@ class ACATConvAssistInterface(threading.Thread):
             self.app_quit_event.set()
             return
 
-        self.initialize_or_configure_convassists()
+        # self.initialize_or_configure_convassists()
         self.handle_incoming_messages()
 
         self.logger.info("Disconnecting from ACAT.")

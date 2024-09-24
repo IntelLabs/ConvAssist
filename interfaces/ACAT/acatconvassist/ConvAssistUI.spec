@@ -7,12 +7,8 @@ from PyInstaller.utils.hooks import collect_data_files
 
 additionaldata = [('Assets', 'Assets')]
 
-# # Iterate over all installed packages and collect metadata
-# for dist in pkg_resources.working_set:
-#     additionaldata += copy_metadata(dist.project_name)
-#     additionaldata += collect_data_files(dist.project_name)
 
-# additionaldata += copy_metadata('convassist')
+additionaldata += copy_metadata('convassist')
 # additionaldata += copy_metadata('tqdm')
 # additionaldata += copy_metadata('torch')
 # additionaldata += copy_metadata('regex')
@@ -26,7 +22,7 @@ additionaldata = [('Assets', 'Assets')]
 # additionaldata += copy_metadata('pyyaml')
 
 additionaldata += collect_data_files("en_core_web_sm")
-additionaldata += collect_data_files("sv-ttk")
+additionaldata += collect_data_files("sv_ttk")
 
 # hiddenimports=[
 #     'en_core_web_sm', 
@@ -53,10 +49,10 @@ a = Analysis( # type: ignore
     binaries=[],
     datas=additionaldata,
     # hiddenimports=hiddenimports,
-    hookspath=[],
+    hookspath=['./custom_hooks'],
     hooksconfig={},
     runtime_hooks=[],
-    # excludes=['torch.onnx', 'scipy.special', 'torch.tensorboard', 'scipy.special.cython_special'],
+    excludes=['torch.onnx', 'torch.utils.tensorboard', 'scipy.special._cdflib', 'tzdata'],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=None,
@@ -73,7 +69,7 @@ exe = EXE( # type: ignore
     a.datas,
 	[('W ignore', None, 'OPTION')],
     name='ConvAssistUI',
-    debug=False,
+    debug=True,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
@@ -87,14 +83,15 @@ exe = EXE( # type: ignore
     entitlements_file=None,
     icon='assets/icon_tray.ico',
 )
-coll = COLLECT( # type: ignore
+
+col = COLLECT( # type: ignore
     exe,
     a.scripts,
     a.binaries,
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name='ConvAssistUI',
 )
