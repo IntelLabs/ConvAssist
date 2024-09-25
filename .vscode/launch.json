@@ -12,7 +12,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal",
+            "console": "internalConsole",
             "justMyCode": false,
             "redirectOutput": true,
             "env": {

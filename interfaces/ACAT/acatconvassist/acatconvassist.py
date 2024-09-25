@@ -12,8 +12,8 @@ import logging
 import os
 import sys
 import threading
-from configparser import ConfigParser
 import time
+from configparser import ConfigParser
 from typing import Any
 
 from utilities.ACATMessageTypes import (

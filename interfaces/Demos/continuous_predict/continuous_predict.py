@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import configparser
-import json
 import logging
 import os
 from pathlib import Path
@@ -26,10 +25,9 @@ config["Common"]["home_dir"] = SCRIPT_DIR
 
 # Create an instance of ConvAssist
 ContinuousPreidictor = ConvAssist("CONT_PREDICT", config=config, log_level=logging.DEBUG)
-
 convAssists = [ContinuousPreidictor]
 
-# output results as a simple table
+
 def print_table(data, header=None):
     col_widths = [30, 12]
     if header:
@@ -39,12 +37,13 @@ def print_table(data, header=None):
 
     for row in data:
         # format the probability to 2 decimal places as a string
-        formatted_row = (row[0], "{:.2f}".format(row[1]))
+        formatted_row = (row[0], f"{row[1]:.2f}")
         formatted_row = [f"{formatted_row[i]:<{col_widths[i]}}" for i in range(len(formatted_row))]
         print(" | ".join(formatted_row))
 
     print("\n")
-    
+
+
 def main():
     while True:
         buffer = input("Enter text to start predictions.\n('help:' for more commands.)\n")
@@ -56,6 +55,7 @@ def main():
                 "loglevel:<level> - Set the log level. \n"
                 "\t'level' can be one of the following: \n"
                 "\tDEBUG, INFO, WARNING, ERROR, CRITICAL \n"
+                "list: - List all available predictors. \n"
                 "exit: - Exit the CLI. \n"
                 "help: - Display this help message."
             )
@@ -82,6 +82,10 @@ def main():
             else:
                 print("Invalid learn command. Please try again.")
             continue
+        elif command[0] == "list":
+            for convAssist in convAssists:
+                print("Predictors:", convAssist.list_predictors())
+            continue
         elif command[0] == "exit":
             print("Exiting CLI.")
             break
@@ -106,10 +110,11 @@ def main():
             # print("sentence_nextLetterProbs ---- ", json.dumps(sentence_nextLetterProbs))
             # print("sentence_predictions: ----- ", json.dumps(sentence_predictions))
             # print("---------------------------------------------------")
-            print ("Word Predictions")
+            print("Word Predictions")
             print_table(word_predictions, header=["Word", "Probability"])
-            print ("Sentence Predictions")
+            print("Sentence Predictions")
             print_table(sentence_predictions, header=["Sentence", "Probability"])
+
 
 if __name__ == "__main__":
     main()

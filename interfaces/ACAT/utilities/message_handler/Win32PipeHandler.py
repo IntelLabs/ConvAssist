@@ -36,6 +36,7 @@ if not sys.platform == "win32":
             raise Exception("Win32PipeMessageHandler is only supported on Windows")
 
 else:
+
     class Win32PipeMessageHandler(MessageHandler):
         def __init__(self, pipe_name: str):
             self.pipe_name = pipe_name
@@ -64,16 +65,13 @@ else:
 
             try:
                 while True:
-                    result, tmp = win32file.ReadFile(
-                        self.pipe_handle.handle, 
-                        buffer_size
-                    )
+                    result, tmp = win32file.ReadFile(self.pipe_handle.handle, buffer_size)
                     if tmp:
-                        data += tmp.decode("utf-8") # type: ignore
+                        data += tmp.decode("utf-8")  # type: ignore
 
                     if result is not winerror.ERROR_MORE_DATA:
                         break
-            
+
             except pywintypes.error as e:
                 raise BrokenPipeError(f"{e.strerror}") from e
 
@@ -83,7 +81,7 @@ else:
                     data = json.loads(data)
 
             return data
-                
+
         def _send_message(self, message: Any) -> None:
             """
             Send the message to the pipe
@@ -123,10 +121,7 @@ else:
 
                 if self.pipe_handle:
                     win32pipe.SetNamedPipeHandleState(
-                        self.pipe_handle.handle, 
-                        win32pipe.PIPE_READMODE_MESSAGE, 
-                        None, 
-                        None
+                        self.pipe_handle.handle, win32pipe.PIPE_READMODE_MESSAGE, None, None
                     )
 
                     clientConnected = True
@@ -140,7 +135,7 @@ else:
                     statusMessage = f"Error connecting to named pipe: {e}"
 
             return clientConnected, statusMessage
-        
+
         def _DisconnectNamedPipe(self) -> None:
             """
             Disconnect the named pipe
@@ -148,11 +143,11 @@ else:
             :param handle: Handle of the pipe
             :return: void
             """
-            try:
+            try:  # nosec B110
                 if self.pipe_handle:
                     win32file.FlushFileBuffers(self.pipe_handle.handle)
                     win32file.CloseHandle(self.pipe_handle.handle)
 
-            except Exception as e:
+            except Exception as e:  # nosec B110
                 # raise Exception(f"Error disconnecting named pipe: {e}") from e
-                pass
+                pass  # nosec B110

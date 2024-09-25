@@ -99,3 +99,13 @@ class PredictorRegistry(list):
             if predictor.predictor_name == predictor_name:
                 return predictor
         return None
+
+    def list_predictors(self):
+        predictors = []
+        for predictor in predictor_mapping:
+            if self.get_predictor(predictor):
+                predictors.append(f"{predictor} - Loaded")
+            else:
+                predictors.append(f"{predictor}")
+
+        return predictors

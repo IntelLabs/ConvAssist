@@ -3,9 +3,7 @@
 
 import unittest
 
-from ..acatconvassist import (
-    ACATConvAssistInterface,
-)
+from ..acatconvassist import ACATConvAssistInterface
 
 
 class TestACATConvAssistInterface(unittest.TestCase):

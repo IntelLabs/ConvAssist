@@ -66,22 +66,30 @@ class SmoothedNgramPredictor(Predictor):
             self.logger.warning("No tokens in the context tracker.")
             return sentence_prediction, word_prediction
 
+        # TODO: FIXME: Expand the tokens to cardinality to make the lookup work
+        if actual_tokens < self.cardinality:
+            tokens = tokens + [""]  # * (self.cardinality - actual_tokens)
+            actual_tokens = len(tokens)
+
         try:
             assert self.ngram_db_conn is not None
             self.ngram_db_conn.connect()
 
             prefix_completion_candidates: List[str] = []
 
-            for k in reversed(range(actual_tokens)):
+            for ngram_len in reversed(range(self.cardinality)):
                 if len(prefix_completion_candidates) >= max_partial_prediction_size:
                     break
-                prefix_ngram = tokens[(len(tokens) - k - 1) :]
+
+                # get the ngram_len prefix tokens
+                prefix_ngram = tokens[: ngram_len + 1]
 
                 if prefix_ngram:
                     partial = self.ngram_db_conn.ngram_fetch_like(
                         prefix_ngram,
                         max_partial_prediction_size - len(prefix_completion_candidates),
                     )
+                    prefix_ngram = None
 
                 if partial:
                     for p in partial:

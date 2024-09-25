@@ -319,6 +319,7 @@ class SentenceCompletionPredictor(Predictor):
         """
         try:
             predictions = Prediction()
+            # TODO : Check if this is the right way to call the generator
             result = self.generator(
                 context,
                 do_sample=False,

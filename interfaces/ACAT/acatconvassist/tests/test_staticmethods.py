@@ -4,9 +4,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from ..acatconvassist import (
-    ACATConvAssistInterface,
-)
+from ..acatconvassist import ACATConvAssistInterface
 
 
 class testStaticMethods(unittest.TestCase):

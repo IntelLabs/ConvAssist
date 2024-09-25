@@ -3,9 +3,10 @@
 
 import warnings
 
-from .MessageHandler import MessageHandler
 from websockets.server import serve
 from websockets.sync.client import connect
+
+from .MessageHandler import MessageHandler
 
 
 class WebSocketHandler(MessageHandler):

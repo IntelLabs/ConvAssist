@@ -38,7 +38,11 @@ class CannedPhrasesPredictor(Predictor):
         self.seed = 42
         self.cannedPhrases_counts = {}
         self.stemmer = PorterStemmer()
-        self.embedder = SentenceTransformer(self.sbertmodel, device=self.device)
+        self.embedder = SentenceTransformer(
+            self.sbertmodel,
+            device=self.device,
+            tokenizer_kwargs={"clean_up_tokenization_spaces": True},
+        )
 
         with open(self.personalized_cannedphrases) as f:
             self.pers_cannedphrasesLines = [s.strip() for s in f.readlines()]
@@ -203,7 +207,9 @@ class CannedPhrasesPredictor(Predictor):
                     "probability": float(cannedph[k] / total_sent),
                 }
                 rows.append(new_row)
-            sorted_rows = sorted(rows, key=lambda x: (x["matches"], x["probability"]), reverse=True)
+            sorted_rows = sorted(
+                rows, key=lambda x: (x["matches"], x["probability"]), reverse=True
+            )
             for row in sorted_rows:
                 if row["matches"] > 0:
                     sent_prediction.add_suggestion(
@@ -263,9 +269,7 @@ class CannedPhrasesPredictor(Predictor):
         if len(sent_prediction) == 0:
             self.logger.error("No canned phrases found")
 
-        self.logger.info(
-            f"Got {len(sent_prediction)} sentence suggestions."
-        )
+        self.logger.info(f"Got {len(sent_prediction)} sentence suggestions.")
         return sent_prediction[:max_partial_prediction_size], word_prediction
 
     # base class method

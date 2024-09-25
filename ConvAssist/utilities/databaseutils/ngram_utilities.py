@@ -277,7 +277,6 @@ class NGramUtilities(DatabaseConnector):
             else:
                 where_clause += f" word = {ngram[i]}"
         return where_clause
-    
 
     def _build_where_clause(self, ngram):
         where_clause = " WHERE"

@@ -27,12 +27,11 @@ else:
     import psutil
     import pystray
     import sv_ttk
+    from acatconvassist import ACATConvAssistInterface
     from PIL import Image
     from pystray import MenuItem as item
 
     from convassist.utilities.logging_utility import LoggingUtility
-    
-    from acatconvassist import ACATConvAssistInterface
 
     license_text_string = "Copyright (C) 2024 Intel Corporation\n"
     license_text_string += "SPDX-License-Identifier: GPL 3.0\n\n"
@@ -248,11 +247,7 @@ else:
         @staticmethod
         def create_image():
             """Create an image for the systray icon."""
-            image = Image.open(
-                os.path.join(
-                    working_dir, "Assets", "icon_tray.ico"
-                )   
-            )
+            image = Image.open(os.path.join(working_dir, "Assets", "icon_tray.ico"))
             return image
 
         def on_quit(self, icon, item):

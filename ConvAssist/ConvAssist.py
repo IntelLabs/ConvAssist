@@ -15,26 +15,6 @@ from .utilities.logging_utility import LoggingUtility
 class ConvAssist:
     """
     ConvAssist class represents a conversational assistant.
-
-    Methods:
-    - __init__(self, id: str, ini_file: str, config: ConfigParser | None = None, log_location: str | None = None, log_level: int | None = None)
-        Initializes the ConvAssist object with the provided parameters.
-    - initialize(self, config: ConfigParser, log_location: str | None = None, log_level: int | None = None)
-        Initializes the ConvAssist object with the provided configuration, log location, and log level.
-    - predict(self)
-        Calls the predict function on the predictor_activator to make language model predictions.
-    - update_params(self, test_gen_sentence_pred, retrieve_from_AAC)
-        Updates the parameters in ACAT and syncs them with the initialized parameters in ConvAssist Predictors.
-    - read_updated_toxicWords(self)
-        Reads the updated toxic words from the predictor_activator.
-    - setLogLocation(self, filename, pathLoc, level)
-        Sets the log location for ConvAssist's logger.
-    - cannedPhrase_recreateDB(self)
-        Recreates the databases for the cannedPhrases predictor.
-    - learn_db(self, text)
-        Learns a sentence, word, or phrase.
-    - check_model(self)
-        Checks if models associated with a predictor are loaded.
     """
 
     def __init__(
@@ -111,14 +91,19 @@ class ConvAssist:
         """
         if not self.initialized:
             raise AttributeError(f"ConvAssist {self.name} not initialized.")
-        
+
         word_nextLetterProbs = []
         word_nextWords = []
         sentence_nextLetterProbs = []
         sentence_nextSentences = []
 
         multiplier = 1
-        (word_nextLetterProbs, word_nextWords, sentence_nextLetterProbs, sentence_nextSentences) = self.predictor_activator.predict(multiplier)
+        (
+            word_nextLetterProbs,
+            word_nextWords,
+            sentence_nextLetterProbs,
+            sentence_nextSentences,
+        ) = self.predictor_activator.predict(multiplier)
         if word_nextWords != []:
             # normalize word probabilities over 10 words.
             prob_sum_over10 = 0.0
@@ -177,3 +162,12 @@ class ConvAssist:
 
     def setLogLevel(self, log_level):
         self.logger.setLevel(log_level)
+
+    def list_predictors(self):
+        """
+        Lists the predictors.
+        """
+        if not self.initialized:
+            raise AttributeError(f"ConvAssist {self.name} not initialized.")
+
+        return self.predictor_registry.list_predictors()

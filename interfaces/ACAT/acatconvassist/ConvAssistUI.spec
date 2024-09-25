@@ -25,20 +25,20 @@ additionaldata += collect_data_files("en_core_web_sm")
 additionaldata += collect_data_files("sv_ttk")
 
 # hiddenimports=[
-#     'en_core_web_sm', 
-#     'huggingface_hub.hf_api', 
-#     'huggingface_hub.repository', 
+#     'en_core_web_sm',
+#     'huggingface_hub.hf_api',
+#     'huggingface_hub.repository',
 #     'torch',
-#     'tqdm', 
-#     'scipy.datasets', 
-#     'scipy.fftpack', 
-#     'scipy.misc', 
-#     'scipy.odr', 
-#     'scipy.signal', 
-#     'sklearn.utils._typedefs', 
+#     'tqdm',
+#     'scipy.datasets',
+#     'scipy.fftpack',
+#     'scipy.misc',
+#     'scipy.odr',
+#     'scipy.signal',
+#     'sklearn.utils._typedefs',
 #     'sklearn.metrics._pairwise_distances_reduction._datasets_pair',
-#     'sklearn.metrics._pairwise_distances_reduction._middle_term_computer', 
-#     'sklearn.utils._heap', 
+#     'sklearn.metrics._pairwise_distances_reduction._middle_term_computer',
+#     'sklearn.utils._heap',
 #     'sklearn.utils._sorting',
 #     'sklearn.utils._vector_sentinel'
 # ]
