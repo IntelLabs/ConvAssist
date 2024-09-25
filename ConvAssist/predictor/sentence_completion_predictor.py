@@ -130,9 +130,7 @@ class SentenceCompletionPredictor(Predictor):
         if not Path.is_file(Path(self.sent_database)):
             self.logger.debug(f"{self.sent_database} not found, creating it")
             columns = ["sentence TEXT UNIQUE", "count INTEGER"]
-            SQLiteDatabaseConnector(self.sent_database, self.logger).create_table(
-                "sentences", columns
-            )
+            SQLiteDatabaseConnector(self.sent_database).create_table("sentences", columns)
 
     @property
     def retrieve(self):
@@ -518,7 +516,7 @@ class SentenceCompletionPredictor(Predictor):
             self.logger.debug(f"learning, {change_tokens}")
             # add to sentence database
             try:
-                dbconn = SQLiteDatabaseConnector(self.sent_database, self.logger)
+                dbconn = SQLiteDatabaseConnector(self.sent_database)
                 dbconn.connect()
                 count = 0
                 # CHECK IF SENTENCE EXISTS IN THE DATABASE

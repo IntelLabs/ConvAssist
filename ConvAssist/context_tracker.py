@@ -21,7 +21,7 @@ class ContextTracker:
         reg = r"\w+(?:['-]\w+)*"  # without spaces
 
         tokenizer = RegexpTokenizer(reg)
-        self.tokens = tokenizer.tokenize(self._context)
+        self.tokens = tokenizer.tokenize(self._context.lower())
 
     def token(self, index):
 
@@ -43,5 +43,5 @@ class ContextTracker:
 
     @context.setter
     def context(self, value):
-        self._context = value
+        self._context = value.lower() if value else value
         self._update_context()
