@@ -17,24 +17,6 @@ class Prediction(list):
 
     """
 
-    def __init__(self):
-        pass
-
-    def __eq__(self, other):
-        if self is other:
-            return True
-        if len(self) != len(other):
-            return False
-        for i, s in enumerate(other):
-            if not s == self[i]:
-                return False
-        return True
-
-    def suggestion_for_token(self, token):
-        for s in self:
-            if s.word == token:
-                return s
-
     def add_suggestion(self, suggestion: Suggestion):
         self.append(suggestion)
         self.sort(key=lambda x: x.probability, reverse=True)
