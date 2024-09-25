@@ -111,23 +111,25 @@ class ConvAssist:
         """
         if not self.initialized:
             raise AttributeError(f"ConvAssist {self.name} not initialized.")
+        
+        word_nextLetterProbs = []
+        word_nextWords = []
+        sentence_nextLetterProbs = []
+        sentence_nextSentences = []
 
         multiplier = 1
-        (wordprob, word, sentprob, sent) = self.predictor_activator.predict(multiplier)
-        if word != []:
+        (word_nextLetterProbs, word_nextWords, sentence_nextLetterProbs, sentence_nextSentences) = self.predictor_activator.predict(multiplier)
+        if word_nextWords != []:
             # normalize word probabilities over 10 words.
-            normalized_words = word[0:10]
             prob_sum_over10 = 0.0
-            words = []
-            for w in enumerate(normalized_words):
+            for w in enumerate(word_nextWords[0:10]):
                 prob_sum_over10 += w[1].probability
-                words.append(w[1].word)
 
         return (
-            wordprob,
-            [(p.word, p.probability / prob_sum_over10) for p in word],
-            sentprob,
-            [(p.word, p.probability) for p in sent],
+            word_nextLetterProbs,
+            [(p.word, p.probability / prob_sum_over10) for p in word_nextWords],
+            sentence_nextLetterProbs,
+            [(p.word, p.probability) for p in sentence_nextSentences],
         )
 
     def update_params(self, test_gen_sentence_pred, retrieve_from_AAC):

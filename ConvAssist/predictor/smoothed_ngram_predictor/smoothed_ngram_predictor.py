@@ -62,6 +62,10 @@ class SmoothedNgramPredictor(Predictor):
         # get self.cardinality tokens from the context tracker
         actual_tokens, tokens = self.context_tracker.get_tokens(self.cardinality)
 
+        if actual_tokens == 0 or not tokens:
+            self.logger.warning("No tokens in the context tracker.")
+            return sentence_prediction, word_prediction
+
         try:
             assert self.ngram_db_conn is not None
             self.ngram_db_conn.connect()

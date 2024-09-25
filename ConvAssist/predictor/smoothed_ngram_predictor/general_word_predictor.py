@@ -56,7 +56,7 @@ class GeneralWordPredictor(SmoothedNgramPredictor):
 
         if actual_tokens == 0:
             self.logger.warning(
-                "No tokens in the context tracker.  Getting most frequent start words..."
+                f"No tokens in the context tracker.  Getting {max_partial_prediction_size} most frequent start words..."
             )
 
             with open(self.startwords) as f:
