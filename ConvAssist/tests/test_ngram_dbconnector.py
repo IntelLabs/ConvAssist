@@ -4,7 +4,7 @@
 import unittest
 from unittest.mock import MagicMock
 
-from ConvAssist.utilities.databaseutils.sqllite_ngram_dbconnector import (
+from ..utilities.databaseutils.sqllite_ngram_dbconnector import (
     SQLiteNgramDatabaseConnector,
 )
 

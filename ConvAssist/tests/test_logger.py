@@ -6,7 +6,7 @@ import sys
 import unittest
 from io import StringIO
 
-from ConvAssist.utilities.logging_utility import LoggingUtility, QueueHandler
+from ..utilities.logging_utility import LoggingUtility, QueueHandler
 
 
 class TestLoggingUtility(unittest.TestCase):

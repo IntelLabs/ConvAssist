@@ -6,8 +6,8 @@ import logging
 import unittest
 from unittest.mock import mock_open, patch
 
-from ConvAssist.context_tracker import ContextTracker
-from ConvAssist.predictor_registry import PredictorRegistry
+from ..context_tracker import ContextTracker
+from ..predictor_registry import PredictorRegistry
 
 
 class TestPredictorRegistry(unittest.TestCase):

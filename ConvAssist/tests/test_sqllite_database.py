@@ -5,12 +5,10 @@ import sqlite3
 import unittest
 from pathlib import Path
 
-from ConvAssist.tests.utils import safe_check_folder, safe_delete_file
+from ..tests.utils import safe_check_folder, safe_delete_file
 
 # from unittest.mock import MagicMock
-from ConvAssist.utilities.databaseutils.sqllite_dbconnector import (
-    SQLiteDatabaseConnector,
-)
+from ..utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
 
 class TestSQLiteDatabase(unittest.TestCase):

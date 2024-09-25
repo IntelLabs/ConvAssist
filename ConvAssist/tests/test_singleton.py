@@ -3,7 +3,7 @@
 
 import unittest
 
-from ConvAssist.utilities.singleton import OptionalSingleton, Singleton
+from ..utilities.singleton import OptionalSingleton, Singleton
 
 
 class TestSingleton(unittest.TestCase):
