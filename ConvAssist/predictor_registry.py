@@ -17,7 +17,8 @@ from .predictor.smoothed_ngram_predictor import (
     SmoothedNgramPredictor,
 )
 
-predictor_mapping = {
+predictors = {
+    "ShortHandPredictor": SmoothedNgramPredictor,
     "SmoothedNgramPredictor": SmoothedNgramPredictor,
     "CannedWordPredictor": CannedWordPredictor,
     "GeneralWordPredictor": GeneralWordPredictor,
@@ -44,11 +45,16 @@ class PredictorRegistry(list):
         super().__init__()
 
     def set_predictors(
-        self, config: ConfigParser, context_tracker: ContextTracker, logger: logging.Logger
+        self,
+        config: ConfigParser,
+        context_tracker: ContextTracker,
+        logger: logging.Logger,
+        predictors: list[str] | None = None,
     ):
         self[:] = []
 
-        predictors = config.get("PredictorRegistry", "predictors", fallback="").split()
+        if not predictors:
+            predictors = config.get("PredictorRegistry", "predictors", fallback="").split()
 
         for predictor in predictors:
             self._add_predictor(predictor, config, context_tracker, logger)
@@ -64,10 +70,10 @@ class PredictorRegistry(list):
 
         predictor_class = config.get(predictor_name, "predictor_class")
 
-        if predictor_class in predictor_mapping:
+        if predictor_class in predictors:
             try:
-                if predictor_class in predictor_mapping:
-                    predictor = predictor_mapping[predictor_class](
+                if predictor_class in predictors:
+                    predictor = predictors[predictor_class](
                         config, context_tracker, predictor_name, logger
                     )
                 else:
@@ -101,11 +107,9 @@ class PredictorRegistry(list):
         return None
 
     def list_predictors(self):
-        predictors = []
-        for predictor in predictor_mapping:
+        result = []
+        for predictor in predictors:
             if self.get_predictor(predictor):
-                predictors.append(f"{predictor} - Loaded")
-            else:
-                predictors.append(f"{predictor}")
+                result.append(f"{predictor}")
 
-        return predictors
+        return result

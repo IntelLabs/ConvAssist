@@ -19,9 +19,7 @@ class SmoothedNgramPredictor(Predictor):
     """
 
     def configure(self) -> None:
-        self.ngram_db_conn = SQLiteNgramDatabaseConnector(
-            self.database, self.cardinality, self.logger
-        )
+        self.ngram_db_conn = SQLiteNgramDatabaseConnector(self.database, self.cardinality)
 
         self.recreate_database()
 

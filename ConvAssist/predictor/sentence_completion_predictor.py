@@ -249,7 +249,7 @@ class SentenceCompletionPredictor(Predictor):
         try:
             pers_results: dict[str, float] = {}
             totalsentences = 0
-            dbconn = SQLiteDatabaseConnector(self.sent_database, self.logger)
+            dbconn = SQLiteDatabaseConnector(self.sent_database)
             dbconn.connect()
             count = 0
             # CHECK IF SENTENCE EXISTS IN THE DATABASE
@@ -281,9 +281,7 @@ class SentenceCompletionPredictor(Predictor):
                     addedcompletions.append(k)
                     count = count + 1
         except Exception as e:
-            self.logger.error(
-                f"Exception in SentenceCompletionPredictor, retrieveFromDataset function {e}"
-            )
+            self.logger.error(f"Exception in {self.predictor_name}, {__name__} function {e}")
 
         return pred
 

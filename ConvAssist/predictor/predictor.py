@@ -61,7 +61,7 @@ class Predictor(ABC):
             )
         else:
             self.logger = LoggingUtility().get_logger(
-                f"{logger.name}-{self.predictor_name}", log_level=logging.DEBUG, queue_handler=True
+                f"{logger.name}-{self.predictor_name}", log_level=logger.level, queue_handler=True
             )
 
         self.logger.info(f"Initializing {self.predictor_name} predictor")

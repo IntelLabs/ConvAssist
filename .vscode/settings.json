@@ -4,8 +4,4 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "python.testing.promptToConfigure": true,
-    "python.REPL.enableREPLSmartSend": false,
-    "python.analysis.typeCheckingMode": "basic",
-    "codeQL.githubDatabase.download": "never"
 }

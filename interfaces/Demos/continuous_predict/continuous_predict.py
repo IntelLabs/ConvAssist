@@ -6,6 +6,8 @@ import logging
 import os
 from pathlib import Path
 
+from conv_assist_modes import ConvAssistMode, conv_assist_modes
+
 from convassist.ConvAssist import ConvAssist
 
 SCRIPT_DIR = str(Path(__file__).resolve().parent)
@@ -24,8 +26,10 @@ if not success_count:
 config["Common"]["home_dir"] = SCRIPT_DIR
 
 # Create an instance of ConvAssist
-ContinuousPreidictor = ConvAssist("CONT_PREDICT", config=config, log_level=logging.DEBUG)
-convAssists = [ContinuousPreidictor]
+ContinuousPredictor = ConvAssist("CONT_PREDICT", config=config, log_level=logging.ERROR)
+
+# Create an instance of ConvAssistMode
+convAssistMode = ConvAssistMode(ContinuousPredictor)
 
 
 def print_table(data, header=None):
@@ -55,7 +59,7 @@ def main():
                 "loglevel:<level> - Set the log level. \n"
                 "\t'level' can be one of the following: \n"
                 "\tDEBUG, INFO, WARNING, ERROR, CRITICAL \n"
-                "list: - List all available predictors. \n"
+                "mode:<mode> - Set the mode. (leave blank to list available modes)\n"
                 "exit: - Exit the CLI. \n"
                 "help: - Display this help message."
             )
@@ -65,8 +69,7 @@ def main():
             if len(command) == 2:
                 level = command[1].upper()
                 if level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
-                    for convAssist in convAssists:
-                        convAssist.setLogLevel(level)
+                    ContinuousPredictor.setLogLevel(level)
                     print(f"Log level set to: {level}\n")
                 else:
                     print("Invalid log level. Please try again.")
@@ -77,14 +80,23 @@ def main():
         elif command[0] == "learn":
             if len(command) == 2:
                 print("Learning: ", command[1])
-                for convAssist in convAssists:
-                    convAssist.learn_text(command[1])
+                ContinuousPredictor.learn_text(command[1])
             else:
                 print("Invalid learn command. Please try again.")
             continue
-        elif command[0] == "list":
-            for convAssist in convAssists:
-                print("Predictors:", convAssist.list_predictors())
+            continue
+        elif command[0] == "mode":
+            if len(command) == 2 and command[1]:
+                try:
+                    convAssistMode.set_mode(command[1])
+                    print(f"Mode set to: {command[1]}")
+                    print("\nAvailable Predictors:", ContinuousPredictor.list_predictors())
+                except ValueError as e:
+                    print(e)
+            else:
+                print("Available modes:")
+                convAssistMode.list_modes()
+                print("\nAvailable Predictors:", ContinuousPredictor.list_predictors())
             continue
         elif command[0] == "exit":
             print("Exiting CLI.")
@@ -92,28 +104,22 @@ def main():
 
         print("GOING INTO PREDICTION MODE")
 
-        for convAssist in convAssists:
-            convAssist.context_tracker.context = buffer
-            prefix = convAssist.context_tracker.token(0)
-            context = convAssist.context_tracker.context
-            print("PREFIX = ", prefix, " CONTEXT = ", context)
+        ContinuousPredictor.context_tracker.context = buffer
+        prefix = ContinuousPredictor.context_tracker.token(0)
+        context = ContinuousPredictor.context_tracker.context
+        print("PREFIX = ", prefix, " CONTEXT = ", context)
 
-            (
-                word_nextLetterProbs,
-                word_predictions,
-                sentence_nextLetterProbs,
-                sentence_predictions,
-            ) = convAssist.predict()
+        (
+            _,
+            word_predictions,
+            _,
+            sentence_predictions,
+        ) = ContinuousPredictor.predict()
 
-            # print("word_nextLetterProbs ----", json.dumps(word_nextLetterProbs))
-            # print("word_predictions: ----- ", json.dumps(word_predictions))
-            # print("sentence_nextLetterProbs ---- ", json.dumps(sentence_nextLetterProbs))
-            # print("sentence_predictions: ----- ", json.dumps(sentence_predictions))
-            # print("---------------------------------------------------")
-            print("Word Predictions")
-            print_table(word_predictions, header=["Word", "Probability"])
-            print("Sentence Predictions")
-            print_table(sentence_predictions, header=["Sentence", "Probability"])
+        print("Word Predictions")
+        print_table(word_predictions, header=["Word", "Probability"])
+        print("Sentence Predictions")
+        print_table(sentence_predictions, header=["Sentence", "Probability"])
 
 
 if __name__ == "__main__":

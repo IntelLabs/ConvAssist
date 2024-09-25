@@ -74,7 +74,7 @@ class ConvAssist:
         self.context_tracker = ContextTracker(lowercase_mode)
 
         self.predictor_registry = PredictorRegistry()
-        self.predictor_registry.set_predictors(self.config, self.context_tracker, self.logger)
+        self.set_predictors()
 
         self.predictor_activator = PredictorActivator(
             self.config, self.predictor_registry, self.context_tracker, self.logger
@@ -171,3 +171,13 @@ class ConvAssist:
             raise AttributeError(f"ConvAssist {self.name} not initialized.")
 
         return self.predictor_registry.list_predictors()
+
+    def set_predictors(self, predictors: list | None = None):
+        """
+        Sets the predictors.
+        Args:
+            predictors (list): The list of predictors.
+        """
+        self.predictor_registry.set_predictors(
+            self.config, self.context_tracker, self.logger, predictors
+        )
