@@ -21,7 +21,7 @@ pydebugstring = "^1.0.0.2"
 spacy = "^3.7.6"
 
 [tool.poetry.extras]
-dev = ["pytest", "pytest-timeout", "pytest-cov"]
+test = ["pytest", "pytest-timeout", "pytest-cov"]
 
 [build-system]
 requires = ["poetry-core"]
