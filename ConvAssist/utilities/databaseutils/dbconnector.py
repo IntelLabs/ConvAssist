@@ -19,14 +19,6 @@ class DatabaseConnector(ABC):
     Abstract base class for database interactions.
     """
 
-    def __init__(self, logger=None):
-        if logger:
-            self.logger = logger
-        else:
-            self.logger = LoggingUtility().get_logger(
-                __name__, log_level=logging.DEBUG, queue_handler=True
-            )
-
     @abstractmethod
     def connect(self, **kwargs) -> Any:
         """
@@ -92,4 +84,4 @@ class DatabaseConnector(ABC):
         """
         Create a table in the database.
         """
-        pass
+        pass  # pragma: no cover

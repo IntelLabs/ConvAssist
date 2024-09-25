@@ -15,8 +15,8 @@ class NGramUtilities(DatabaseConnector):
     Abstract base class for database interactions.
     """
 
-    def __init__(self, cardinality=1, logger=None):
-        super().__init__(logger)
+    def __init__(self, cardinality=1):
+        super().__init__()
         self.cardinality = cardinality
         self.lowercase = False
         self.normalize = False
@@ -191,12 +191,9 @@ class NGramUtilities(DatabaseConnector):
 
             result = self.fetch_all(query)
         except DatabaseError as e:
-            self.logger.critical(f"Error while ngram_fetch_like this query: {query}")
             raise e
-        return result
 
-    def increment_ngram_count(self, ngram):
-        pass
+        return result
 
     def insert_ngram(self, ngram, count):
         """
@@ -218,11 +215,7 @@ class NGramUtilities(DatabaseConnector):
         try:
             if not self.fetch_all(query_check):
                 self.execute_query(query_insert)
-            else:
-                self.logger.info(f"Word '{ngram[0]}' already exists in the database.")
-                pass
         except Exception as e:
-            self.logger.critical(f"Exception while processing this sql query: {query_insert}")
             raise e
 
     def update_ngram(self, ngram, count):

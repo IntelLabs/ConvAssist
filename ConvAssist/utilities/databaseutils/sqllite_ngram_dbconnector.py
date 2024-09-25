@@ -11,9 +11,9 @@ class SQLiteNgramDatabaseConnector(SQLiteDatabaseConnector, NGramUtilities):
     provides methods to create and query n-gram tables.
     """
 
-    def __init__(self, dbname: str, cardinality=1, logger=None):
-        SQLiteDatabaseConnector.__init__(self, dbname=dbname, logger=logger)
-        NGramUtilities.__init__(self, cardinality=cardinality, logger=logger)
+    def __init__(self, dbname: str, cardinality=1):
+        SQLiteDatabaseConnector.__init__(self, dbname=dbname)
+        NGramUtilities.__init__(self, cardinality=cardinality)
 
     """
     All the methods from NGramDatabaseConnector and SQLiteDatabaseConnector are inherited

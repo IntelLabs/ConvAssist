@@ -8,13 +8,12 @@ from .dbconnector import DatabaseConnector, DatabaseError
 
 
 class SQLiteDatabaseConnector(DatabaseConnector):
-    def __init__(self, dbname: str, logger=None):
-        super().__init__(logger=logger)
+    def __init__(self, dbname: str):
+        super().__init__()
         self.dbname = dbname
         self.conn: sqlite3.Connection | None = None
 
     def connect(self, **kwargs) -> sqlite3.Connection:
-        self.logger.debug(f"Connecting to SQLite database {self.dbname}")
         self.conn = sqlite3.connect(self.dbname)
         return self.conn
 
