@@ -19,6 +19,7 @@ hnswlib = "^0.8.0"
 sentence-transformers = "^3.1.1"
 pydebugstring = "^1.0.0.2"
 spacy = "^3.7.6"
+pyttsx3 = "^2.97"
 
 [tool.poetry.extras]
 test = ["pytest", "pytest-timeout", "pytest-cov"]

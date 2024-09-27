@@ -35,15 +35,15 @@ class MeritocracyCombiner(Combiner):
                 # skip predictions from the SpellCorrectPredictor?!?
                 continue
 
-            # TODO - refactor so the SentenceComplettionPredictor has it's own combiner
+            # TODO - refactor so the SentenceCompletionPredictor has it's own combiner
             elif suggestion.predictor_name == SentenceCompletionPredictor.__name__:
                 # result is a sentence. Make sure to get the first letter of the
                 # sentence
                 nextLetter = word_predicted.split()[0][0]
 
-            elif context.strip():
+            elif context:
                 position = word_predicted.find(context)
-                if (position != -1) and word_predicted != context:
+                if (position == 0) and word_predicted != context:
                     nextLetter = word_predicted[position + len(context)]
                 else:
                     # if the context is not found in the word_predicted, then

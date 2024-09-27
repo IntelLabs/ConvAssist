@@ -32,7 +32,7 @@ class ContextTracker:
 
     def get_tokens(self, count: int):
         actual_tokens = count if len(self.tokens) >= count else len(self.tokens)
-        return actual_tokens, self.tokens[:actual_tokens]
+        return actual_tokens, self.tokens[-actual_tokens:]
 
     def get_last_token(self):
         return self.tokens[-1] if len(self.tokens) > 0 else ""

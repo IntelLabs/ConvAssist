@@ -53,6 +53,7 @@ class SentenceCompletionPredictor(Predictor):
         self.embedder = SentenceTransformer(
             str(self._sentence_transformer_model),
             device=self.device,
+            local_files_only=True,
             tokenizer_kwargs={"clean_up_tokenization_spaces": "True"},
         )
         self.embedding_size = 384  # Size of embeddings
