@@ -23,6 +23,9 @@ class ContextTracker:
         tokenizer = RegexpTokenizer(reg)
         self.tokens = tokenizer.tokenize(self._context.lower())
 
+        if self._context and self._context[-1] == " ":  # if the last character is a space
+            self.tokens.append("")
+
     def token(self, index):
 
         if 0 <= index < len(self.tokens):

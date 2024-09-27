@@ -72,11 +72,9 @@ class SmoothedNgramPredictor(Predictor):
 
             partial = None
             prefix_ngram = None
-            for ngram_len in reversed(range(actual_tokens + 1)):
-                if ngram_len == self.cardinality:
-                    prefix_ngram = tokens[-(ngram_len - 1) :] + [""]
-                elif ngram_len:
-                    prefix_ngram = tokens[-ngram_len:] + [""]
+            for ngram_len in reversed(range(actual_tokens)):
+                if ngram_len:
+                    prefix_ngram = tokens[-(ngram_len - 1) :]
                 else:
                     # just get the last token
                     prefix_ngram = tokens[-1:]
