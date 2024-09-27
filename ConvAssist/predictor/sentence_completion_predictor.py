@@ -15,7 +15,7 @@ import torch
 from nltk import sent_tokenize, word_tokenize
 from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
-from transformers import Pipeline, pipeline
+from transformers import GPT2LMHeadModel, GPT2Tokenizer, Pipeline, pipeline
 
 from ..utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 from .predictor import Predictor
@@ -31,7 +31,7 @@ class SentenceCompletionPredictor(Predictor):
     def configure(self):
         self._model_loaded = False
         self.corpus_sentences = []
-        self.generator: Pipeline
+        self.sentence_generator: Pipeline
 
         self.nlp = NLP().get_nlp()
 
@@ -46,7 +46,7 @@ class SentenceCompletionPredictor(Predictor):
             self.n_gpu = 0
 
         # check if saved torch model exists
-        self.load_model(self.test_generalsentenceprediction, self.retrieve)
+        self.load_model()
         self.stemmer = PorterStemmer()
 
         # CREATE INDEX TO QUERY DATABASE
@@ -64,11 +64,11 @@ class SentenceCompletionPredictor(Predictor):
         # We will normalize our vectors to unit length, then is Inner Product equal to cosine similarity
         self.index = hnswlib.Index(space="cosine", dim=self.embedding_size)
 
-        self.corpus_sentences = open(self.retrieve_database).readlines()
-        self.corpus_sentences = [s.strip() for s in self.corpus_sentences]
+        with open(self.retrieve_database) as f:
+            self.corpus_sentences = [s.strip() for s in f.readlines()]
 
-        self.blacklist_words = open(self.blacklist_file).readlines()
-        self.blacklist_words = [s.strip() for s in self.blacklist_words]
+        with open(self.blacklist_file) as f:
+            self.blacklist_words = [s.strip() for s in f.readlines()]
 
         self.personalized_allowed_toxicwords = self._read_personalized_toxic_words()
 
@@ -133,6 +133,33 @@ class SentenceCompletionPredictor(Predictor):
             columns = ["sentence TEXT UNIQUE", "count INTEGER"]
             SQLiteDatabaseConnector(self.sent_database).create_table("sentences", columns)
 
+    def load_model(self) -> None:
+        self.logger.debug(f"{__name__} loading model {str(self._modelname)}")
+
+        if os.path.exists(self.modelname):
+            try:
+                self.logger.debug(f"Loading gpt2 model from {str(self.modelname)}")
+
+                device = 0 if self.device == "cuda" or self.device == "mps" else -1
+
+                tokenizer = GPT2Tokenizer.from_pretrained(self.tokenizer)
+                model = GPT2LMHeadModel.from_pretrained(self.modelname)
+
+                tokenizer.pad_token_id = tokenizer.eos_token_id
+
+                self.sentence_generator = pipeline(
+                    "text-generation",
+                    model=model,
+                    tokenizer=tokenizer,
+                    device=device,
+                )
+                self._model_loaded = True
+            except Exception as e:
+                self.logger.error(f"Exception in SentenceCompletionPredictor load_model = {e}")
+                self._model_loaded = False
+
+        self.logger.debug(f"SentenceCompletionPredictor MODEL status: {self.model_loaded}")
+
     @property
     def retrieve(self):
         return self._retrieveaac
@@ -148,13 +175,15 @@ class SentenceCompletionPredictor(Predictor):
             torch.cuda.manual_seed_all(seed)
 
     def _read_personalized_toxic_words(self):
+
         path = Path(self.personalized_allowed_toxicwords_file)
-        if not Path.exists(path):
-            f = open(self.personalized_allowed_toxicwords_file, "w")
-            f.close()
-        self.personalized_allowed_toxicwords = open(
-            self.personalized_allowed_toxicwords_file
-        ).readlines()
+        if not path.exists():
+            with open(self.personalized_allowed_toxicwords_file, "w") as f:
+                pass
+
+        with open(self.personalized_allowed_toxicwords_file) as f:
+            self.personalized_allowed_toxicwords = f.readlines()
+
         self.personalized_allowed_toxicwords = [
             s.strip() for s in self.personalized_allowed_toxicwords
         ]
@@ -316,8 +345,8 @@ class SentenceCompletionPredictor(Predictor):
         """
         try:
             predictions = Prediction()
-            # TODO : Check if this is the right way to call the generator
-            result = self.generator(
+
+            result = self.sentence_generator(
                 context,
                 do_sample=False,
                 max_new_tokens=20,
@@ -414,44 +443,6 @@ class SentenceCompletionPredictor(Predictor):
             self.logger.error(f"Exception in SentenceCompletionPredictor.{e}")
 
         return predictions
-
-    # Base class method
-    def load_model(self, test_generalsentenceprediction: bool, retrieve: bool) -> None:
-        """
-        load_model: loads the model for sentence completion
-        Args:
-            test_generalSentencePrediction: bool: flag to test the model
-            retrieve: bool: flag to retrieve from the dataset
-        Returns:
-            None
-        """
-
-        self.logger.debug(f"{__name__} loading model {str(self._modelname)}")
-
-        self.test_generalsentenceprediction = test_generalsentenceprediction
-        self.retrieve = retrieve
-
-        # if we are testing the models or not retrieving from the AAC dataset
-        if (self.test_generalsentenceprediction) or (not self.retrieve):
-            if os.path.exists(self.modelname):
-                try:
-                    self.logger.debug(f"Loading gpt2 model from {str(self.modelname)}")
-                    self.generator = pipeline(
-                        "text-generation",
-                        model=self.modelname,
-                        tokenizer=self.tokenizer,
-                        device=self.device,
-                    )
-                    self._model_loaded = True
-                except Exception as e:
-                    self.logger.error(f"Exception in SentenceCompletionPredictor load_model = {e}")
-                    self._model_loaded = False
-
-        elif self.retrieve:
-            # TODO: REFACTOR THIS
-            self._model_loaded = True
-
-        self.logger.debug(f"SentenceCompletionPredictor MODEL loaded: {self.model_loaded}")
 
     @property
     def model_loaded(self):

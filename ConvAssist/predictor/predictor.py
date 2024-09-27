@@ -211,7 +211,7 @@ class Predictor(ABC):
         # Not all predictors need this, but define it here for those that do
         pass
 
-    def load_model(*args, **kwargs):  # pragma: no cover
+    def load_model(self):  # pragma: no cover
         # Not all predictors need this, but define it here for those that do
         pass
 
