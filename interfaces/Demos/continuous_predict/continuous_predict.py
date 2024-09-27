@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pyttsx3
 
+from convassist.context_tracker import ContextTracker
 from convassist.ConvAssist import ConvAssist
 
 SCRIPT_DIR = str(Path(__file__).resolve().parent)
@@ -52,6 +53,11 @@ conv_assist_modes = {
 }
 
 
+class CustomContextTracker(ContextTracker):
+    def __repr__(self):
+        return self.context.replace(" ", ".")
+
+
 class ConvAssistMode:
     def __init__(self, convassist: ConvAssist):
         self.convassist = convassist
@@ -73,7 +79,8 @@ class ConvAssistMode:
 
 class ContinuousPredict:
     def __init__(self):
-        self.context = ""
+        self.ct = CustomContextTracker()
+
         self.word_predictions = []
         self.sentence_predictions = []
 
@@ -130,7 +137,7 @@ class ContinuousPredict:
         print("\n")
 
     def show_context(self, _):
-        print(f"Current context: {self.context}")
+        print(f"Current context: {self.ct}")
 
     def show_help(self, _):
         print(
@@ -154,7 +161,7 @@ class ContinuousPredict:
             self.print_table(self.word_predictions)
 
         else:
-            self.handle_word_sentence(command)
+            self.update_context(int(command[1]), self.word_predictions)
 
     def handle_sentence(self, command):
         if len(command) == 1:
@@ -162,19 +169,19 @@ class ContinuousPredict:
             self.print_table(self.sentence_predictions)
 
         else:
-            self.handle_word_sentence(command)
+            self.update_context(int(command[1]), self.sentence_predictions)
 
-    def handle_word_sentence(self, command):
+    def update_context(self, index: int, predictions: list):
 
-        if len(command) > 1:
-            if command[0] == "word":
-                self.context += " " + self.word_predictions[int(command[1])][0]
-            elif command[0] == "sentence":
-                self.context += " " + self.sentence_predictions[int(command[1])][0]
-            else:
-                return
-            self.word_predictions, self.sentence_predictions = self.predict()
-        print(f"New context: {self.context}")
+        last_token = self.ct.get_last_token()
+        if last_token == "":  # nosec b105
+            self.ct.context += predictions[index][0] + " "
+        else:
+            last_token_index = self.ct.context.rfind(last_token)
+            self.ct.context = self.ct.context[:last_token_index] + predictions[index][0] + " "
+
+        print(f"New context: {self.ct}")
+        self.word_predictions, self.sentence_predictions = self.predict()
 
     def set_log_level(self, command):
         if len(command) == 2:
@@ -189,10 +196,10 @@ class ContinuousPredict:
         engine = pyttsx3.init()
         engine.setProperty("rate", 150)
         engine.setProperty("volume", 1)
-        engine.say(self.context)
+        engine.say(self.ct)
         engine.runAndWait()
 
-        self.ContinuousPredictor.learn_text(self.context)
+        self.ContinuousPredictor.learn_text(self.ct.context)
 
     def learn_phrase(self, command):
         if len(command) > 1:
@@ -218,7 +225,7 @@ class ContinuousPredict:
     def predict(self) -> tuple[dict, dict]:
         print("GOING INTO PREDICTION MODE")
 
-        self.ContinuousPredictor.context_tracker.context = self.context
+        self.ContinuousPredictor.context_tracker.context = self.ct.context
         prefix = self.ContinuousPredictor.context_tracker.token(0)
         context = self.ContinuousPredictor.context_tracker.context
         print(f"PREFIX = {prefix} CONTEXT = {context}")
@@ -255,9 +262,9 @@ class ContinuousPredict:
                     continue
 
             else:
-                self.context = buffer
+                self.ct.context = buffer
                 self.word_predictions, self.sentence_predictions = self.predict()
-                print(f"New context: {self.context}")
+                print(f"New context: {self.ct}")
 
 
 def main():
