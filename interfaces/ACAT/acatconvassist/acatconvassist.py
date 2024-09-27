@@ -16,7 +16,9 @@ import time
 from configparser import ConfigParser
 from typing import Any
 
-from utilities.ACATMessageTypes import (
+from convassist.ConvAssist import ConvAssist
+from convassist.utilities.logging_utility import LoggingUtility
+from interfaces.ACAT.utilities.ACATMessageTypes import (
     ConvAssistMessage,
     ConvAssistMessageTypes,
     ConvAssistPredictionTypes,
@@ -24,10 +26,7 @@ from utilities.ACATMessageTypes import (
     ParameterType,
     WordAndCharacterPredictionResponse,
 )
-from utilities.message_handler.MessageHandler import MessageHandler
-
-from convassist.ConvAssist import ConvAssist
-from convassist.utilities.logging_utility import LoggingUtility
+from interfaces.ACAT.utilities.message_handler.MessageHandler import MessageHandler
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 if current_path not in sys.path:
