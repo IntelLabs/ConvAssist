@@ -64,39 +64,42 @@ class SmoothedNgramPredictor(Predictor):
             self.logger.warning("No tokens in the context tracker.")
             return sentence_prediction, word_prediction
 
-        # TODO: FIXME: Expand the tokens to cardinality to make the lookup work
-        if actual_tokens < self.cardinality:
-            tokens = tokens + [""]  # * (self.cardinality - actual_tokens)
-            actual_tokens = len(tokens)
-
         try:
             assert self.ngram_db_conn is not None
             self.ngram_db_conn.connect()
 
             prefix_completion_candidates: List[str] = []
 
-            for ngram_len in reversed(range(self.cardinality)):
-                if len(prefix_completion_candidates) >= max_partial_prediction_size:
-                    break
-
-                # get the ngram_len prefix tokens
-                prefix_ngram = tokens[: ngram_len + 1]
+            partial = None
+            prefix_ngram = None
+            for ngram_len in reversed(range(actual_tokens + 1)):
+                if ngram_len == self.cardinality:
+                    prefix_ngram = tokens[-(ngram_len - 1) :] + [""]
+                elif ngram_len:
+                    prefix_ngram = tokens[-ngram_len:] + [""]
+                else:
+                    # just get the last token
+                    prefix_ngram = tokens[-1:]
 
                 if prefix_ngram:
                     partial = self.ngram_db_conn.ngram_fetch_like(
                         prefix_ngram,
                         max_partial_prediction_size - len(prefix_completion_candidates),
                     )
-                    prefix_ngram = None
 
                 if partial:
                     for p in partial:
                         if len(prefix_completion_candidates) >= max_partial_prediction_size:
                             break
-                        # TODO explain why -2
                         candidate = p[-2]
-                        if candidate not in prefix_completion_candidates:
+                        if (
+                            candidate not in tokens
+                            and candidate not in prefix_completion_candidates
+                        ):
                             prefix_completion_candidates.append(candidate)
+
+                if len(prefix_completion_candidates) >= max_partial_prediction_size:
+                    break
 
             # smoothing
             unigram_counts_sum = self.ngram_db_conn.unigram_counts_sum()

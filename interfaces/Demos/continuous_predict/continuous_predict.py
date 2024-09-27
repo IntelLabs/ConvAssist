@@ -29,7 +29,7 @@ conv_assist_modes = {
         ],
     },
     "sentence": {
-        "description": "Predicts the next word and sentence.",
+        "description": "Predicts the next word and sentence using sentence and word predictors.",
         "predictors": [
             "SentenceCompletionPredictor",
             "GeneralWordPredictor",
@@ -92,7 +92,7 @@ class ContinuousPredict:
 
         # Create an instance of ConvAssist
         self.ContinuousPredictor = ConvAssist(
-            "CONT_PREDICT", config=config, log_level=logging.DEBUG
+            "CONT_PREDICT", config=config, log_level=logging.ERROR
         )
 
         # Create an instance of ConvAssistMode
@@ -170,7 +170,7 @@ class ContinuousPredict:
             if command[0] == "word":
                 self.context += " " + self.word_predictions[int(command[1])][0]
             elif command[0] == "sentence":
-                self.context += self.sentence_predictions[int(command[1])][0]
+                self.context += " " + self.sentence_predictions[int(command[1])][0]
             else:
                 return
             self.word_predictions, self.sentence_predictions = self.predict()
