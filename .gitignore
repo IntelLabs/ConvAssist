@@ -18,3 +18,7 @@ Demos/resources/personalized/canned_ngram.db
 Demos/resources/personalized/canned_sentences.db
 Demos/resources/personalized/hnswlib_canned.index
 Demos/resources/personalized/personalizedCannedPhrases_embeddings.pkl
+interfaces/ACAT/acatconvassist/ConvAssistUI.py
+interfaces/Demos/continuous_predict/resources/personalized/canned_ngram.db
+interfaces/Demos/continuous_predict/resources/personalized/canned_sentences.db
+interfaces/Demos/continuous_predict/resources/personalized/sent_database.db
