@@ -137,7 +137,7 @@ class PredictorActivator:
 
     def update_params(self, test_gen_sentence_pred, retrieve_from_AAC):
         for predictor in self.registry:
-            predictor.load_model(test_gen_sentence_pred, retrieve_from_AAC)
+            predictor.load_model()
 
     def read_updated_toxicWords(self):
         for predictor in self.registry:
