@@ -25,54 +25,45 @@ from .utilities.prediction import Prediction, Suggestion
 
 class SentenceCompletionPredictor(Predictor):
     """
-    SentenceCompletionPredictor is a class that provides sentence completion predictions using a combination of n-gram models and GPT-2.
+    SentenceCompletionPredictor is a class that provides functionality for sentence completion prediction using a pre-trained language model and a corpus of sentences.
 
     Methods:
-        configure(): Configures the predictor by loading necessary models, embeddings, and indexes.
-
-        load_model() -> None: Loads the GPT-2 model for sentence generation.
-
-        retrieve: Property to get the retrieval attribute.
-
-        retrieve(value):
-            Property setter to set the retrieval attribute.
-
-        _set_seed(seed):
-            Sets the seed for reproducibility.
-
-        _read_personalized_toxic_words():
+        configure(self):
+            Configures the predictor by loading the necessary models, embeddings, and indexes.
+        load_model(self) -> None:
+            Loads the pre-trained language model for sentence generation.
+        retrieve(self):
+            Property to get the retrieve attribute.
+        retrieve(self, value):
+            Property to set the retrieve attribute.
+        _set_seed(self, seed):
+            Sets the random seed for reproducibility.
+        _read_personalized_toxic_words(self):
             Reads personalized allowed toxic words from a file.
-
-        _extract_svo(sent):
-            Extracts subject-verb-object (SVO) from a sentence.
-
-        _ngram_to_string(ngram):
+        _extract_svo(self, sent):
+            Extracts subject-verb-object (SVO) from a given sentence.
+        _ngram_to_string(self, ngram):
             Converts an n-gram to a string.
-
-        _filter_text(text):
-            Filters the text for blacklisted words.
-
-        _textInCorpus(text):
-            Checks if the text is in the corpus and returns a similarity score.
-
-        _retrieve_fromDataset(context):
-            Retrieves sentences from the dataset based on the given context.
-
-        _checkRepetition(text):
+        _filter_text(self, text):
+            Filters the text to check for blacklisted words.
+        _textInCorpus(self, text):
+            Checks if the given text is in the corpus and returns the similarity score.
+        _retrieve_fromDataset(self, context):
+            Retrieves sentences from the dataset that match the given context.
+        _checkRepetition(self, text):
             Checks for repetitive bigrams and trigrams in the text.
-
-        _generate(context: str, num_gen: int) -> Prediction:
+        _generate(self, context: str, num_gen: int) -> Prediction:
             Generates sentence completions for the given context.
-
-        model_loaded:
+        model_loaded(self):
             Property to check if the model is loaded.
-
-        predict(max_partial_prediction_size: int, filter: Optional[str] = None):
+        predict(self, max_partial_prediction_size: int, filter: Optional[str] = None):
             Predicts sentence completions based on the given context.
-
-        learn(change_tokens):
+        learn(self, change_tokens):
             Learns from the given change tokens by adding them to the database.
-    Calculates prediction from n-gram model using gpt-2.
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self._retrieveaac = None
+                self._model_loaded = False
     """
 
     def configure(self):
