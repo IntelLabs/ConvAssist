@@ -17,13 +17,23 @@ pytest-cov = {version = "^5.0.0",  optional = true }
 nltk = "^3.9.1"
 hnswlib = "^0.8.0"
 sentence-transformers = "^3.1.1"
-pydebugstring = "^1.0.0.2"
-spacy = "^3.7.6"
-pyttsx3 = "^2.97"
+spacy = "3.7.6" # Pinning to 3.7.6 to avoid breaking changes in 3.8.0
 mypy = "^1.11.2"
+sv-ttk = {version = "^2.6.0", markers = "sys_platform == 'win32'"}
+pywin32 = {version = "^306", markers = "sys_platform == 'win32'"}
+pystray = {version = "^0.19.5", markers = "sys_platform == 'win32'"}
+pyinstaller = {version = "^6.10.0", optional = true, markers = "sys_platform == 'win32'"}
+pydebugstring = {version = "^1.0.0.2", markers = "sys_platform == 'win32'"}
+
+pyttsx3 = {version = "^2.97", optional = true }
+pefile = "<2024.8.26"
+onnx = "^1.16.2"
+onnxruntime = "^1.19.2"
 
 [tool.poetry.extras]
 test = ["pytest", "pytest-timeout", "pytest-cov"]
+acat_interface = ["sv-ttk", "pywin32", "pystray", "pyinstaller", "pydebugstring"]
+continuous_integration = ["pyttsx3"]
 
 [build-system]
 requires = ["poetry-core"]

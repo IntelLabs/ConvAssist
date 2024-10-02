@@ -1,97 +1,64 @@
 # -*- mode: python ; coding: utf-8 -*-
-import sys
-import pkg_resources
-sys.setrecursionlimit(5000)
-from PyInstaller.utils.hooks import copy_metadata
-from PyInstaller.utils.hooks import collect_data_files
+import os
 
-additionaldata = [('Assets', 'Assets')]
+from PyInstaller.utils.hooks import copy_metadata, collect_data_files
+from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT
 
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__name__))
 
+additionaldata = []
+# additionaldata = [('src\\assets', 'assets')]
 additionaldata += copy_metadata('convassist')
-# additionaldata += copy_metadata('tqdm')
-# additionaldata += copy_metadata('torch')
-# additionaldata += copy_metadata('regex')
-# additionaldata += copy_metadata('filelock')
-# additionaldata += copy_metadata('packaging')
-# additionaldata += copy_metadata('requests')
-# additionaldata += copy_metadata('numpy')
-# additionaldata += copy_metadata('tokenizers')
-# additionaldata += copy_metadata('transformers')
-# additionaldata += copy_metadata('huggingface-hub')
-# additionaldata += copy_metadata('pyyaml')
-
-additionaldata += collect_data_files("en_core_web_sm")
 additionaldata += collect_data_files("sv_ttk")
+additionaldata += collect_data_files("en_core_web_sm")
 
-# hiddenimports=[
-#     'en_core_web_sm',
-#     'huggingface_hub.hf_api',
-#     'huggingface_hub.repository',
-#     'torch',
-#     'tqdm',
-#     'scipy.datasets',
-#     'scipy.fftpack',
-#     'scipy.misc',
-#     'scipy.odr',
-#     'scipy.signal',
-#     'sklearn.utils._typedefs',
-#     'sklearn.metrics._pairwise_distances_reduction._datasets_pair',
-#     'sklearn.metrics._pairwise_distances_reduction._middle_term_computer',
-#     'sklearn.utils._heap',
-#     'sklearn.utils._sorting',
-#     'sklearn.utils._vector_sentinel'
-# ]
+print(f'script dir: {SCRIPT_DIR}')
+print(f'additional data: {additionaldata}')
 
-a = Analysis( # type: ignore
-    ['ConvAssistUI.py'],
+a = Analysis(
+    [f'{SCRIPT_DIR}\\src\\ConvAssistUI.py'],
     pathex=[],
     binaries=[],
     datas=additionaldata,
-    # hiddenimports=hiddenimports,
-    hookspath=['./custom_hooks'],
+    hiddenimports=[],
+    hookspath=[f'{SCRIPT_DIR}\\custom_hooks'],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['torch.onnx', 'torch.utils.tensorboard', 'scipy.special._cdflib', 'tzdata'],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=None,
+    excludes=[],
     noarchive=False,
+    optimize=0,
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=None) # type: ignore
 
-exe = EXE( # type: ignore
+pyz = PYZ(a.pure, a.zipped_data)
+
+
+exe = EXE(
     pyz,
     a.scripts,
     a.binaries,
     a.zipfiles,
     a.datas,
-	[('W ignore', None, 'OPTION')],
+    [('W ignore', None, 'OPTION')],
     name='ConvAssistUI',
-    debug=True,
+    debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,
+    console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-    icon='assets/icon_tray.ico',
+    icon=f'{SCRIPT_DIR}\\src\\assets\\icon_tray.ico'
 )
 
-col = COLLECT( # type: ignore
+
+coll = COLLECT(
     exe,
-    a.scripts,
     a.binaries,
-    a.zipfiles,
     a.datas,
     strip=False,
-    upx=False,
+    upx=True,
     upx_exclude=[],
     name='ConvAssistUI',
 )
