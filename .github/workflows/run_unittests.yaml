@@ -48,3 +48,11 @@ jobs:
         source $(poetry env info --path)/bin/activate
         pytest
       working-directory: ./convassist
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v3.2.1-node20
+      with:
+        name: coverage-report
+        path: |
+          htmlcov/
+          coverage.xml
