@@ -4,7 +4,7 @@
 import logging
 from configparser import ConfigParser
 
-from nltk import sent_tokenize
+import nltk
 
 from .context_tracker import ContextTracker
 from .predictor_activator import PredictorActivator
@@ -70,6 +70,9 @@ class ConvAssist:
             self.name, self.log_level, self.log_location, True
         )
 
+        # Verify that the nltk files are downloaded
+        self._verify_nltk_files()
+
         lowercase_mode = self.config.getboolean("ContextTracker", "lowercase_mode", fallback=False)
         self.context_tracker = ContextTracker(lowercase_mode)
 
@@ -83,12 +86,18 @@ class ConvAssist:
 
         self.initialized = True
 
+    def _verify_nltk_files(self):
+        try:
+            # Check if punkt is already downloaded
+            nltk.data.find("tokenizers/punkt")
+            self.logger.debug("Punkt Tokenizer Models are already installed.")
+        except LookupError:
+            # If not, download punkt tokenizer
+            self.logger.debug("Punkt Tokenizer Models not found, downloading...")
+            nltk.download("punkt")
+            self.logger.debug("Punkt Tokenizer Models downloaded successfully.")
+
     def predict(self) -> tuple:
-        """
-        Calls the predict function on the predictor_activator to make language model predictions.
-        Returns:
-            tuple: The predictions made by the predictor_activator.
-        """
         if not self.initialized:
             raise AttributeError(f"ConvAssist {self.name} not initialized.")
 
@@ -144,7 +153,7 @@ class ConvAssist:
         if not self.initialized:
             raise AttributeError(f"ConvAssist {self.name} not initialized.")
 
-        sentences = sent_tokenize(text)
+        sentences = nltk.sent_tokenize(text)
         for eachSent in sentences:
             self.predictor_activator.learn_text(eachSent)
 
