@@ -4,11 +4,11 @@
 name: Python application
 
 on:
-  workflow_run:
   push:
     branches: [ "main", "covassist_cleanup" ]
   pull_request:
     branches: [ "main", "covassist_cleanup" ]
+  workflow_dispatch:
 
 permissions:
   contents: read
