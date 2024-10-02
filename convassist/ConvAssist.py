@@ -94,7 +94,7 @@ class ConvAssist:
         except LookupError:
             # If not, download punkt tokenizer
             self.logger.debug("Punkt Tokenizer Models not found, downloading...")
-            nltk.download("punkt")
+            nltk.download(["punkt", "punkt_tab"])
             self.logger.debug("Punkt Tokenizer Models downloaded successfully.")
 
     def predict(self) -> tuple:
