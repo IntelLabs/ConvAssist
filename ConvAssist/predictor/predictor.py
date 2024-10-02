@@ -15,6 +15,76 @@ from .utilities.prediction import Prediction
 
 
 class Predictor(ABC):
+    """
+    Predictor is an abstract base class that defines the interface for various predictors.
+    Attributes:
+        config (ConfigParser): Configuration parser object.
+        context_tracker (ContextTracker): Object to track the context.
+        predictor_name (str): Name of the predictor.
+        logger (logging.Logger): Logger object for logging information.
+        _aac_dataset (str): Path to the AAC dataset.
+        _blacklist_file (str): Path to the blacklist file.
+        _database (str): Path to the database.
+        _deltas (str): String of delta values.
+        _embedding_cache_path (str): Path to the embedding cache.
+        _generic_phrases (str): Path to the generic phrases file.
+        _index_path (str): Path to the index file.
+        _learn (bool): Flag to enable learning.
+        _modelname (str): Path to the model name.
+        _personalized_allowed_toxicwords_file (str): Path to the personalized allowed toxic words file.
+        _personalized_cannedphrases (str): Path to the personalized canned phrases file.
+        _personalized_resources_path (str): Path to the personalized resources.
+        _predictor_class (str): Class of the predictor.
+        _retrieve_database (str): Path to the retrieve database.
+        _retrieveaac (bool): Flag to enable AAC retrieval.
+        _sbertmodel (str): SBERT model name.
+        _sent_database (str): Path to the sentence database.
+        _sentence_transformer_model (str): Path to the sentence transformer model.
+        _sentences_db (str): Path to the sentences database.
+        _spellingdatabase (str): Path to the spelling database.
+        _startsents (str): Path to the start sentences file.
+        _startwords (str): Path to the start words file.
+        _static_resources_path (str): Path to the static resources.
+        _stopwords (str): Path to the stopwords file.
+        _test_generalsentenceprediction (bool): Flag to enable general sentence prediction testing.
+        _tokenizer (str): Path to the tokenizer.
+    Methods:
+        predictor_name: Returns the name of the predictor.
+        aac_dataset: Returns the path to the AAC dataset.
+        database: Returns the path to the database.
+        deltas: Gets and sets the list of delta values.
+        cardinality: Returns the number of delta values.
+        generic_phrases: Returns the path to the generic phrases file.
+        learn_enabled: Returns the learning flag.
+        modelname: Returns the path to the model name.
+        personalized_cannedphrases: Returns the path to the personalized canned phrases file.
+        predictor_class: Returns the class of the predictor.
+        retrieveaac: Returns the AAC retrieval flag.
+        sbertmodel: Returns the SBERT model name.
+        sentence_transformer_model: Returns the path to the sentence transformer model.
+        sent_database: Returns the path to the sentence database.
+        retrieve_database: Returns the path to the retrieve database.
+        blacklist_file: Returns the path to the blacklist file.
+        embedding_cache_path: Returns the path to the embedding cache.
+        index_path: Returns the path to the index file.
+        stopwordsFile: Returns the path to the stopwords file.
+        personalized_allowed_toxicwords_file: Returns the path to the personalized allowed toxic words file.
+        startsents: Returns the path to the start sentences file.
+        tokenizer: Returns the path to the tokenizer.
+        startwords: Returns the path to the start words file.
+        test_generalsentenceprediction: Gets and sets the flag for general sentence prediction testing.
+        configure: Abstract method to configure the predictor.
+        predict: Abstract method to predict the next word and sentence based on the context.
+        read_personalized_corpus: Reads the personalized corpus from the canned phrases file.
+        learn: Method for learning, to be implemented by subclasses if needed.
+        recreate_database: Method to recreate the database, to be implemented by subclasses if needed.
+        load_model: Method to load the model, to be implemented by subclasses if needed.
+        read_personalized_toxic_words: Reads personalized toxic words, to be implemented by subclasses if needed.
+        _find_option_in_section: Finds an option in the given section or in the "Common" section.
+        _read_config: Reads the configuration for the predictor.
+        __repr__: Returns a string representation of the predictor.
+    """
+
     def __init__(
         self,
         config: ConfigParser,

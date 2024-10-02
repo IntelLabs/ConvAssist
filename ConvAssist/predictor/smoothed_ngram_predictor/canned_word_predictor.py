@@ -10,6 +10,22 @@ from .smoothed_ngram_predictor import SmoothedNgramPredictor
 
 
 class CannedWordPredictor(SmoothedNgramPredictor):
+    """
+    CannedWordPredictor is a specialized predictor that extends the SmoothedNgramPredictor.
+    It is designed to handle canned responses using natural language processing (NLP) techniques.
+
+    Methods:
+        configure():
+            Configures the predictor by loading the NLP model and initializing constants and stopwords.
+
+        extract_svo(sent: str) -> str:
+            Extracts significant subject-verb-object (SVO) tokens from a given sentence.
+
+        recreate_database():
+            Recreates the sentence and n-gram databases by adding new phrases and removing outdated ones.
+
+    """
+
     def configure(self):
         super().configure()
 

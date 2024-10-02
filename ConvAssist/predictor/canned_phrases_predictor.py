@@ -19,7 +19,19 @@ from .utilities.prediction import Prediction, Suggestion
 
 class CannedPhrasesPredictor(Predictor):
     """
-    Searches the canned phrase database for matching next words and sentences
+    CannedPhrasesPredictor is a class that searches a database of canned phrases to find matching next words and sentences based on a given context.
+
+    Methods:
+    - configure: Configures the predictor by setting up the device (CPU, CUDA, or MPS), loading or creating embeddings, and initializing the HNSWLIB index.
+    - _create_index: Creates and saves an HNSWLIB index for fast nearest neighbor search.
+    - sentences_db_path: Property that returns the path to the sentences database.
+    - model_loaded: Property that returns whether the model is loaded.
+    - recreate_database: Recreates the database by reading personalized canned phrases and updating embeddings and indices if necessary.
+    - _find_semantic_matches: Finds semantic matches for a given context using the HNSWLIB index and SentenceTransformer embeddings.
+    - _find_direct_matches: Finds direct matches for a given context by comparing stemmed words and calculating probabilities.
+    - _getTopInitialPhrases: Retrieves the top initial phrases based on their frequency in the canned phrases database.
+    - predict: Predicts the next sentences and words based on the given context by finding both direct and semantic matches.
+    - learn: Learns new phrases by adding them to the embeddings and updating the database with their counts.
     """
 
     def configure(self):

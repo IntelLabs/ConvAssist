@@ -1,5 +1,4 @@
 # ConvAssist
-# Predictive Sentence Completion and Response Generation for Assistive Context-Aware Toolkit
 
 ConvAssist is a library intended to enable and empower users with disabilities to communicate using the latest language modeling technologies, via Intel's Assistive Context Aware Toolkit, ACAT. ConvAssist can quickly suggest utterances/sentences that the user can use to have a social conversation or communicate with their caregiver in near real time. 
 
@@ -7,21 +6,27 @@ ConvAssist is built on [Pressagio](https://github.com/Poio-NLP/pressagio), that 
 
 ConvAssist contains language models based on specific Assistive and Augmentative Communication (AAC) datasets, and dialog datasets, tailored for day-to-day communication in our assistive usecase. These language models support both next word prediction and sentence completion for enabling near-real time communication with least amount of user effort and intervention. 
 
-ConvAssist enables different modes of interactions for users through the ACAT interface. The three modes are 
-1) Sentence Mode
-2) Canned Phrases Mode and 
-3) Short-Hand Mode 
+## Predictor Classes
 
-In the Sentence Mode, users can use the interface to type any sentence they would like to. As they type a letter, word completions appear along with their probabilities. After a word is chosen or typed, sentence completions also appear with 5 possible completions of the context typed so far. The predictions come from an AI model finetuned for the AAC use case. Please find the associated [model card here](https://github.com/IntelLabs/ConvAssist/blob/main/ACAT_ConvAssist_Interface/resources/static_resources/aac_gpt2/GPT2ForAAC_model_card.md). 
+### Sentence Completion Predictor
+```SentenceCompletionPredictor``` is a class that provides sentence completion predictions using a combination of n-gram models and GPT-2.
 
-The Canned Phrases Mode can be used to store and search for frequently used phrases for easy and quick access. 
+### Spell Correct Predictor
+```SpellCorrectPredictor``` is a class that extends the Predictor class to provide spell correction functionality. It uses a spell checker to generate suggestions for the last token in the context.
 
-Short-Hand Mode can be used by users for quick communication - in situations where the user needs to communicate with their caretaker with minimum number of words (without the need for grammatical sentences). 
+### Canned Phrases Predictor
+```CannedPhrasesPredictor``` is a class that searches a database of canned phrases to find matching next words and sentences based on a given context. 
 
-## How to run 
-ConvAssist can be used with ACAT for the best user-experience. But ConvAssist can also be used as a standalone application for research and development. To install, run and use ConvAssist, follow the below steps. 
+### Canned Word Predictor
+```CannedWordPredictor``` is a specialized predictor that extends the SmoothedNgramPredictor.  It is designed to handle canned responses using natural language processing (NLP) techniques.
 
-### Install
+### Smoothed NGram Predictor
+```SmoothedNgramPredictor``` is a class that extends the Predictor class to provide functionality for predicting the next word(s) in a sequence using smoothed n-grams.
+
+### General Word Predictor
+```GeneralWordPredictor``` is a class that extends SmoothedNgramPredictor to provide word predictions based on a precomputed set of most frequent starting words from an AAC dataset.
+
+## Installation and use
 ConvAssist works with Python 3.12.x or greater. Create a virtual environment and install the required packages.  We provide a pyproject.toml file to assist, and use Poetry for package management.
 
 #### Create a Virtual Environment with Poetry
@@ -59,8 +64,7 @@ cd interfaces/Demos/continuous_predict
 python pyprompter.py
 ```
 
-The `continuous_prediction.ini` file defines which predictors are enable.  See documentation 
-for details on how to use the configuration file.
+The `continuous_prediction.ini` file defines which predictors are enable.  See documentation for continuous_predict for details on how to use the configuration file.
 
 ## License
 ConvAssist source code is distributed under the GPL-3.0 or later license.

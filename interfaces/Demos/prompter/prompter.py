@@ -18,8 +18,7 @@ Check that wxPython is properly installed.
     sys.exit(1)
 
 try:
-    import ConvAssist
-    import ConvAssist.utilities.callback
+    from convassist import ConvAssist
 except ImportError as ex:
     print(
         """

@@ -14,8 +14,33 @@ from .ngram_map import NgramMap
 
 class SmoothedNgramPredictor(Predictor):
     """
-    Calculates prediction from n-gram model in sqlite database.
+    SmoothedNgramPredictor is a class that extends the Predictor class to provide
+    functionality for predicting the next word(s) in a sequence using smoothed n-grams.
 
+    Methods:
+        configure() -> None:
+            Configures the predictor by initializing the n-gram database connector and recreating the database.
+
+        recreate_database():
+            Placeholder method for recreating the database.
+
+        extract_svo(sent):
+            Default implementation that returns the input sentence.
+
+        generate_ngrams(token, n):
+            Generates n-grams from the given tokens.
+
+        getNgramMap(ngs, ngram_map):
+            Populates the n-gram map with the given n-grams.
+
+        predict(max_partial_prediction_size: int, filter):
+            Predicts the next word(s) based on the context and n-gram database.
+
+        _count(tokens, offset, ngram_size):
+            Counts the occurrences of the specified n-gram in the database.
+
+        learn(change_tokens):
+            Learns new n-grams from the given tokens and updates the n-gram database.
     """
 
     def configure(self) -> None:

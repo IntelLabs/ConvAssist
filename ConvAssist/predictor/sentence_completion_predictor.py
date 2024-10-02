@@ -25,6 +25,53 @@ from .utilities.prediction import Prediction, Suggestion
 
 class SentenceCompletionPredictor(Predictor):
     """
+    SentenceCompletionPredictor is a class that provides sentence completion predictions using a combination of n-gram models and GPT-2.
+
+    Methods:
+        configure(): Configures the predictor by loading necessary models, embeddings, and indexes.
+
+        load_model() -> None: Loads the GPT-2 model for sentence generation.
+
+        retrieve: Property to get the retrieval attribute.
+
+        retrieve(value):
+            Property setter to set the retrieval attribute.
+
+        _set_seed(seed):
+            Sets the seed for reproducibility.
+
+        _read_personalized_toxic_words():
+            Reads personalized allowed toxic words from a file.
+
+        _extract_svo(sent):
+            Extracts subject-verb-object (SVO) from a sentence.
+
+        _ngram_to_string(ngram):
+            Converts an n-gram to a string.
+
+        _filter_text(text):
+            Filters the text for blacklisted words.
+
+        _textInCorpus(text):
+            Checks if the text is in the corpus and returns a similarity score.
+
+        _retrieve_fromDataset(context):
+            Retrieves sentences from the dataset based on the given context.
+
+        _checkRepetition(text):
+            Checks for repetitive bigrams and trigrams in the text.
+
+        _generate(context: str, num_gen: int) -> Prediction:
+            Generates sentence completions for the given context.
+
+        model_loaded:
+            Property to check if the model is loaded.
+
+        predict(max_partial_prediction_size: int, filter: Optional[str] = None):
+            Predicts sentence completions based on the given context.
+
+        learn(change_tokens):
+            Learns from the given change tokens by adding them to the database.
     Calculates prediction from n-gram model using gpt-2.
     """
 
