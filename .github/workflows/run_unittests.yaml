@@ -28,28 +28,12 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip
         python3 -m pip install poetry
-        poetry config virtualenvs.create true
-        poetry config virtualenvs.in-project false
-        poetry config virtualenvs.path .virtualenvs
-    - name: Poetry Version
-      id: poetry-version
-      run: echo "::set-output name=version::$(poetry --version | grep -oP '[\d\.]+')"
-    - name: Cache Poetry virtualenv
-      uses: actions/cache@v2
-      id: cache
-      with:
-        path: .virtualenvs
-        key: ${{ inputs.os }}-${{ inputs.python-version }}-poetry-${{ steps.poetry-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
-        restore-keys: |
-          ${{ inputs.os }}-${{ inputs.python-version }}-poetry-${{ steps.poetry-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
     - name: Install dependencies
       run: |
-        poetry install -E test
-      shell: bash
-      if: steps.cache.outputs.cache-hit != 'true'        
-    - name: Test with pytest
+        poetry install
+      working-directory: ./convassist
+
+    - name: Run tests
       run: |
-        poetry shell
-        cd convassist
-        pytest
-      shell: bash
+        poetry run pytest -s
+      working-directory: ./convassist
