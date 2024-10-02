@@ -1,6 +1,6 @@
 # ConvAssist
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/IntelLabs/ConvAssist/badge)](https://scorecard.dev/viewer/?uri=github.com/IntelLabs/ConvAssist)
-
+[![Unit Tests](https://github.com/IntelLabs/ConvAssist/actions/workflows/run_unittests.yaml/badge.svg?branch=covassist-cleanup)](https://github.com/IntelLabs/ConvAssist/actions/workflows/run_unittests.yaml)
 
 ConvAssist is a library intended to enable and empower users with disabilities to communicate using the latest language modeling technologies, via Intel's Assistive Context Aware Toolkit, ACAT. ConvAssist can quickly suggest utterances/sentences that the user can use to have a social conversation or communicate with their caregiver in near real time. 
 
