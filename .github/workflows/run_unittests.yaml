@@ -44,7 +44,7 @@ jobs:
           ${{ inputs.os }}-${{ inputs.python-version }}-poetry-${{ steps.poetry-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
     - name: Install dependencies
       run: |
-        poetry install
+        poetry install -E test
       shell: bash
       if: steps.cache.outputs.cache-hit != 'true'        
     - name: Test with pytest
