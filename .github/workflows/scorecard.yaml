@@ -11,10 +11,10 @@ on:
   # https://github.com/ossf/scorecard/blob/main/docs/checks.md#maintained
   schedule:
     - cron: '44 15 * * 0'
-  push:
-    branches: [ "main", "covassist-cleanup" ]
-  pull_request:
-    branches: [ "main", "covassist-cleanup" ]
+  # push:
+  #   branches: [ "main", "covassist-cleanup" ]
+  # pull_request:
+  #   branches: [ "main", "covassist-cleanup" ]
 
 # Declare default permissions as read only.
 permissions: read-all
