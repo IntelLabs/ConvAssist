@@ -31,10 +31,10 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install
-      working-directory: ./convassist
+      # working-directory: ./convassist
 
     - name: Run tests
       run: |
-        poetry shell
-        poetry run pytest -s
+        source $(poetry env info --path)/bin/activate
+        pytest
       working-directory: ./convassist
