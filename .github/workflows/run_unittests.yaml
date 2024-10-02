@@ -54,5 +54,6 @@ jobs:
       with:
         name: coverage-report
         path: |
-          htmlcov/
-          coverage.xml
+          convassist/htmlcov/
+          convassist/coverage.xml
+        
