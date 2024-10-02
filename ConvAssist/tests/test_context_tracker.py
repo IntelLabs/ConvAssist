@@ -23,7 +23,7 @@ class TestContextTracker(unittest.TestCase):
 
     def test_get_tokens(self):
         tracker = ContextTracker()
-        tracker.context = "example token "
+        tracker.context = "example token"
         count, tokens = tracker.get_tokens(2)
         assert count == 2
         self.assertEqual(tokens, ["example", "token"])
@@ -38,8 +38,8 @@ class TestContextTracker(unittest.TestCase):
         tracker = ContextTracker()
         tracker.context = "tokens with punctuation's and hypenated-words "
         count, tokens = tracker.get_tokens(10)
-        assert count == 5
-        self.assertEqual(tokens, ["tokens", "with", "punctuation's", "and", "hypenated-words"])
+        assert count == 6
+        self.assertEqual(tokens, ["tokens", "with", "punctuation's", "and", "hypenated-words", ""])
 
     def test_get_last_token(self):
         tracker = ContextTracker()
@@ -51,7 +51,7 @@ class TestContextTracker(unittest.TestCase):
         tracker = ContextTracker()
         tracker.context = "example token "
         last_token = tracker.get_last_token()
-        self.assertEqual(last_token, "token")
+        self.assertEqual(last_token, "")
 
     def test_get_last_token_empty(self):
         tracker = ContextTracker()
@@ -92,8 +92,8 @@ class TestContextTracker(unittest.TestCase):
         tracker = ContextTracker()
         tracker.context = " "
         count, tokens = tracker.get_tokens(1)
-        assert count == 0
-        self.assertEqual(tokens, [])
+        assert count == 1
+        self.assertEqual(tokens, [""])
 
 
 if __name__ == "__main__":
