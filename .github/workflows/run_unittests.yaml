@@ -49,5 +49,7 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'        
     - name: Test with pytest
       run: |
+        poetry shell
+        cd convassist
         pytest
       shell: bash
