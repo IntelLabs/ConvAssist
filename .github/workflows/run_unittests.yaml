@@ -35,5 +35,6 @@ jobs:
 
     - name: Run tests
       run: |
+        poetry shell
         poetry run pytest -s
       working-directory: ./convassist
