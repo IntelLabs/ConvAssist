@@ -19,3 +19,5 @@ interfaces/Demos/continuous_predict/resources/personalized/canned_sentences.db
 interfaces/Demos/continuous_predict/resources/personalized/sent_database.db
 interfaces/Demos/continuous_predict/resources/personalized/all_aac_embeddings.pkl
 interfaces/Demos/continuous_predict/resources/personalized/all_aac_semanticSearch.index
+coverage.xml
+**/*,cover
