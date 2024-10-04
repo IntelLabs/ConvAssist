@@ -169,7 +169,7 @@ class ConvAssist:
         status = self.predictor_registry.model_status()
         return status
 
-    def setLogLevel(self, log_level):
+    def set_log_level(self, log_level):
         self.logger.setLevel(log_level)
 
     def list_predictors(self):
