@@ -92,10 +92,21 @@ class Predictor(ABC):
         predictor_name: str,
         logger: logging.Logger | None = None,
     ):
-
         self.config: ConfigParser = config
         self.context_tracker: ContextTracker = context_tracker
         self._predictor_name: str = predictor_name
+
+        # configure a logger
+        if logger is None:
+            self.logger = LoggingUtility().get_logger(
+                f"{self.predictor_name}", log_level=logging.DEBUG, queue_handler=True
+            )
+        else:
+            self.logger = LoggingUtility().get_logger(
+                f"{logger.name}-{self.predictor_name}", log_level=logger.level, queue_handler=True
+            )
+
+        self.logger.info(f"Initializing {self.predictor_name} predictor")
 
         self._aac_dataset: str = ""  # Path
         self._blacklist_file: str = ""  # Path
@@ -124,19 +135,11 @@ class Predictor(ABC):
         self._test_generalsentenceprediction: bool = False
         self._tokenizer: str = ""  # Path
 
-        # configure a logger
-        if logger is None:
-            self.logger = LoggingUtility().get_logger(
-                f"{self.predictor_name}", log_level=logging.DEBUG, queue_handler=True
-            )
-        else:
-            self.logger = LoggingUtility().get_logger(
-                f"{logger.name}-{self.predictor_name}", log_level=logger.level, queue_handler=True
-            )
-
-        self.logger.info(f"Initializing {self.predictor_name} predictor")
-
         self._read_config()
+
+        self.logger.info(f"Finished initializing {self.predictor_name} predictor")
+
+        # TODO: FIXME - Change functionality to force a call to configure.
         self.configure()
 
     @property

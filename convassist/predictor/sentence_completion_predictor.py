@@ -12,10 +12,10 @@ import joblib
 import nltk
 import numpy
 import torch
+import transformers
 from nltk import sent_tokenize, word_tokenize
 from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
-from transformers import GPT2LMHeadModel, GPT2Tokenizer, Pipeline, pipeline
 
 from ..utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 from .predictor import Predictor
@@ -69,7 +69,7 @@ class SentenceCompletionPredictor(Predictor):
     def configure(self):
         self._model_loaded = False
         self.corpus_sentences = []
-        self.sentence_generator: Pipeline
+        self.sentence_generator: transformers.Pipeline | None = None
 
         self.nlp = NLP().get_nlp()
 
@@ -180,17 +180,20 @@ class SentenceCompletionPredictor(Predictor):
 
                 device = 0 if self.device == "cuda" or self.device == "mps" else -1
 
-                tokenizer = GPT2Tokenizer.from_pretrained(self.tokenizer)
-                model = GPT2LMHeadModel.from_pretrained(self.modelname)
+                tokenizer = transformers.GPT2Tokenizer.from_pretrained(self.tokenizer)
+                assert tokenizer is not None
+                model = transformers.GPT2LMHeadModel.from_pretrained(self.modelname)
+                assert model is not None
 
                 tokenizer.pad_token_id = tokenizer.eos_token_id
 
-                self.sentence_generator = pipeline(
+                self.sentence_generator = transformers.pipeline(
                     "text-generation",
                     model=model,
                     tokenizer=tokenizer,
                     device=device,
                 )
+                assert self.sentence_generator is not None
                 self._model_loaded = True
             except Exception as e:
                 self.logger.error(f"Exception in SentenceCompletionPredictor load_model = {e}")
@@ -384,8 +387,13 @@ class SentenceCompletionPredictor(Predictor):
         try:
             predictions = Prediction()
 
+            gen_context = "<bos>" + context
+
+            if gen_context.endswith((".", "!", "?")):
+                gen_context = gen_context + " <eos>"
+
             result = self.sentence_generator(
-                context,
+                gen_context,
                 do_sample=False,
                 max_new_tokens=20,
                 num_return_sequences=10,
@@ -400,63 +408,65 @@ class SentenceCompletionPredictor(Predictor):
             else:
                 raise TypeError(f"Unexpected type for result: {type(result)}")
 
-            inputContext = context
             allsent: list[str] = []
             counts: Dict[str, float] = {}
             totalsent = 0
-            if num_gen < 5:
-                num_gen = 5
-            num_gen = 10
-            inputContext = inputContext.replace("<bos> ", "")
-            contextList = sent_tokenize(inputContext)
-            num_context_sent = len(contextList)
-            self.logger.debug(f"num_context_sent = {num_context_sent}")
-            for o in generated_text:
-                self.logger.debug(f"Generated Text: {o['generated_text']}")
-                gentext = o["generated_text"]
-                newgen = re.split(r"<bos> |<eos> |bos|eos|<bos>|<eos>|<|>|\[|\]|\d", gentext)
-                self.logger.debug(f"Full generated Text = {newgen[1]}")
-                gen_text_sent = sent_tokenize(newgen[1])
-                currSentence = gen_text_sent[num_context_sent - 1]
+
+            for text in generated_text:
+                sentence = text["generated_text"]
+                self.logger.debug(f"Generated Text: {sentence}")
+
+                # Cleanup and split the generated text into sentences
+                # clean_sentences = self._clean_generated_text(sentence)
+
+                # Get the first sentence between the markers
+                clean_sentence = self.extract_text_between_markers(sentence)
+
+                self.logger.debug(f"Full generated Text = {clean_sentence}")
+                # gen_text_sent = sent_tokenize(clean_sentences[1])
+                # currSentence = gen_text_sent[num_context_sentences - 1]
 
                 # check for repetitive sentences
-                if self._checkRepetition(currSentence):
-                    self.logger.warning(f"Repetition in the sentence: {currSentence}")
+                if self._checkRepetition(clean_sentence):
+                    self.logger.warning(f"Repetition in the sentence: {clean_sentence}")
                     continue
 
-                reminderText = currSentence[len(contextList[-1]) :]
-                reminderTextForFilter = re.sub(r"[?,!.\n]", "", reminderText.strip())
+                remainderText = clean_sentence[len(context) :]
+                remainderTextForFilter = re.sub(r"[?,!.\n]", "", remainderText.strip())
 
-                if not self._filter_text(reminderTextForFilter)[0]:
-                    reminderText = re.sub(r"[?!.\n]", "", reminderText.strip())
-                    score = self._textInCorpus(currSentence.strip())
+                filtered, _ = self._filter_text(remainderTextForFilter)
+
+                if not filtered:
+                    score = self._textInCorpus(clean_sentence.strip())
 
                     # TODO: DO WE THRESHOLD SCORES?
                     # TODO: DETOXIFY
 
-                    if reminderText != "":
-                        if currSentence not in allsent:
-                            imp_tokens = self._extract_svo(currSentence)
+                    if remainderTextForFilter != "":
+                        if clean_sentence not in allsent:
+                            imp_tokens = self._extract_svo(clean_sentence)
                             imp_tokens_reminder = []
                             # get important tokens only of the generated completion
                             for imp in imp_tokens:
-                                if imp in word_tokenize(reminderText):
+                                if imp in word_tokenize(remainderTextForFilter):
                                     imp_tokens_reminder.append(imp)
                             present = False
                             for a in allsent:
                                 for it in imp_tokens_reminder:
                                     if self.stemmer.stem(it) in [
                                         self.stemmer.stem(w)
-                                        for w in word_tokenize(a[len(contextList[-1]) :])
+                                        for w in word_tokenize(a[len(context) :])
                                     ]:
                                         present = True
                                         break
                             if not present:
-                                allsent.append(currSentence)
-                                counts[reminderText] = 1 * score
+                                allsent.append(clean_sentence)
+                                counts[remainderText] = 1 * score
                                 totalsent = totalsent + 1
                         else:
-                            counts[reminderText] = counts[reminderText] + 1 * score
+                            counts[remainderTextForFilter] = (
+                                counts[remainderTextForFilter] + 1 * score
+                            )
                             totalsent = totalsent + 1
 
             # toxic_filtered_sent = self.detoxify(allsent)
@@ -482,6 +492,47 @@ class SentenceCompletionPredictor(Predictor):
 
         return predictions
 
+    def _clean_generated_text(self, gentext):
+        # Just clean the generated text of all the potential rubbish
+        # return re.sub(r"[<>\[\]\d\n\t]|<bos>|<eos>|bos|eos", "", gentext)
+        return re.split(r"[<>\[\]\d\n\t]|<bos>|<eos>|bos|eos", gentext)
+        # return re.split(r"<bos> |<eos> |bos|eos|<bos>|<eos>|<|>|\[|\]|\d", gentext)
+
+    def extract_text_between_markers(
+        self, text: str, start_marker: str = "<bos>", end_marker: str = "<eos>"
+    ) -> str:
+        """
+        Extract text between start_marker and end_marker. If end_marker is not present,
+        stop at the first punctuation mark.
+
+        Args:
+            text (str): The input text.
+            start_marker (str): The marker indicating the start of the text to extract.
+            end_marker (str): The marker indicating the end of the text to extract.
+
+        Returns:
+            str: The extracted text.
+        """
+        # Find the start marker
+        start_index = text.find(start_marker)
+        if start_index == -1:
+            return ""  # Start marker not found
+
+        # Move the index to the end of the start marker
+        start_index += len(start_marker)
+
+        # Find the end marker
+        end_index = text.find(end_marker, start_index)
+        if end_index == -1:
+            # End marker not found, stop at the first punctuation mark
+            match = re.search(r"[.?!]", text[start_index:])
+            if match:
+                end_index = start_index + match.start()
+            else:
+                end_index = len(text)  # No punctuation found, take the rest of the text
+
+        return text[start_index:end_index].strip()
+
     @property
     def model_loaded(self):
         return self._model_loaded
@@ -497,12 +548,7 @@ class SentenceCompletionPredictor(Predictor):
             # TODO: Fix this
             self.logger.debug(f"context is empty, loading top sentences from {self._startsents}")
 
-            with open(self.startsents) as f:
-                data = f.readlines()
-                for k in data:
-                    sentence_predictions.add_suggestion(
-                        Suggestion(k.strip(), float(1 / len(data)), self.predictor_name)
-                    )
+            sentence_predictions = self.load_n_start_sentences(max_partial_prediction_size)
 
             if not sentence_predictions:
                 self.logger.warning("No start sentences found.  File may be missing or corrupted.")
@@ -533,10 +579,21 @@ class SentenceCompletionPredictor(Predictor):
                         f"generating {remaining_predicitions_needed} more predictions"
                     )
                     sentence_predictions = self._generate(
-                        "<bos> " + context.strip(), remaining_predicitions_needed
+                        context.strip(), remaining_predicitions_needed
                     )
 
         return sentence_predictions, word_predictions
+
+    def load_n_start_sentences(self, max_partial_prediction_size=-1):
+        predictions = Prediction()
+
+        with open(self.startsents) as f:
+            data = f.readlines(max_partial_prediction_size)
+            for sentence in data:
+                predictions.add_suggestion(
+                    Suggestion(sentence.strip(), float(1 / len(data)), self.predictor_name)
+                )
+        return predictions
 
     # Base class method
     def learn(self, change_tokens):

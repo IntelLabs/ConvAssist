@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
-from spacy import load
+import spacy
 
 from ...utilities.singleton import Singleton
 
@@ -20,17 +20,20 @@ class NLP(metaclass=Singleton):
         if hasattr(sys, "_MEIPASS"):
             base_path = sys._MEIPASS  # type: ignore
             nlp_loc = os.path.join(base_path, nlp_loc)
-            print('nlp_loc:', nlp_loc)
+            print("nlp_loc:", nlp_loc)
 
         if os.path.exists(nlp_loc):
             # Loading the model from a path
             child_dirs = [child for child in Path(nlp_loc).iterdir() if child.is_dir()]
             if len(child_dirs) > 0:
-                nlp = load(child_dirs[0])
-        
+                nlp = spacy.load(child_dirs[0])
+
         else:
             # Loading the model from the installed package
-            nlp = load(nlp_loc)
+            if not spacy.util.is_package(nlp_loc):
+                spacy.cli.download(nlp_loc)
+
+            nlp = spacy.load(nlp_loc)
 
         return nlp
 
