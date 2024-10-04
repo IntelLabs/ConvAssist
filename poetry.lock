@@ -23,6 +23,17 @@ files = [
 ]
 
 [[package]]
+name = "backpedal"
+version = "0.9.14"
+description = "Backpedal"
+optional = false
+python-versions = "*"
+files = [
+    {file = "backpedal-0.9.14-py3-none-any.whl", hash = "sha256:b98a9f74ff617974868c1ccc349d6d7efa3ea8aa5c620d92877ac7bd3a8755fe"},
+    {file = "backpedal-0.9.14.tar.gz", hash = "sha256:7e16a340f3dac1c80c43167964d86e8a72c8d29184aae9d4a80a4e4196e921d7"},
+]
+
+[[package]]
 name = "blis"
 version = "1.0.1"
 description = "The Blis BLAS-like linear algebra library, as a self-contained C-extension."
@@ -1169,7 +1180,7 @@ files = [
 name = "pefile"
 version = "2023.2.7"
 description = "Python PE parsing module"
-optional = false
+optional = true
 python-versions = ">=3.6.0"
 files = [
     {file = "pefile-2023.2.7-py3-none-any.whl", hash = "sha256:da185cd2af68c08a6cd4481f7325ed600a88f6a813bad9dea07ab3ef73d8d8d6"},
@@ -1459,7 +1470,7 @@ typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 name = "pydebugstring"
 version = "1.0.0.2"
 description = "function to write python obects to OutputDebugString on windows"
-optional = false
+optional = true
 python-versions = ">=3.0"
 files = [
     {file = "pydebugstring-1.0.0.2-py3-none-any.whl", hash = "sha256:6fd50a5e439978ec89230baa26b22c754fecfd27749b9f665fcd9c26ac135834"},
@@ -4407,7 +4418,7 @@ files = [
 name = "pystray"
 version = "0.19.5"
 description = "Provides systray integration"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "pystray-0.19.5-py2.py3-none-any.whl", hash = "sha256:a0c2229d02cf87207297c22d86ffc57c86c227517b038c0d3c59df79295ac617"},
@@ -4492,7 +4503,7 @@ pywin32 = {version = "*", markers = "platform_system == \"Windows\""}
 name = "pywin32"
 version = "306"
 description = "Python for Window Extensions"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "pywin32-306-cp310-cp310-win32.whl", hash = "sha256:06d3420a5155ba65f0b72f2699b5bacf3109f36acbe8923765c22938a69dfc8d"},
@@ -4710,13 +4721,13 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "rich"
-version = "13.9.1"
+version = "13.9.2"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "rich-13.9.1-py3-none-any.whl", hash = "sha256:b340e739f30aa58921dc477b8adaa9ecdb7cecc217be01d93730ee1bc8aa83be"},
-    {file = "rich-13.9.1.tar.gz", hash = "sha256:097cffdf85db1babe30cc7deba5ab3a29e1b9885047dab24c57e9a7f8a9c1466"},
+    {file = "rich-13.9.2-py3-none-any.whl", hash = "sha256:8c82a3d3f8dcfe9e734771313e606b39d8247bb6b826e196f4914b333b743cf1"},
+    {file = "rich-13.9.2.tar.gz", hash = "sha256:51a2c62057461aaf7152b4d611168f93a9fc73068f8ded2790f29fe2b5366d0c"},
 ]
 
 [package.dependencies]
@@ -5013,7 +5024,7 @@ files = [
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
@@ -5022,13 +5033,13 @@ files = [
 
 [[package]]
 name = "smart-open"
-version = "7.0.4"
+version = "7.0.5"
 description = "Utils for streaming large files (S3, HDFS, GCS, Azure Blob Storage, gzip, bz2...)"
 optional = false
 python-versions = "<4.0,>=3.7"
 files = [
-    {file = "smart_open-7.0.4-py3-none-any.whl", hash = "sha256:4e98489932b3372595cddc075e6033194775165702887216b65eba760dfd8d47"},
-    {file = "smart_open-7.0.4.tar.gz", hash = "sha256:62b65852bdd1d1d516839fcb1f6bc50cd0f16e05b4ec44b52f43d38bcb838524"},
+    {file = "smart_open-7.0.5-py3-none-any.whl", hash = "sha256:8523ed805c12dff3eaa50e9c903a6cb0ae78800626631c5fe7ea073439847b89"},
+    {file = "smart_open-7.0.5.tar.gz", hash = "sha256:d3672003b1dbc85e2013e4983b88eb9a5ccfd389b0d4e5015f39a9ee5620ec18"},
 ]
 
 [package.dependencies]
@@ -5041,7 +5052,7 @@ gcs = ["google-cloud-storage (>=2.6.0)"]
 http = ["requests"]
 s3 = ["boto3"]
 ssh = ["paramiko"]
-test = ["azure-common", "azure-core", "azure-storage-blob", "boto3", "google-cloud-storage (>=2.6.0)", "moto[server]", "paramiko", "pytest", "pytest-rerunfailures", "requests", "responses", "zstandard"]
+test = ["awscli", "azure-common", "azure-core", "azure-storage-blob", "boto3", "google-cloud-storage (>=2.6.0)", "moto[server]", "numpy", "paramiko", "pyopenssl", "pytest", "pytest-benchmark", "pytest-rerunfailures", "requests", "responses", "zstandard"]
 webhdfs = ["requests"]
 zst = ["zstandard"]
 
@@ -5195,7 +5206,7 @@ catalogue = ">=2.0.3,<2.1.0"
 name = "sv-ttk"
 version = "2.6.0"
 description = "A gorgeous theme for Tkinter, based on Windows 11's UI"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "sv_ttk-2.6.0-py3-none-any.whl", hash = "sha256:4319c52edf2e14732fe84bdc9788e26f9e9a1ad79451ec0f89f0120ffc8105d9"},
@@ -5850,9 +5861,9 @@ files = [
 
 [extras]
 acat-interface = ["pydebugstring", "pyinstaller", "pystray", "pywin32", "sv-ttk"]
-continuous-prediction = ["pyttsx3"]
+demos = ["pyttsx3"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "ab45518083208175576ef78bb02cb238fd00cdbb9162013c1ee770039a08ef67"
+content-hash = "4e30d2b68628d404f9608bb116a8418ba9a44b6121510695c5f8ff3a507f7b17"
