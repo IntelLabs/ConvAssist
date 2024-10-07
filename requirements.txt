@@ -30,7 +30,7 @@ pefile==2023.2.7
 pillow==10.3.0
 preshed==3.0.9
 psutil==5.9.8
-pydantic==2.6.4
+pydantic==2.9.2
 pydantic_core==2.16.3
 pyinstaller==6.5.0
 pyinstaller-hooks-contrib==2024.3
