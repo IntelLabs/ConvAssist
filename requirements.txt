@@ -24,7 +24,7 @@ murmurhash==1.0.10
 networkx==3.3
 nltk==3.8.1
 numpy==1.26.4
-packaging==24.0
+packaging==24.1
 pandas==2.2.1
 pefile==2023.2.7
 pillow==10.3.0
