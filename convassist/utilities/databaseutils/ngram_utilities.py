@@ -195,7 +195,7 @@ class NGramUtilities(DatabaseConnector):
 
         return result
 
-    def insert_ngram(self, ngram, count):
+    def insert_ngram(self, cardinality, ngram, count):
         """
         Inserts a given n-gram with count into the database.
 
@@ -206,36 +206,27 @@ class NGramUtilities(DatabaseConnector):
         count : int
             The count for the given n-gram.
 
+        INSERT INTO _{N}_gram (word_{N}, word_{N-1}, word)
+        VALUES ('V1', 'V2', 'V3', count)
+        ON CONFLICT (word_{N}, word_{N-1}, word)
+        DO UPDATE SET count
+
         """
-        values = self._build_values_clause(ngram, count)
-        escaped_ngram = re_escape_singlequote.sub("''", ngram[0])
-        query_check = f"SELECT * from _{len(ngram)}_gram where word = '{escaped_ngram}';"  # nosec
-        query_insert = f"INSERT INTO _{len(ngram)}_gram {values};"
+        table_name = f"_{cardinality}_gram"
+        columns = ", ".join([f"word_{i + 1}" for i in reversed(range(cardinality - 1))])
+        if columns:
+            columns = ", ".join([columns, "word"])
+        else:
+            columns = "word"
+        placeholders = ", ".join(["?" for _ in range(cardinality)])
+        unique_columns = columns
+
+        query = f"INSERT INTO {table_name} ({columns}, count) VALUES ({placeholders}, ?) ON CONFLICT ({unique_columns}) DO UPDATE SET count = count + 1;"
 
         try:
-            if not self.fetch_all(query_check):
-                self.execute_query(query_insert)
+            self.execute_query(query, (*ngram, count))
         except Exception as e:
             raise e
-
-    def update_ngram(self, ngram, count):
-        """
-        Updates a given ngram in the database. The ngram has to be in the
-        database, otherwise this method will stop with an error.
-
-        Parameters
-        ----------
-        ngram : iterable of str
-            A list, set or tuple of strings.
-        count : int
-            The count for the given n-gram.
-
-        """
-        query = f"UPDATE _{len(ngram)}_gram SET count = ?"
-        query += self._build_where_clause(ngram)
-        query += ";"
-        params = (count,) + tuple(ngram)
-        self.execute_query(query, params)
 
     def remove_ngram(self, ngram):
         """
