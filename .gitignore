@@ -7,18 +7,16 @@ tests/test_data/dbs/*
 build/
 dist/
 
-.coverage
+.coverage*
 .DS_Store
 results/
 .mypy_cache/
 .pytest_cache/
 *.log
 logs/
-interfaces/Demos/continuous_predict/resources/personalized/canned_ngram.db
-interfaces/Demos/continuous_predict/resources/personalized/canned_sentences.db
-interfaces/Demos/continuous_predict/resources/personalized/sent_database.db
-interfaces/Demos/continuous_predict/resources/personalized/all_aac_embeddings.pkl
-interfaces/Demos/continuous_predict/resources/personalized/all_aac_semanticSearch.index
+interfaces/Demos/continuous_predict/resources/personalized
+interfaces/Demos/continuous_predict/resources/static
 coverage.xml
-**/*,cover
-convassist/.coverage.tzimmer-mobl.amr.corp.intel.com.95474.Xdinfdfx
+convassist/.coverage.*
+tests/test_data/static
+tests/test_data/personalized
