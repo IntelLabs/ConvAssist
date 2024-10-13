@@ -32,7 +32,7 @@ class QueueHandler(logging.Handler):
         self.log_queue.put(self.format(record))
 
 
-class LoggingUtility(metaclass=Singleton):
+class LoggingUtility:
     def __init__(self):
         self._formatter: logging.Formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s %(message)s"

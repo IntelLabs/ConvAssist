@@ -12,6 +12,8 @@ def find_resources(dir_name):
 
 
 def setup_static_resources():
+    teardown_static_resources()
+
     if not os.path.exists(f"{SOURCE_DIR}/test_data/static"):
         os.makedirs(f"{SOURCE_DIR}/test_data/static")
 
@@ -20,6 +22,9 @@ def setup_static_resources():
 
     with open(f"{SOURCE_DIR}/test_data/static/filter_words.txt", "w") as f:
         f.write("filter\n")
+
+    with open(f"{SOURCE_DIR}/test_data/static/all_aac.txt", "w") as f:
+        f.write("all\nyour\nbases\nare\nmine\n")
 
     third_party_files = find_resources("3rd_party_resources")
     if third_party_files:
@@ -37,6 +42,8 @@ def teardown_static_resources():
 
 
 def setup_personalized_resources():
+    teardown_personalized_resources()
+
     if not os.path.exists(f"{SOURCE_DIR}/test_data/personalized"):
         os.makedirs(f"{SOURCE_DIR}/test_data/personalized")
 
@@ -47,6 +54,10 @@ def setup_personalized_resources():
     shutil.copy(
         f"{SOURCE_DIR}/test_data/token_data.txt",
         f"{SOURCE_DIR}/test_data/personalized/personalizedCannedPhrases.txt",
+    )
+    shutil.copy(
+        f"{SOURCE_DIR}/test_data/start_words.json",
+        f"{SOURCE_DIR}/test_data/personalized/startWords.json",
     )
 
 

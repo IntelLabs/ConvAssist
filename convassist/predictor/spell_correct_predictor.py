@@ -51,5 +51,5 @@ class SpellCorrectPredictor(Predictor):
 
         return setence_predictions, word_predictions[:max_partial_prediction_size]
 
-    def learn_text(self, text):
+    def learn_text(self, text):  # pragma: no cover
         self.logger.warning("SpellCorrectPredictor does not support learning.")

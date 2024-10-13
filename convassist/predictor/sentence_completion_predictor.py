@@ -66,13 +66,7 @@ class SentenceCompletionPredictor(Predictor):
                 self._model_loaded = False
     """
 
-    def configure(self):
-        self._model_loaded = False
-        self.corpus_sentences = []
-        self.sentence_generator: transformers.Pipeline | None = None
-
-        self.nlp = NLP().get_nlp()
-
+    def __init__(self, *args, **kwargs):
         if torch.cuda.is_available():
             self.device = "cuda"
             self.n_gpu = torch.cuda.device_count()
@@ -82,6 +76,15 @@ class SentenceCompletionPredictor(Predictor):
         else:
             self.device = "cpu"
             self.n_gpu = 0
+
+        self.corpus_sentences = []
+        self.sentence_generator: transformers.Pipeline | None = None
+        self._model_loaded = False
+
+        super().__init__(*args, **kwargs)
+
+    def configure(self):
+        self.nlp = NLP().get_nlp()
 
         # check if saved torch model exists
         self.load_model()
@@ -173,6 +176,9 @@ class SentenceCompletionPredictor(Predictor):
 
     def load_model(self) -> None:
         self.logger.debug(f"{__name__} loading model {str(self._modelname)}")
+
+        if self.model_loaded:
+            return
 
         if os.path.exists(self.modelname):
             try:

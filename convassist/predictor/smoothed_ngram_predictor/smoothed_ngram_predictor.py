@@ -55,28 +55,6 @@ class SmoothedNgramPredictor(Predictor):
     def extract_svo(self, sent):
         return sent
 
-    # # default implementation
-    # def recreate_database(self):
-    #     pass
-
-    def generate_ngrams(self, token, n):
-        n = n + 1
-        # Use the zip function to help us generate n-grams
-        # Concatenate the tokens into ngrams and return
-        ngrams = zip(*[token[i:] for i in range(n)])
-        returnobj = [" ".join(ngram) for ngram in ngrams]
-        return returnobj
-
-    def getNgramMap(self, ngs, ngram_map):
-        for item in ngs:
-            tokens = item.split(" ")
-            ngram_list = []
-            for token in tokens:
-                idx = ngram_map.add_token(token)
-                ngram_list.append(idx)
-            ngram_map.add(ngram_list)
-        return ngram_map
-
     def predict(self, max_partial_prediction_size: int, filter):
 
         sentence_prediction = Prediction()
@@ -85,9 +63,9 @@ class SmoothedNgramPredictor(Predictor):
         # get self.cardinality tokens from the context tracker
         actual_tokens, tokens = self.context_tracker.get_tokens(self.cardinality)
 
-        if actual_tokens == 0 or not tokens:
-            self.logger.warning("No tokens in the context tracker.")
-            return sentence_prediction, word_prediction
+        # if actual_tokens == 0 or not tokens:
+        #     self.logger.warning("No tokens in the context tracker.")
+        #     return sentence_prediction, word_prediction
 
         try:
             assert self.ngram_db_conn is not None
@@ -97,9 +75,9 @@ class SmoothedNgramPredictor(Predictor):
 
             partial = None
             prefix_ngram = None
-            for ngram_len in reversed(range(actual_tokens)):
+            for ngram_len in reversed(range(actual_tokens + 1)):
                 if ngram_len:
-                    prefix_ngram = tokens[-(ngram_len - 1) :]
+                    prefix_ngram = tokens[-(ngram_len):]
                 else:
                     # just get the last token
                     prefix_ngram = tokens[-1:]

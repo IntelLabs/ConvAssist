@@ -1,10 +1,12 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import json
 import os
 
-from ...utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
+from ..utilities.canned_data import cannedData
 from ..utilities.nlp import NLP
+from ..utilities.prediction import Prediction, Suggestion
 from .ngram_map import NgramMap
 from .smoothed_ngram_predictor import SmoothedNgramPredictor
 
@@ -27,7 +29,8 @@ class CannedWordPredictor(SmoothedNgramPredictor):
     """
 
     def configure(self):
-        super().configure()
+
+        self.canned_data = cannedData(self.sentences_db, self.personalized_cannedphrases)
 
         # load the natural language processing model
         self.nlp = NLP().get_nlp()
@@ -55,14 +58,12 @@ class CannedWordPredictor(SmoothedNgramPredictor):
             # strip each word in stopwordsList
             self.stopwordsList = [word.strip() for word in self.stopwordsList]
 
+        super().configure()
+
     # Override default properties
     @property
     def sentences_db(self):
         return os.path.join(self._personalized_resources_path, self._sentences_db)
-
-    # @property
-    # def database(self):
-    #     return os.path.join(self._personalized_resources_path, self._database)
 
     def extract_svo(self, sent):
         doc = self.nlp(sent)
@@ -98,100 +99,83 @@ class CannedWordPredictor(SmoothedNgramPredictor):
         return " ".join(imp_tokens).strip().lower()
 
     def recreate_database(self):
-        sentence_db = SQLiteDatabaseConnector(self.sentences_db)
 
-        # STEP 1: Check if sentences_db exists
-        if not os.path.exists(self.sentences_db):
-            self.logger.error(f"sentences_db does not exist: {self.sentences_db}")
+        # STEP 1: CREATE CANNED_NGRAM DATABASE IF IT DOES NOT EXIST
+        try:
+            assert self.ngram_db_conn
+            self.ngram_db_conn.connect()
+            for i in range(self.cardinality):
+                self.ngram_db_conn.create_ngram_table(cardinality=i + 1)
 
-            sentence_db.connect()
-            columns = ["sentence TEXT PRIMARY KEY", "count INTEGER"]
-            sentence_db.create_table("sentences", columns)
-            sentence_db.close()
+        except Exception as e:
+            self.logger.error(f"exception in creating personalized db : {e}")
 
-        # STEP 1: Update personalized_corups if it is not None
-        personalized_corpus = self.read_personalized_corpus()
+        phrases_toAdd, phrases_toRemove = self.canned_data.add_remove_data
 
-        if personalized_corpus:
-            try:
+        # Add phrases_toAdd to the ngram database
+        for phrase in phrases_toAdd:
+            for curr_card in range(self.cardinality):
+                ngram_map = NgramMap(curr_card, phrase)
 
-                # STEP 2: CREATE CANNED_NGRAM DATABASE IF IT DOES NOT EXIST
-                try:
-                    assert self.ngram_db_conn
-                    self.ngram_db_conn.connect()
-                    for i in range(self.cardinality):
-                        self.ngram_db_conn.create_ngram_table(cardinality=i + 1)
+                # for every ngram, get db count, update or insert
+                for ngram, count in ngram_map.items():
+                    # old_count = self.ngram_db_conn.ngram_count(ngram)
+                    # if old_count > 0:
+                    #     self.ngram_db_conn.update_ngram(ngram, old_count + count)
+                    #     self.ngram_db_conn.commit()
+                    # else:
+                    self.ngram_db_conn.insert_ngram(curr_card + 1, ngram, count)
+                    # self.ngram_db_conn.commit()
 
-                except Exception as e:
-                    self.logger.error(f"exception in creating personalized db : {e}")
+        # for phrase in phrases_toRemove:
+        #     for curr_card in range(self.cardinality):
+        #         imp_words = self.extract_svo(phrase)
+        #         ngram_map = NgramMap(curr_card, imp_words)
 
-                # TODO: CANNED
-                sentence_db = SQLiteDatabaseConnector(self.sentences_db)
-                sentence_db.connect()
+        #         # for every ngram, get db count, update or insert
+        #         for ngram, count in ngram_map.items():
+        #             countToDelete = self.canned_data.retrieve(phrase).values[0] * count
+        #             old_count = self.ngram_db_conn.ngram_count(ngram)
+        #             if old_count > countToDelete:
+        #                 self.ngram_db_conn.update_ngram(ngram, old_count - countToDelete)
+        #                 self.ngram_db_conn.commit()
+        #             elif old_count == countToDelete:
+        #                 self.ngram_db_conn.remove_ngram(ngram)
+        #                 self.ngram_db_conn.commit()
+        #             elif old_count < countToDelete:
+        #                 self.logger.info(
+        #                     "SmoothedNgramPredictor RecreateDB Delete function: Count in DB < count to Delete"
+        #                 )
 
-                # CHECK FOR PHRASES TO ADD AND PHRASES TO DELETE FROM THE DATABASES
-                sent_db_dict = {}
-                res = sentence_db.fetch_all("SELECT * FROM sentences")
-                if res:
-                    for r in res:
-                        sent_db_dict[r[0]] = r[1]
-                phrases_toRemove = list(set(sent_db_dict.keys()) - set(personalized_corpus))
-                phrases_toAdd = list(set(personalized_corpus) - set(sent_db_dict.keys()))
-                self.logger.info("PHRASES TO ADD = " + str(phrases_toAdd))
-                self.logger.info("PHRASES TO REMOVE = " + str(phrases_toRemove))
+    @property
+    def startwords(self):
+        return os.path.join(self._personalized_resources_path, self._startwords)
 
-                # Add phrases_toAdd to the database and ngram
-                for phrase in phrases_toAdd:
-                    # Add to
-                    query = """INSERT INTO sentences (sentence, count) VALUES (?,?)"""
-                    phraseToInsert = (phrase, 1)
-                    sentence_db.execute_query(query, phraseToInsert)
+    # TODO: Refactor this class and general_word since this is the same code.
+    def predict(self, max_partial_prediction_size: int, filter):
+        """
+        Predicts the next word based on the context tracker and the n-gram model.
+        """
+        sentence_predictions = Prediction()  # Not used in this predictor
+        word_predictions = Prediction()
 
-                    # Add phrase to ngram
-                    for curr_card in range(self.cardinality):
-                        ngram_map = NgramMap()
-                        ngs = self.generate_ngrams(phrase.lower().split(), curr_card)
-                        ngram_map = self.getNgramMap(ngs, ngram_map)
+        actual_tokens, _ = self.context_tracker.get_tokens(self.cardinality)
 
-                        # for every ngram, get db count, update or insert
-                        for ngram, count in ngram_map.items():
-                            old_count = self.ngram_db_conn.ngram_count(ngram)
-                            if old_count > 0:
-                                self.ngram_db_conn.update_ngram(ngram, old_count + count)
-                                self.ngram_db_conn.commit()
-                            else:
-                                self.ngram_db_conn.insert_ngram(ngram, count)
-                                self.ngram_db_conn.commit()
+        if actual_tokens == 0:
+            self.logger.warning(
+                f"No tokens in the context tracker.  Getting {max_partial_prediction_size} most frequent start words..."
+            )
 
-                for phrase in phrases_toRemove:
-                    # Remove phrases_toRemove from the database
-                    query = "DELETE FROM sentences WHERE sentence=?"
-                    sentence_db.execute_query(query, (phrase,))
-                    self.logger.info(f"Phrase {phrase} deleted from sentence_db.")
-                    phraseFreq = sent_db_dict[phrase]
-                    # Remove phrase to ngram
-                    for curr_card in range(self.cardinality):
-                        ngram_map = NgramMap()
-                        imp_words = self.extract_svo(phrase)
-                        ngs = self.generate_ngrams(imp_words.split(), curr_card)
-                        ngram_map = self.getNgramMap(ngs, ngram_map)
-                        # for every ngram, get db count, update or insert
-                        for ngram, count in ngram_map.items():
-                            countToDelete = phraseFreq * count
-                            old_count = self.ngram_db_conn.ngram_count(ngram)
-                            if old_count > countToDelete:
-                                self.ngram_db_conn.update_ngram(ngram, old_count - countToDelete)
-                                self.ngram_db_conn.commit()
-                            elif old_count == countToDelete:
-                                self.ngram_db_conn.remove_ngram(ngram)
-                                self.ngram_db_conn.commit()
-                            elif old_count < countToDelete:
-                                self.logger.info(
-                                    "SmoothedNgramPredictor RecreateDB Delete function: Count in DB < count to Delete"
-                                )
+            with open(self.startwords) as f:
+                self.precomputed_StartWords = json.load(f)
 
-            except Exception as e:
-                self.logger.error(f"= {e}")
-            finally:
-                sentence_db.close()
-                self.ngram_db_conn.close()
+            for w, prob in list(self.precomputed_StartWords.items())[:max_partial_prediction_size]:
+                word_predictions.add_suggestion(Suggestion(w, prob, self.predictor_name))
+
+            if len(word_predictions) == 0:
+                self.logger.error("Error getting most frequent start words.")
+
+            return sentence_predictions, word_predictions
+
+        else:
+            return super().predict(max_partial_prediction_size, filter)

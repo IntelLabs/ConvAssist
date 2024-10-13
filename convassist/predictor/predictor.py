@@ -267,15 +267,6 @@ class Predictor(ABC):
         """
         raise NotImplementedError(f"Configure not implemented in {self.predictor_name}")
 
-    def read_personalized_corpus(self):
-        corpus = []
-
-        with open(self.personalized_cannedphrases) as f:
-            corpus = f.readlines()
-            corpus = [s.strip() for s in corpus]
-
-        return corpus
-
     def learn(self, change_tokens=None):  # pragma: no cover
         # Not all predictors need this, but define it here for those that do
         pass
