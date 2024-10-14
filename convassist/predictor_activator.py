@@ -71,6 +71,10 @@ class PredictorActivator:
         )  # Store the combined next letter probabilities from the word predictor(s)
         word_result = []  # Store the combined results from the word predictor(s)
 
+        if not self.registry:
+            self.logger.warning("No predictors registered.")
+            return (word_nextLetterProbs, word_result, sentence_nextLetterProbs, sentence_result)
+
         if self.context_tracker:
             context = self.context_tracker.get_last_token()
         else:
@@ -131,22 +135,18 @@ class PredictorActivator:
         )
         return (word_nextLetterProbs, word_result, sentence_nextLetterProbs, sentence_result)
 
-    def recreate_database(self):
+    def recreate_database(self):  # pragma: no cover
         for predictor in self.registry:
             predictor.recreate_database()
 
-    def update_params(self, test_gen_sentence_pred, retrieve_from_AAC):
+    def update_params(self, test_gen_sentence_pred, retrieve_from_AAC):  # pragma: no cover
         for predictor in self.registry:
             predictor.load_model()
 
-    def read_updated_toxicWords(self):
+    def read_updated_toxicWords(self):  # pragma: no cover
         for predictor in self.registry:
             predictor.read_personalized_toxic_words()
 
-    def learn_text(self, text):
+    def learn_text(self, text):  # pragma: no cover
         for predictor in self.registry:
             predictor.learn(text)
-
-    # def set_log(self,filename, pathLoc, level):
-    #     # provide a way to set the log location for the predictor activator
-    #     pass

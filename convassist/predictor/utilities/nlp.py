@@ -20,7 +20,6 @@ class NLP(metaclass=Singleton):
         if hasattr(sys, "_MEIPASS"):  # pragma: no cover
             base_path = sys._MEIPASS  # type: ignore
             nlp_loc = os.path.join(base_path, nlp_loc)
-            print("nlp_loc:", nlp_loc)
 
         if os.path.exists(nlp_loc):
             # Loading the model from a path
