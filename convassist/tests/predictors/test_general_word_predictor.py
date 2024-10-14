@@ -11,9 +11,10 @@ from convassist.predictor.smoothed_ngram_predictor.general_word_predictor import
 )
 
 from .. import setup_utils
+from . import TestPredictors
 
 
-class TestGeneralWordPredictor(unittest.TestCase):
+class TestGeneralWordPredictor(TestPredictors):
     @patch("torch.cuda.is_available", return_value=False)
     @patch("torch.backends.mps.is_available", return_value=False)
     def setUp(self, mock_cuda, mock_mps):

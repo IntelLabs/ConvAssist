@@ -9,9 +9,10 @@ from convassist.context_tracker import ContextTracker
 from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
 
 from .. import setup_utils
+from . import TestPredictors
 
 
-class TestSpellCorrectPredictor(unittest.TestCase):
+class TestSpellCorrectPredictor(TestPredictors):
     def setUp(self):
         setup_utils.setup_static_resources()
         setup_utils.setup_personalized_resources()

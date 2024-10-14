@@ -2,6 +2,7 @@ import configparser
 import unittest
 from unittest.mock import patch
 
+from . import TestPredictors
 from parameterized import parameterized
 
 from convassist.context_tracker import ContextTracker
@@ -12,24 +13,25 @@ from convassist.predictor.sentence_completion_predictor import (
 from .. import setup_utils
 
 
-class TestSentenceCompletionPredictor(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        print("setUpClass: This runs once before any tests in the class.")
-        cls.shared_resource = "Shared Resource"
+class TestSentenceCompletionPredictor(TestPredictors):
+
+    @patch("torch.cuda.is_available", return_value=False)
+    @patch("torch.backends.mps.is_available", return_value=False)
+    def setUp(self, mock_cuda, mock_mps):
+                
         SOURCE_DIR = setup_utils.SOURCE_DIR
 
-        cls.config = configparser.ConfigParser()
-        cls.config["Common"] = {
+        self.config = configparser.ConfigParser()
+        self.config["Common"] = {
             "static_resources_path": f"{SOURCE_DIR}/test_data/static",
             "personalized_resources_path": f"{SOURCE_DIR}/test_data/personalized",
             "deltas": "0.01 0.1 0.89",
             "stopwords": "stopwords.txt",
         }
-        cls.config["PredictorRegistry"] = {
+        self.config["PredictorRegistry"] = {
             "predictors": "test_predictor",
         }
-        cls.config["test_predictor"] = {
+        self.config["test_predictor"] = {
             "predictor_class": "SentenceCompletionPredictor",
             "learn": "True",
             "test_generalsentenceprediction": "False",
@@ -46,28 +48,20 @@ class TestSentenceCompletionPredictor(unittest.TestCase):
             "stopwords": "stopwords.txt",
             "personalized_allowed_toxicwords_file": "personalized_allowed_toxicwords.txt",
         }
-        cls.config["ContextTracker"] = {"lowercase_mode": "True"}
+        self.config["ContextTracker"] = {"lowercase_mode": "True"}
 
         setup_utils.setup_static_resources()
         setup_utils.setup_personalized_resources()
-
-    @classmethod
-    def tearDownClass(cls):
-        print("tearDownClass: This runs once after all tests in the class.")
-        del cls.shared_resource
-        del cls.config
-
-        setup_utils.teardown_personalized_resources()
-        setup_utils.teardown_static_resources()
-
-    @patch("torch.cuda.is_available", return_value=False)
-    @patch("torch.backends.mps.is_available", return_value=False)
-    def setUp(self, mock_cuda, mock_mps):
 
         self.context_tracker = ContextTracker(self.config)
         self.predictor = SentenceCompletionPredictor(
             self.config, self.context_tracker, "test_predictor"
         )
+
+    def tearDown(self):
+        setup_utils.teardown_personalized_resources()
+        setup_utils.teardown_static_resources()
+
 
     def test_configure(self):
         self.assertTrue(self.predictor._model_loaded)

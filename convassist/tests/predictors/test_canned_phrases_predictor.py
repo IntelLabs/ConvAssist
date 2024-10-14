@@ -1,5 +1,6 @@
 import configparser
 import os
+import time
 import unittest
 from unittest.mock import patch
 
@@ -16,12 +17,10 @@ class TestCannedPhrasesPredictor(unittest.TestCase):
         setup_utils.setup_static_resources()
         setup_utils.setup_personalized_resources()
 
-        SOURCE_DIR = setup_utils.SOURCE_DIR
-
         self.config = configparser.ConfigParser()
         self.config["Common"] = {
-            "static_resources_path": f"{SOURCE_DIR}/test_data/static",
-            "personalized_resources_path": f"{SOURCE_DIR}/test_data/personalized",
+            "static_resources_path": f"{setup_utils.STATIC_DIR}/test_data/static",
+            "personalized_resources_path": f"{setup_utils.SOURCE_DIR}/test_data/personalized",
             "deltas": "0.01 0.1 0.89",
             "stopwords": "stopwords.txt",
         }
@@ -47,6 +46,7 @@ class TestCannedPhrasesPredictor(unittest.TestCase):
         )
 
     def tearDown(self):
+        time.sleep(3)
         setup_utils.teardown_static_resources()
         setup_utils.teardown_personalized_resources()
 
