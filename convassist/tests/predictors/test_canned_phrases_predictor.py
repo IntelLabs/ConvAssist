@@ -58,6 +58,22 @@ class TestCannedPhrasesPredictor(TestPredictors):
         self.assertEqual(self.predictor.device, "cpu")
         self.assertEqual(self.predictor.n_gpu, 0)
 
+        self.assertEqual(
+            self.predictor.predictor_class, self.config["test_predictor"]["predictor_class"]
+        )
+        self.assertEqual(self.predictor.deltas, [0.01, 0.1, 0.89])
+        self.assertEqual(self.predictor.learn_enabled, True)
+
+        # The following are the only required parameters
+        self.assertTrue(os.path.exists(self.predictor.embedding_cache_path))
+        self.assertTrue(os.path.exists(self.predictor.index_path))
+        self.assertTrue(os.path.exists(self.predictor.personalized_cannedphrases))
+        self.assertTrue(os.path.exists(self.predictor._personalized_resources_path))
+        self.assertTrue(os.path.exists(self.predictor.sbertmodel))
+        self.assertTrue(os.path.exists(self.predictor._static_resources_path))
+        self.assertTrue(os.path.exists(self.predictor.stopwordsFile))
+        self.assertTrue(os.path.exists(self.predictor.sentences_db_path))
+
     def test_load_model(self):
 
         self.predictor.load_model()

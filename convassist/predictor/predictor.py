@@ -192,7 +192,7 @@ class Predictor(ABC):
 
     @property
     def sbertmodel(self):
-        return self._sbertmodel
+        return os.path.join(self._static_resources_path, self._sbertmodel)
 
     @property
     def sentence_transformer_model(self):
