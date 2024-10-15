@@ -8,9 +8,10 @@ from convassist.context_tracker import ContextTracker
 from convassist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
 
 from .. import setup_utils
+from . import TestPredictors
 
 
-class TestCannedPhrasesPredictor(unittest.TestCase):
+class TestCannedPhrasesPredictor(TestPredictors):
     @patch("torch.cuda.is_available", return_value=False)
     @patch("torch.backends.mps.is_available", return_value=False)
     def setUp(self, mock_cuda, mock_mps):
