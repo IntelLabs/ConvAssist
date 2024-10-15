@@ -36,4 +36,4 @@ class Combiner(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def combine(self):
-        raise NotImplementedError("Method must be implemented")
+        raise NotImplementedError("Method must be implemented")  # pragma: no cover

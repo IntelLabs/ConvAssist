@@ -70,3 +70,29 @@ class TestMeritocracyCombiner(unittest.TestCase):
         )
 
         assert result == correct
+
+    def test_computeLetterProbs_with_context(self):
+        result = Prediction()
+        result.add_suggestion(Suggestion("hello", 0.6, "TestPredictor"))
+        result.add_suggestion(Suggestion("hi", 0.2, "TestPredictor"))
+        context = "h"
+        expected = [("e", 0.5), ("i", 0.5)]
+        assert self.combiner.computeLetterProbs(result, context) == expected
+
+    def test_computeLetterProbs_ignore_spell_correct_predictor(self):
+        result = Prediction()
+        result.add_suggestion(Suggestion("hello", 0.6, "SpellCorrectPredictor"))
+        result.add_suggestion(Suggestion("hi", 0.2, "TestPredictor"))
+        context = ""
+        expected = [("h", 0.5)]
+        assert self.combiner.computeLetterProbs(result, context) == expected
+
+    def test_computeLetterProbs_ignore_sentence_completion_predictor(self):
+        result = Prediction()
+        result.add_suggestion(
+            Suggestion("hello world", 0.6, predictor_name="SentenceCompletionPredictor")
+        )
+        result.add_suggestion(Suggestion("hi", 0.2, predictor_name="TestPredictor"))
+        context = ""
+        expected = [("h", 1.0)]
+        assert self.combiner.computeLetterProbs(result, context) == expected

@@ -12,9 +12,6 @@ from .combiner import Combiner
 
 
 class MeritocracyCombiner(Combiner):
-    def __init__(self):
-        pass
-
     """
     Computes probabilities for the next letter - for BCI
     """
