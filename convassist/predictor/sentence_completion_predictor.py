@@ -92,7 +92,7 @@ class SentenceCompletionPredictor(Predictor):
 
         # CREATE INDEX TO QUERY DATABASE
         self.embedder = SentenceTransformer(
-            str(self._sentence_transformer_model),
+            str(self.sentence_transformer_model),
             device=self.device,
             local_files_only=True,
             tokenizer_kwargs={"clean_up_tokenization_spaces": "True"},

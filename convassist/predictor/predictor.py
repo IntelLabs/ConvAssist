@@ -196,7 +196,7 @@ class Predictor(ABC):
 
     @property
     def sentence_transformer_model(self):
-        return os.path.join(self._personalized_resources_path, self._sentence_transformer_model)
+        return os.path.join(self._static_resources_path, self._sentence_transformer_model)
 
     @property
     def sent_database(self):
