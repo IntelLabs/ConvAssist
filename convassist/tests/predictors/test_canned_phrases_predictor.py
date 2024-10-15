@@ -20,7 +20,7 @@ class TestCannedPhrasesPredictor(TestPredictors):
 
         self.config = configparser.ConfigParser()
         self.config["Common"] = {
-            "static_resources_path": f"{setup_utils.STATIC_DIR}/test_data/static",
+            "static_resources_path": f"{setup_utils.SOURCE_DIR}/test_data/static",
             "personalized_resources_path": f"{setup_utils.SOURCE_DIR}/test_data/personalized",
             "deltas": "0.01 0.1 0.89",
             "stopwords": "stopwords.txt",
