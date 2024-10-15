@@ -18,9 +18,6 @@ class Combiner(metaclass=abc.ABCMeta):
     Base class for all combiners
     """
 
-    def __init__(self):
-        pass
-
     def filter(self, prediction: Prediction) -> Prediction:
         seen_tokens: Set[str] = set()
         result = Prediction()

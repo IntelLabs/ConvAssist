@@ -2,7 +2,6 @@ import configparser
 import unittest
 from unittest.mock import patch
 
-from . import TestPredictors
 from parameterized import parameterized
 
 from convassist.context_tracker import ContextTracker
@@ -11,14 +10,28 @@ from convassist.predictor.sentence_completion_predictor import (
 )
 
 from .. import setup_utils
+from . import TestPredictors
 
 
 class TestSentenceCompletionPredictor(TestPredictors):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        setup_utils.setup_static_resources()
+        setup_utils.setup_personalized_resources()
+
+    @classmethod
+    def tearDownClass(cls):
+        setup_utils.teardown_static_resources()
+        setup_utils.teardown_personalized_resources()
+
+        super().tearDownClass()
 
     @patch("torch.cuda.is_available", return_value=False)
     @patch("torch.backends.mps.is_available", return_value=False)
     def setUp(self, mock_cuda, mock_mps):
-                
+
         SOURCE_DIR = setup_utils.SOURCE_DIR
 
         self.config = configparser.ConfigParser()
@@ -50,18 +63,10 @@ class TestSentenceCompletionPredictor(TestPredictors):
         }
         self.config["ContextTracker"] = {"lowercase_mode": "True"}
 
-        setup_utils.setup_static_resources()
-        setup_utils.setup_personalized_resources()
-
         self.context_tracker = ContextTracker(self.config)
         self.predictor = SentenceCompletionPredictor(
             self.config, self.context_tracker, "test_predictor"
         )
-
-    def tearDown(self):
-        setup_utils.teardown_personalized_resources()
-        setup_utils.teardown_static_resources()
-
 
     def test_configure(self):
         self.assertTrue(self.predictor._model_loaded)
