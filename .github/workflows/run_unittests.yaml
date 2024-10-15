@@ -5,9 +5,9 @@ name: Unit Tests
 
 on:
   push:
-    branches: [ "main", "covassist_cleanup" ]
+    branches: ["main", "covassist_cleanup"]
   pull_request:
-    branches: [ "main", "covassist_cleanup" ]
+    branches: ["main", "covassist_cleanup"]
   workflow_dispatch:
 
 permissions:
@@ -15,45 +15,44 @@ permissions:
 
 jobs:
   unittest:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5.2.0
-      with:
-        python-version: "3.12"
+      - uses: actions/checkout@v4
 
-    - name: Cache Python virtual environment
-      uses: actions/cache@v4.0.2
-      with:
-        path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-python-${{ hashFiles('**/poetry.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-python-
-          
-    - name: Install Poetry
-      run: |
-        python3 -m pip install --upgrade pip
-        python3 -m pip install poetry
-        
-    - name: Install dependencies
-      run: |
-        poetry install
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5.2.0
+        with:
+          python-version: "3.12"
 
-    - name: Run tests
-      run: |
-        source $(poetry env info --path)/bin/activate
-        pytest
-      working-directory: ./convassist
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4.0.2
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-python-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-python-
 
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v4.4.0
-      with:
-        name: coverage-report
-        path: |
-          convassist/htmlcov/
-          convassist/coverage.xml
-        
+      - name: Install Poetry
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install poetry
+
+      - name: Install dependencies
+        run: |
+          poetry install
+
+      - name: Run tests
+        run: |
+          source $(poetry env info --path)/bin/activate
+          spacy download en_core_web_sm
+          pytest
+        working-directory: ./convassist
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4.4.0
+        with:
+          name: coverage-report
+          path: |
+            convassist/htmlcov/
+            convassist/coverage.xml
