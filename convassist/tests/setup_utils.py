@@ -22,9 +22,12 @@ def copy_static_resources():
 
     try:
         assert third_party_files
-        source_dir = f"{third_party_files}/aac_gpt2"
-        dest_dir = f"{SOURCE_DIR}/test_data/static/aac_gpt2"
-        shutil.copytree(source_dir, dest_dir, dirs_exist_ok=True)
+        shutil.copytree(
+            f"{third_party_files}/aac_gpt2",
+            f"{SOURCE_DIR}/test_data/static/aac_gpt2",
+            dirs_exist_ok=True,
+        )
+
         shutil.copytree(
             f"{third_party_files}/multi-qa-MiniLM-L6-cos-v1",
             f"{SOURCE_DIR}/test_data/static/multi-qa-MiniLM-L6-cos-v1",

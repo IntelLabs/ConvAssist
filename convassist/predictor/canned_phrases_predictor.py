@@ -42,6 +42,7 @@ class CannedPhrasesPredictor(Predictor):
         self._model_loaded = False
         self.seed = 42
         self.stemmer = PorterStemmer()
+        assert os.path.exists(self.sbertmodel), f"Model {self.sbertmodel} not found"
         self.embedder = SentenceTransformer(
             self.sbertmodel,
             device=self.device,
