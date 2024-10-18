@@ -119,33 +119,16 @@ class CannedWordPredictor(SmoothedNgramPredictor):
 
                 # for every ngram, get db count, update or insert
                 for ngram, count in ngram_map.items():
-                    # old_count = self.ngram_db_conn.ngram_count(ngram)
-                    # if old_count > 0:
-                    #     self.ngram_db_conn.update_ngram(ngram, old_count + count)
-                    #     self.ngram_db_conn.commit()
-                    # else:
                     self.ngram_db_conn.insert_ngram(curr_card + 1, ngram, count)
-                    # self.ngram_db_conn.commit()
 
-        # for phrase in phrases_toRemove:
-        #     for curr_card in range(self.cardinality):
-        #         imp_words = self.extract_svo(phrase)
-        #         ngram_map = NgramMap(curr_card, imp_words)
+        for phrase in phrases_toRemove:
+            for curr_card in range(self.cardinality):
+                # imp_words = self.extract_svo(phrase)
+                ngram_map = NgramMap(curr_card, phrase)
 
-        #         # for every ngram, get db count, update or insert
-        #         for ngram, count in ngram_map.items():
-        #             countToDelete = self.canned_data.retrieve(phrase).values[0] * count
-        #             old_count = self.ngram_db_conn.ngram_count(ngram)
-        #             if old_count > countToDelete:
-        #                 self.ngram_db_conn.update_ngram(ngram, old_count - countToDelete)
-        #                 self.ngram_db_conn.commit()
-        #             elif old_count == countToDelete:
-        #                 self.ngram_db_conn.remove_ngram(ngram)
-        #                 self.ngram_db_conn.commit()
-        #             elif old_count < countToDelete:
-        #                 self.logger.info(
-        #                     "SmoothedNgramPredictor RecreateDB Delete function: Count in DB < count to Delete"
-        #                 )
+                # for every ngram, get db count, update or insert
+                for ngram, count in ngram_map.items():
+                    self.ngram_db_conn.remove_ngram(ngram)
 
     @property
     def startwords(self):

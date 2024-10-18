@@ -25,6 +25,10 @@ class cannedData:
         self.update()
 
     @property
+    def length(self):
+        return len(self.all_phrases_as_list())
+
+    @property
     def add_data(self):
         return self._add_data
 

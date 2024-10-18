@@ -10,8 +10,8 @@ from convassist.predictor.smoothed_ngram_predictor.canned_word_predictor import 
     CannedWordPredictor,
 )
 
-from . import TestPredictors
 from .. import setup_utils
+from . import TestPredictors
 
 
 class TestCannedWordPredictor(TestPredictors):
@@ -73,21 +73,6 @@ class TestCannedWordPredictor(TestPredictors):
         self.assertEqual(len(word_predictions), max_partial_prediction_size)
         self.assertEqual(word_predictions[0].word, expected_word)
 
-    # def test_predict_context(self):
-    #     max_partial_prediction_size = 1
-    #     self.predictor.context_tracker.context = "Here's to the "
-
-    #     sentence_predictions, word_predictions = self.predictor.predict(
-    #         max_partial_prediction_size, None
-    #     )
-
-    #     self.assertIsNotNone(sentence_predictions)
-    #     self.assertEqual(len(sentence_predictions), 0)
-    #     self.assertIsNotNone(word_predictions)
-    #     self.assertEqual(len(word_predictions), max_partial_prediction_size)
-
-    #     self.assertEqual(word_predictions[0].word, "crazy")
-
     def test_learn_new_sentence(self):
         change_tokens = "This is a new sentence to learn."
         self.predictor.learn(change_tokens)
@@ -106,6 +91,24 @@ class TestCannedWordPredictor(TestPredictors):
         _, words = self.predictor.predict(1, None)
         self.assertEqual(len(words), 1)
         self.assertEqual(words[0].word, "the")
+
+    def test_remove_canned_words(self):
+
+        with open(self.predictor.personalized_cannedphrases, "w") as f:
+            f.write("My new phrase")
+
+        self.predictor = None
+        self.predictor = CannedWordPredictor(self.config, self.context_tracker, "test_predictor")
+
+        self.predictor.context_tracker.context = "My new "
+        _, words = self.predictor.predict(1, None)
+        self.assertEqual(len(words), 1)
+        self.assertEqual(words[0].word, "phrase")
+
+        self.predictor.context_tracker.context = "to the "
+        _, words = self.predictor.predict(1, None)
+        self.assertEqual(len(words), 1)
+        self.assertEqual(words[0].word, "my")
 
 
 if __name__ == "__main__":

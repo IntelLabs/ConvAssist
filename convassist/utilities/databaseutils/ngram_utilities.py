@@ -242,7 +242,7 @@ class NGramUtilities(DatabaseConnector):
         query = f"DELETE FROM _{len(ngram)}_gram"  # nosec
         query += self._build_where_clause(ngram)
         query += ";"
-        self.execute_query(query)
+        self.execute_query(query, (ngram))
 
     def _build_values_clause(self, ngram, count):
         ngram_escaped = []
