@@ -1,0 +1,62 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        // {
+        //     "name": "Python Debugger: Module",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "module": "pyinstaller"
+        // },
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "internalConsole",
+            "justMyCode": false,
+            "redirectOutput": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Continuous Predict Util",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/interfaces/Demos/continuous_predict/continuous_predict.py",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "ConvAssistUI",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "ConvAssistUI.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/interfaces/ACAT/acatconvassist",
+            "justMyCode": false,
+            "redirectOutput": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/interfaces/ACAT"
+            }
+        },
+        {
+            "name": "Python Debugger: Python File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}"
+        },
+        {
+            "name": "Python: Debug Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "purpose": ["debug-test"],
+            "console": "integratedTerminal",
+            "justMyCode": false
+          }
+          
+    ]
+}
