@@ -17,6 +17,16 @@ repos:
       - id: check-case-conflict
       - id: check-added-large-files
 
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.1 # Updated 2023/07
+    hooks:
+      - id: insert-license
+        name: insert-license-shell
+        files: \.(sh|py)$
+        args:
+          - --license-filepath
+          # defaults to: LICENSE.txt
+          - HEADER
   # python code formatting
   - repo: https://github.com/psf/black
     rev: 22.6.0
@@ -30,20 +40,6 @@ repos:
     hooks:
       - id: isort
         args: ["--profile", "black", "--filter-files"]
-
-  # python upgrading syntax to newer version
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v2.32.1
-    hooks:
-      - id: pyupgrade
-        args: [--py38-plus]
-
-  # # python docstring formatting
-  # - repo: https://github.com/myint/docformatter
-  #   rev: v1.4
-  #   hooks:
-  #     - id: docformatter
-  #       args: [--in-place, --wrap-summaries=99, --wrap-descriptions=99]
 
   # python check (PEP8), programming errors and code complexity
   - repo: https://github.com/PyCQA/flake8
@@ -73,33 +69,5 @@ repos:
     hooks:
       - id: prettier
         types: [yaml]
-
-  # # jupyter notebook cell output clearing
-  # - repo: https://github.com/kynan/nbstripout
-  #   rev: 0.5.0
-  #   hooks:
-  #     - id: nbstripout
-
-  # # md formatting
-  # - repo: https://github.com/executablebooks/mdformat
-  #   rev: 0.7.14
-  #   hooks:
-  #     - id: mdformat
-  #       args: ["--number"]
-  #       additional_dependencies:
-  #         - mdformat-gfm
-  #         - mdformat-tables
-  #         - mdformat_frontmatter
-  #         # - mdformat-toc
-  #         # - mdformat-black
-
-  # # word spelling linter
-  # - repo: https://github.com/codespell-project/codespell
-  #   rev: v2.1.0
-  #   hooks:
-  #     - id: codespell
-  #       args:
-  #         - --skip=logs/**,data/**
-  #         - --ignore-words-list=abc,def,gard,fo
 
 exclude: 3rd_party_resources/|Demos/resources|.*\.md$|.*\.json$

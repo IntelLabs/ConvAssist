@@ -195,7 +195,7 @@ class NGramUtilities(DatabaseConnector):
 
         return result
 
-    def insert_ngram(self, cardinality, ngram, count):
+    def insert_ngram(self, cardinality, ngram, count, update_on_conflict=True):
         """
         Inserts a given n-gram with count into the database.
 
@@ -221,7 +221,11 @@ class NGramUtilities(DatabaseConnector):
         placeholders = ", ".join(["?" for _ in range(cardinality)])
         unique_columns = columns
 
-        query = f"INSERT INTO {table_name} ({columns}, count) VALUES ({placeholders}, ?) ON CONFLICT ({unique_columns}) DO UPDATE SET count = count + 1;"
+        query = f"INSERT INTO {table_name} ({columns}, count) VALUES ({placeholders}, ?)"
+        if update_on_conflict:
+            query += f"ON CONFLICT ({unique_columns}) DO UPDATE SET count = count + 1;"
+        else:
+            query += f"ON CONFLICT ({unique_columns}) DO NOTHING;"
 
         try:
             self.execute_query(query, (*ngram, count))

@@ -16,6 +16,7 @@ results/
 logs/
 interfaces/Demos/continuous_predict/resources/personalized
 interfaces/Demos/continuous_predict/resources/static_resources
+interfaces/Demos/prompter/
 coverage.xml
 convassist/.coverage.*
 tests/test_data/static

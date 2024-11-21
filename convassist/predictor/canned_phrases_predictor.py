@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import collections
+import logging
 import os
 
 import hnswlib
@@ -23,8 +24,13 @@ class CannedPhrasesPredictor(Predictor):
     to find matching next words and sentences based on a given context.
     """
 
-    def __init__(self, config, context_tracker, predictor_name):
-
+    def __init__(
+        self,
+        config,
+        context_tracker,
+        predictor_name,
+        logger: logging.Logger | None = None,
+    ):
         # Only check for GPU one time must be done before predictor is loaded
         if torch.cuda.is_available():
             self.device = "cuda"
@@ -36,52 +42,67 @@ class CannedPhrasesPredictor(Predictor):
             self.device = "cpu"
             self.n_gpu = 0
 
-        super().__init__(config, context_tracker, predictor_name)
+        super().__init__(config, context_tracker, predictor_name, logger)
 
     def configure(self):
+        self.corpus_phrases = []
+        self.corpus_embeddings = []
+
         self._model_loaded = False
-        self.seed = 42
         self.stemmer = PorterStemmer()
-        assert os.path.exists(self.sbertmodel), f"Model {self.sbertmodel} not found"
+
+        # TODO Fix this
+        if os.path.exists(self.sbertmodel):
+            sbertmodel = self.sbertmodel
+            localfiles = True
+        else:
+            sbertmodel = self._sbertmodel
+            localfiles = False
+
         self.embedder = SentenceTransformer(
-            self.sbertmodel,
+            sbertmodel,
             device=self.device,
-            local_files_only=True,
+            local_files_only=localfiles,
             tokenizer_kwargs={"clean_up_tokenization_spaces": True},
         )
 
         self.cannedData = cannedData(self.sentences_db_path, self.personalized_cannedphrases)
 
-        if not os.path.isfile(self.embedding_cache_path):
-            self.logger.debug(f"{self.embedding_cache_path} does not exist, creating")
+        if self.cannedData.length > 0:
+            if not os.path.isfile(self.embedding_cache_path):
+                self.logger.debug(f"{self.embedding_cache_path} does not exist, creating")
 
-            canned_data = self.cannedData.all_phrases_as_list()
-            corpus_embeddings = self.embedder.encode(
-                canned_data, show_progress_bar=True, convert_to_numpy=True
+                canned_data = self.cannedData.all_phrases_as_list()
+                corpus_embeddings = self.embedder.encode(
+                    canned_data, show_progress_bar=True, convert_to_numpy=True
+                )
+                joblib.dump(
+                    {"sentences": canned_data, "embeddings": corpus_embeddings},
+                    self.embedding_cache_path,
+                )
+
+            cache_data = joblib.load(self.embedding_cache_path)
+            self.corpus_phrases = cache_data["sentences"]
+            self.corpus_embeddings = cache_data["embeddings"]
+
+            self.embedding_size = (
+                self.corpus_embeddings[0].shape[0] if len(self.corpus_embeddings) > 0 else 0
             )
-            joblib.dump(
-                {"sentences": canned_data, "embeddings": corpus_embeddings},
-                self.embedding_cache_path,
-            )
+            self.index = hnswlib.Index(space="cosine", dim=self.embedding_size)
 
-        cache_data = joblib.load(self.embedding_cache_path)
-        self.corpus_phrases = cache_data["sentences"]
-        self.corpus_embeddings = cache_data["embeddings"]
+            # CHECK IF INDEX IS PRESENT
+            if os.path.exists(self.index_path):
+                self.logger.info("Loading index at ..." + self.index_path)
+                self.index.load_index(self.index_path)
+            else:
+                # Create the HNSWLIB index
+                self.logger.info("Start creating HNSWLIB index")
+                self.index.init_index(max_elements=10000, ef_construction=400, M=64)
+                self.index = self._create_index(self.index)
+            self.index.set_ef(50)
 
-        self.n_clusters = 20  # clusters for hnswlib index
-        self.embedding_size = self.corpus_embeddings[0].shape[0]
-        self.index = hnswlib.Index(space="cosine", dim=self.embedding_size)
-
-        # CHECK IF INDEX IS PRESENT
-        if os.path.exists(self.index_path):
-            self.logger.info("Loading index at ..." + self.index_path)
-            self.index.load_index(self.index_path)
         else:
-            # Create the HNSWLIB index
-            self.logger.info("Start creating HNSWLIB index")
-            self.index.init_index(max_elements=10000, ef_construction=400, M=64)
-            self.index = self._create_index(self.index)
-        self.index.set_ef(50)
+            self.logger.warning("No canned phrases present.")
 
         self._model_loaded = True
         self.logger.debug(f"cannedPhrases count: {len(self.corpus_phrases)}")
@@ -107,7 +128,7 @@ class CannedPhrasesPredictor(Predictor):
             question_embedding = self.embedder.encode(context)
 
             # We use hnswlib knn_query method to find the top_k_hits
-            corpus_ids, distances = self.index.knn_query(question_embedding, k=5)
+            corpus_ids, distances = self.index.knn_query(question_embedding, k=10)
 
             # We extract corpus ids and scores for the first query
             hits = [
@@ -202,8 +223,9 @@ class CannedPhrasesPredictor(Predictor):
             # First get direct matches based on both databases:
             sent_prediction = self._find_direct_matches(context, sent_prediction)
 
-            # Get semantic matches based on both databases:
-            sent_prediction = self._find_semantic_matches(context, sent_prediction)
+            # Only do a semantic search if we have more than 2 tokens in context
+            if self.context_tracker.token_count >= 2:
+                sent_prediction = self._find_semantic_matches(context, sent_prediction)
 
         except Exception as e:
             self.logger.error("Exception in cannedPhrases Predict: {e} ")

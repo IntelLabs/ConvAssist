@@ -16,12 +16,12 @@ print(f'script dir: {SCRIPT_DIR}')
 print(f'additional data: {additionaldata}')
 
 a = Analysis(
-    [f'{SCRIPT_DIR}\\src\\ConvAssistUI.py'],
+    [f'{SCRIPT_DIR}\\ConvAssistUI.py'],
     pathex=[],
     binaries=[],
     datas=additionaldata,
     hiddenimports=[],
-    hookspath=[f'{SCRIPT_DIR}\\custom_hooks'],
+    hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],

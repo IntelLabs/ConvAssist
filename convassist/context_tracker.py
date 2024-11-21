@@ -48,3 +48,7 @@ class ContextTracker:
     def context(self, value):
         self._context = value.lower() if value else value
         self._update_context()
+
+    @property
+    def token_count(self):
+        return len(self.tokens)

@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
-from configparser import ConfigParser
+import os
+from configparser import ConfigParser, ExtendedInterpolation
 
 import nltk
 
