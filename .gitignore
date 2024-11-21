@@ -20,5 +20,3 @@ coverage.xml
 convassist/.coverage.*
 tests/test_data/static
 tests/test_data/personalized
-interfaces/Demos/predictor_editor
-interfaces/Demos/prompter

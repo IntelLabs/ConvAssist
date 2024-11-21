@@ -110,7 +110,6 @@ class CannedWordPredictor(SmoothedNgramPredictor):
         except Exception as e:
             self.logger.error(f"exception in creating personalized db : {e}")
 
-        # phrases_toAdd, phrases_toRemove = self.canned_data.add_remove_data
         phrases_toAdd = self.canned_data.all_phrases_as_list()
         phrases_toRemove = []
 

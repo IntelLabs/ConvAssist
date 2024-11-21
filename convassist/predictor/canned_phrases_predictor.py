@@ -31,7 +31,6 @@ class CannedPhrasesPredictor(Predictor):
         predictor_name,
         logger: logging.Logger | None = None,
     ):
-
         # Only check for GPU one time must be done before predictor is loaded
         if torch.cuda.is_available():
             self.device = "cuda"
@@ -230,6 +229,9 @@ class CannedPhrasesPredictor(Predictor):
 
         except Exception as e:
             self.logger.error("Exception in cannedPhrases Predict: {e} ")
+
+        if len(sent_prediction) == 0:
+            self.logger.error("No canned phrases found")
 
         self.logger.info(f"Got {len(sent_prediction)} sentence suggestions.")
         return sent_prediction[:max_partial_prediction_size], word_prediction

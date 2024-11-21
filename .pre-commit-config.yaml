@@ -27,7 +27,6 @@ repos:
           - --license-filepath
           # defaults to: LICENSE.txt
           - HEADER
-
   # python code formatting
   - repo: https://github.com/psf/black
     rev: 22.6.0
