@@ -50,8 +50,8 @@ class Suggestion:
 
     @probability.setter
     def probability(self, value):
-        # if value < MIN_PROBABILITY or value > MAX_PROBABILITY:
-        #     raise SuggestionException("Probability is too high or too low = " + str(value))
+        if value < MIN_PROBABILITY or value > MAX_PROBABILITY:
+            raise SuggestionException("Probability is too high or too low = " + str(value))
         self._probability = value
 
     @probability.deleter

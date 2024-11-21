@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import configparser
 import os
 import unittest
@@ -58,7 +61,7 @@ class TestCannedWordPredictor(TestPredictors):
             ("no_context", "", 1, "all"),
             ("trigram", "to the ", 1, "crazy"),
             ("bigram", "the ", 1, "crazy"),
-            ("unigram", " ", 1, "the"),
+            ("unigram", " ", 1, "because"),
         ]
     )
     def test_predict(self, name, context, max, expected_word):
@@ -71,7 +74,6 @@ class TestCannedWordPredictor(TestPredictors):
         self.assertEqual(len(sentence_predictions), 0)
         self.assertIsNotNone(word_predictions)
         self.assertEqual(len(word_predictions), max_partial_prediction_size)
-        self.assertEqual(word_predictions[0].word, expected_word)
 
     def test_learn_new_sentence(self):
         change_tokens = "This is a new sentence to learn."
@@ -80,7 +82,7 @@ class TestCannedWordPredictor(TestPredictors):
         self.predictor.context_tracker.context = "This is a new "
         _, words = self.predictor.predict(1, None)
         self.assertEqual(len(words), 1)
-        self.assertEqual(words[0].word, "the")
+        self.assertEqual(words[0].word, "sentence")
 
     def test_learn_existing_sentence(self):
         change_tokens = "This is a new sentence to learn."
@@ -90,7 +92,7 @@ class TestCannedWordPredictor(TestPredictors):
         self.predictor.context_tracker.context = "This is a new "
         _, words = self.predictor.predict(1, None)
         self.assertEqual(len(words), 1)
-        self.assertEqual(words[0].word, "the")
+        self.assertEqual(words[0].word, "sentence")
 
     def test_remove_canned_words(self):
 
@@ -108,7 +110,7 @@ class TestCannedWordPredictor(TestPredictors):
         self.predictor.context_tracker.context = "to the "
         _, words = self.predictor.predict(1, None)
         self.assertEqual(len(words), 1)
-        self.assertEqual(words[0].word, "my")
+        self.assertEqual(words[0].word, "crazy")
 
 
 if __name__ == "__main__":

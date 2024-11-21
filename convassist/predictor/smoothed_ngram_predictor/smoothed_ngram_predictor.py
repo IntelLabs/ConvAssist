@@ -179,29 +179,15 @@ class SmoothedNgramPredictor(Predictor):
 
                 change_tokens = self.extract_svo(change_tokens)
 
-                change_tokens = change_tokens.split()
+                # change_tokens = change_tokens.split()
                 for curr_card in range(self.cardinality):
-                    ngram_map = NgramMap()
-                    ngs = self.generate_ngrams(change_tokens, curr_card)
-                    # ngram_map = self.getNgramMap(ngs, ngram_map)
-                    for item in ngs:
-                        tokens = item.split(" ")
-                        ngram_list = []
-                        for token in tokens:
-                            idx = ngram_map.add_token(token)
-                            ngram_list.append(idx)
-                        ngram_map.add(ngram_list)
+                    ngram_map = NgramMap(curr_card, change_tokens)
 
                     # write this ngram_map to LM ...
                     # for every ngram, get db count, update or insert
                     for ngram, count in ngram_map.items():
-                        old_count = self.ngram_db_conn.ngram_count(ngram)
-                        if old_count > 0:
-                            self.ngram_db_conn.update_ngram(ngram, old_count + count)
-                            self.ngram_db_conn.commit()
-                        else:
-                            self.ngram_db_conn.insert_ngram(ngram, count)
-                            self.ngram_db_conn.commit()
+                        self.ngram_db_conn.insert_ngram(curr_card + 1, ngram, count, True)
+                        self.ngram_db_conn.commit()
             except Exception as e:
                 self.logger.error(f"{self.predictor_name} learn function: {e}")
 
