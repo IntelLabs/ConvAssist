@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import configparser
 import unittest
 from unittest.mock import patch
@@ -51,11 +54,11 @@ class TestSentenceCompletionPredictor(TestPredictors):
             "retrieveaac": "False",
             "sent_database": "sent_database.db",
             "retrieve_database": "all_aac.txt",
-            "modelname": "aac_gpt2",
-            "tokenizer": "aac_gpt2",
+            "modelname": "IntelLabs/aac_gpt2",
+            "tokenizer": "IntelLabs/aac_gpt2",
             "startsents": "startSentences.txt",
             "embedding_cache_path": "all_aac_embeddings.pkl",
-            "sentence_transformer_model": "multi-qa-MiniLM-L6-cos-v1",
+            "sentence_transformer_model": "sentence-transformers/multi-qa-MiniLM-L6-cos-v1",
             "index_path": "all_aac_semanticSearch.index",
             "blacklist_file": "filter_words.txt",
             "stopwords": "stopwords.txt",

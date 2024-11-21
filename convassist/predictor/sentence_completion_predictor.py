@@ -94,7 +94,6 @@ class SentenceCompletionPredictor(Predictor):
         self.embedder = SentenceTransformer(
             str(self.sentence_transformer_model),
             device=self.device,
-            local_files_only=True,
             tokenizer_kwargs={"clean_up_tokenization_spaces": "True"},
         )
         self.embedding_size = 384  # Size of embeddings
@@ -180,30 +179,29 @@ class SentenceCompletionPredictor(Predictor):
         if self.model_loaded:
             return
 
-        if os.path.exists(self.modelname):
-            try:
-                self.logger.debug(f"Loading gpt2 model from {str(self.modelname)}")
+        try:
+            self.logger.debug(f"Loading gpt2 model from {str(self.modelname)}")
 
-                device = 0 if self.device == "cuda" or self.device == "mps" else -1
+            device = 0 if self.device == "cuda" or self.device == "mps" else -1
 
-                tokenizer = transformers.GPT2Tokenizer.from_pretrained(self.tokenizer)
-                assert tokenizer is not None
-                model = transformers.GPT2LMHeadModel.from_pretrained(self.modelname)
-                assert model is not None
+            tokenizer = transformers.GPT2Tokenizer.from_pretrained(self.tokenizer)
+            assert tokenizer is not None
+            model = transformers.GPT2LMHeadModel.from_pretrained(self.modelname)
+            assert model is not None
 
-                tokenizer.pad_token_id = tokenizer.eos_token_id
+            tokenizer.pad_token_id = tokenizer.eos_token_id
 
-                self.sentence_generator = transformers.pipeline(
-                    "text-generation",
-                    model=model,
-                    tokenizer=tokenizer,
-                    device=device,
-                )
-                assert self.sentence_generator is not None
-                self._model_loaded = True
-            except Exception as e:
-                self.logger.error(f"Exception in SentenceCompletionPredictor load_model = {e}")
-                self._model_loaded = False
+            self.sentence_generator = transformers.pipeline(
+                "text-generation",
+                model=model,
+                tokenizer=tokenizer,
+                device=device,
+            )
+            assert self.sentence_generator is not None
+            self._model_loaded = True
+        except Exception as e:
+            self.logger.error(f"Exception in SentenceCompletionPredictor load_model = {e}")
+            self._model_loaded = False
 
         self.logger.debug(f"SentenceCompletionPredictor MODEL status: {self.model_loaded}")
 

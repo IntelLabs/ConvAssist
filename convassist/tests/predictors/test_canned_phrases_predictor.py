@@ -72,7 +72,6 @@ class TestCannedPhrasesPredictor(TestPredictors):
         self.assertTrue(os.path.exists(self.predictor.index_path))
         self.assertTrue(os.path.exists(self.predictor.personalized_cannedphrases))
         self.assertTrue(os.path.exists(self.predictor._personalized_resources_path))
-        self.assertTrue(os.path.exists(self.predictor.sbertmodel))
         self.assertTrue(os.path.exists(self.predictor._static_resources_path))
         self.assertTrue(os.path.exists(self.predictor.stopwordsFile))
         self.assertTrue(os.path.exists(self.predictor.sentences_db_path))

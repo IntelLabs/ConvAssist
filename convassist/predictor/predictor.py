@@ -176,7 +176,7 @@ class Predictor(ABC):
 
     @property
     def modelname(self):
-        return os.path.join(self._static_resources_path, self._modelname)
+        return self._modelname
 
     @property
     def personalized_cannedphrases(self):
@@ -192,11 +192,11 @@ class Predictor(ABC):
 
     @property
     def sbertmodel(self):
-        return os.path.join(self._static_resources_path, self._sbertmodel)
+        return self._sbertmodel
 
     @property
     def sentence_transformer_model(self):
-        return os.path.join(self._static_resources_path, self._sentence_transformer_model)
+        return self._sentence_transformer_model
 
     @property
     def sent_database(self):
@@ -234,7 +234,7 @@ class Predictor(ABC):
 
     @property
     def tokenizer(self):
-        return os.path.join(self._static_resources_path, self._tokenizer)
+        return self._tokenizer
 
     @property
     def startwords(self):
