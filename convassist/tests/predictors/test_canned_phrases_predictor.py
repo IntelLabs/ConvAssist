@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import configparser
 import os
 import time
@@ -36,7 +39,7 @@ class TestCannedPhrasesPredictor(TestPredictors):
             "learn": "True",
             "embedding_cache_path": "personalizedCannedPhrases_embeddings.pkl",
             "index_path": "hnswlib_canned.index",
-            "sbertmodel": "multi-qa-MiniLM-L6-cos-v1",
+            "sbertmodel": "sentence-transformers/multi-qa-MiniLM-L6-cos-v1",
         }
 
         self.config["ContextTracker"] = {"lowercase_mode": "True"}

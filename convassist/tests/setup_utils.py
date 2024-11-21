@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import os
 import shutil
 import unittest
@@ -22,17 +25,18 @@ def copy_static_resources():
 
     try:
         assert third_party_files
-        shutil.copytree(
-            f"{third_party_files}/aac_gpt2",
-            f"{SOURCE_DIR}/test_data/static/aac_gpt2",
-            dirs_exist_ok=True,
-        )
+        # shutil.copytree(
+        #     f"{third_party_files}/aac_gpt2",
+        #     f"{SOURCE_DIR}/test_data/static/aac_gpt2",
+        #     dirs_exist_ok=True,
+        # )
 
-        shutil.copytree(
-            f"{third_party_files}/multi-qa-MiniLM-L6-cos-v1",
-            f"{SOURCE_DIR}/test_data/static/multi-qa-MiniLM-L6-cos-v1",
-            dirs_exist_ok=True,
-        )
+        # shutil.copytree(
+        #     f"{third_party_files}/multi-qa-MiniLM-L6-cos-v1",
+        #     f"{SOURCE_DIR}/test_data/static/multi-qa-MiniLM-L6-cos-v1",
+        #     dirs_exist_ok=True,
+        # )
+
         shutil.copytree(
             f"{third_party_files}/aac_dataset/",
             f"{SOURCE_DIR}/test_data/static",
