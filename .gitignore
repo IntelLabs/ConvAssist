@@ -7,6 +7,10 @@ tests/test_data/dbs/*
 build/
 dist/
 
+# Ignore 3rd party resources
+3rd_party_resources/aac_dataset
+3rd_party_resources/daily_dialog
+
 .coverage*
 .DS_Store
 results/

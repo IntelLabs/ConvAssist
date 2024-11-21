@@ -15,6 +15,9 @@ class NLP(metaclass=Singleton):
         self.nlp = self.load_nlp()
 
     def load_nlp(self):
+        # TODO: Move this to always download the model from the internet
+        # TODO: Move this to a config file
+
         nlp_loc = "en_core_web_sm"
         # spacy model is in _MEIPASS when running as a pyinstaller executable
         if hasattr(sys, "_MEIPASS"):  # pragma: no cover
