@@ -5,7 +5,7 @@ import collections
 import string
 from typing import Iterable, List, Tuple
 
-from nltk import word_tokenize
+# from nltk import word_tokenize
 
 
 class NgramMap:
@@ -131,7 +131,7 @@ class NgramMap:
 
     @staticmethod
     def generateNgrams(tokens, cardinality):
-        cardinality = cardinality + 1
+        cardinality = cardinality
         # Use the zip function to help us generate n-grams
         # Concatenate the tokens into ngrams and return
         ngrams = zip(*[tokens[i:] for i in range(cardinality)])

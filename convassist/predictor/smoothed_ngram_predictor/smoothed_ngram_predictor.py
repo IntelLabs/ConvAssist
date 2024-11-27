@@ -2,58 +2,32 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import string
+from abc import ABC, abstractmethod
+from io import FileIO
 from typing import List
 
-from ...utilities.databaseutils.sqllite_ngram_dbconnector import (
-    SQLiteNgramDatabaseConnector,
-)
-from ..predictor import Predictor
-from ..utilities.prediction import Prediction, Suggestion
-from .ngram_map import NgramMap
+from convassist.predictor import Predictor
+from convassist.predictor.utilities.prediction import Prediction, Suggestion
+from convassist.utilities.ngram.ngramutil import NGramUtil
 
 
-class SmoothedNgramPredictor(Predictor):
+class SmoothedNgramPredictor(Predictor, ABC):
     """
     SmoothedNgramPredictor is a class that extends the Predictor class to provide
     functionality for predicting the next word(s) in a sequence using smoothed n-grams.
-
-    Methods:
-        configure() -> None:
-            Configures the predictor by initializing the n-gram database connector and recreating the database.
-
-        recreate_database():
-            Placeholder method for recreating the database.
-
-        extract_svo(sent):
-            Default implementation that returns the input sentence.
-
-        generate_ngrams(token, n):
-            Generates n-grams from the given tokens.
-
-        getNgramMap(ngs, ngram_map):
-            Populates the n-gram map with the given n-grams.
-
-        predict(max_partial_prediction_size: int, filter):
-            Predicts the next word(s) based on the context and n-gram database.
-
-        _count(tokens, offset, ngram_size):
-            Counts the occurrences of the specified n-gram in the database.
-
-        learn(change_tokens):
-            Learns new n-grams from the given tokens and updates the n-gram database.
     """
 
     def configure(self) -> None:
-        self.ngram_db_conn = SQLiteNgramDatabaseConnector(self.database, self.cardinality)
-
-        self.recreate_database()
-
-    def recreate_database(self):
+        # # make sure personalized databases are updated
+        # with NGramUtil(self.database, cardinality=3) as ngramutil:
+        #     with open(self.personalized_cannedphrases, "r") as f:
+        #         for line in f:
+        #             ngramutil.learn(line.strip('.\n'))
         pass
 
-    # Default implementation
+    @abstractmethod
     def extract_svo(self, sent):
-        return sent
+        raise NotImplementedError(f"extract_svo not implemented in {self.predictor_name}")
 
     def predict(self, max_partial_prediction_size: int, filter):
 
@@ -62,36 +36,33 @@ class SmoothedNgramPredictor(Predictor):
 
         # get self.cardinality tokens from the context tracker
         actual_tokens, tokens = self.context_tracker.get_tokens(self.cardinality)
-
-        # if actual_tokens == 0 or not tokens:
-        #     self.logger.warning("No tokens in the context tracker.")
-        #     return sentence_prediction, word_prediction
+        prefix_completion_candidates: List[str] = []
 
         try:
-            assert self.ngram_db_conn is not None
-            self.ngram_db_conn.connect()
-
-            prefix_completion_candidates: List[str] = []
-
             partial = None
             prefix_ngram = None
             for ngram_len in reversed(range(actual_tokens + 1)):
-                if ngram_len:
-                    prefix_ngram = tokens[-(ngram_len):]
-                else:
-                    # just get the last token
-                    prefix_ngram = tokens[-1:]
+                if len(prefix_completion_candidates) >= max_partial_prediction_size:
+                    break
 
-                if prefix_ngram:
-                    partial = self.ngram_db_conn.ngram_fetch_like(
-                        prefix_ngram,
-                        max_partial_prediction_size - len(prefix_completion_candidates),
-                    )
+                with NGramUtil(self.database, ngram_len) as ngramutil:
 
-                if partial:
+                    if ngram_len:
+                        prefix_ngram = tokens[-(ngram_len):]
+                    else:
+                        # just get the last token
+                        prefix_ngram = tokens[-1:]
+
+                    if prefix_ngram:
+                        try:
+                            partial = ngramutil.fetch_like(
+                                prefix_ngram,
+                                max_partial_prediction_size - len(prefix_completion_candidates),
+                            )
+                        except Exception as e:
+                            self.logger.error(f"Error fetching ngrams for {prefix_ngram}: {e}")
+                            continue
                     for p in partial:
-                        if len(prefix_completion_candidates) >= max_partial_prediction_size:
-                            break
                         candidate = p[-2]
                         if (
                             candidate not in tokens
@@ -99,51 +70,44 @@ class SmoothedNgramPredictor(Predictor):
                         ):
                             prefix_completion_candidates.append(candidate)
 
-                if len(prefix_completion_candidates) >= max_partial_prediction_size:
-                    break
+                        # smoothing
+                        unigram_counts_sum = ngramutil.unigram_counts_sum()
 
-            # smoothing
-            unigram_counts_sum = self.ngram_db_conn.unigram_counts_sum()
+                        candidate_tokens = [""] * ngram_len
+                        for i in range(actual_tokens):
+                            candidate_tokens[i] = tokens[i]
 
-            candidate_tokens = [""] * self.cardinality
-            for i in range(actual_tokens):
-                candidate_tokens[i] = tokens[i]
+                        for j, candidate in enumerate(prefix_completion_candidates):
+                            candidate_tokens[ngram_len - 1] = candidate
+                            probability = 0.0
+                            for k in range(ngram_len):
+                                numerator = ngramutil.count(candidate_tokens, 0, k + 1)
 
-            for j, candidate in enumerate(prefix_completion_candidates):
-                candidate_tokens[self.cardinality - 1] = candidate
-                probability = 0.0
-                for k in range(self.cardinality):
-                    numerator = self._count(candidate_tokens, 0, k + 1)
-
-                    denominator = unigram_counts_sum
-                    if numerator > 0:
-                        denominator = self._count(candidate_tokens, -1, k)
-                    frequency = 0
-                    if denominator > 0:
-                        frequency = float(numerator) / denominator
-                    probability += float(self.deltas[k]) * frequency
-                if probability > 0:
-                    if all(
-                        char in string.punctuation
-                        for char in candidate_tokens[self.cardinality - 1]
-                    ):
-                        self.logger.debug(
-                            candidate_tokens[self.cardinality - 1] + " contains punctuations "
-                        )
-                    else:
-                        word_prediction.add_suggestion(
-                            Suggestion(
-                                candidate_tokens[self.cardinality - 1],
-                                probability,
-                                self.predictor_name,
-                            )
-                        )
+                                denominator = unigram_counts_sum
+                                if numerator > 0:
+                                    denominator = ngramutil.count(candidate_tokens, -1, k)
+                                frequency = 0
+                                if denominator > 0:
+                                    frequency = float(numerator) / denominator
+                                probability += float(self.deltas[k]) * frequency
+                            if probability > 0:
+                                if all(
+                                    char in string.punctuation
+                                    for char in candidate_tokens[ngram_len - 1]
+                                ):
+                                    self.logger.debug(
+                                        candidate_tokens[ngram_len - 1] + " contains punctuations "
+                                    )
+                                else:
+                                    word_prediction.add_suggestion(
+                                        Suggestion(
+                                            candidate_tokens[ngram_len - 1],
+                                            probability,
+                                            self.predictor_name,
+                                        )
+                                    )
         except Exception as e:
             self.logger.error(f"Exception in {self.predictor_name} predict function: {e}")
-
-        finally:
-            if self.ngram_db_conn is not None:
-                self.ngram_db_conn.close
 
         if len(word_prediction) == 0:
             self.logger.error(f"No predictions from {self.predictor_name}")
@@ -154,44 +118,20 @@ class SmoothedNgramPredictor(Predictor):
 
         return sentence_prediction, word_prediction
 
-    def _count(self, tokens, offset, ngram_size):
-        result = 0
-        if ngram_size > 0:
-            ngram = tokens[len(tokens) - ngram_size + offset : len(tokens) + offset]
-            result = self.ngram_db_conn.ngram_count(ngram)
-        else:
-            result = self.ngram_db_conn.unigram_counts_sum()
-        return result
-
-    def learn(self, change_tokens):
+    def learn(self, phrase):
         # build up ngram map for all cardinalities
         # i.e. learn all ngrams and counts in memory
         if self.learn_enabled:
-            try:
-                assert self.ngram_db_conn is not None
-                self.ngram_db_conn.connect()
+            with NGramUtil(self.database, self.cardinality) as ngramutil:
+                try:
+                    self.logger.debug(f"learning ...{phrase}")
 
-                self.logger.debug("learning ..." + str(change_tokens))
-                change_tokens = change_tokens.lower().translate(
-                    str.maketrans("", "", string.punctuation)
-                )
-                self.logger.debug("after removing punctuations, change_tokens = " + change_tokens)
+                    phrase = phrase.lower().translate(str.maketrans("", "", string.punctuation))
+                    phrase = self.extract_svo(phrase)
 
-                change_tokens = self.extract_svo(change_tokens)
+                    ngramutil.learn(phrase)
 
-                # change_tokens = change_tokens.split()
-                for curr_card in range(self.cardinality):
-                    ngram_map = NgramMap(curr_card, change_tokens)
+                except Exception as e:
+                    self.logger.error(f"{self.predictor_name} learn function: {e}")
 
-                    # write this ngram_map to LM ...
-                    # for every ngram, get db count, update or insert
-                    for ngram, count in ngram_map.items():
-                        self.ngram_db_conn.insert_ngram(curr_card + 1, ngram, count, True)
-                        self.ngram_db_conn.commit()
-            except Exception as e:
-                self.logger.error(f"{self.predictor_name} learn function: {e}")
-
-            finally:
-                if self.ngram_db_conn is not None:
-                    self.ngram_db_conn.close
         pass

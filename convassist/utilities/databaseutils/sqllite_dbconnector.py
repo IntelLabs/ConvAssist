@@ -59,6 +59,9 @@ class SQLiteDatabaseConnector(DatabaseConnector):
             cursor.execute(query, params or ())
             result = cursor.fetchall()
 
+        except Exception as e:
+            raise DatabaseError(f"Error fetching data from database:{e}")
+
         finally:
             cursor.close()
             return result
@@ -88,6 +91,5 @@ class SQLiteDatabaseConnector(DatabaseConnector):
                 ({', '.join(columns)})
             """
             )
-            self.close()
         except Exception as e:
             raise Exception(f"Unable to create table {tablename} in {self.dbname}.", e)

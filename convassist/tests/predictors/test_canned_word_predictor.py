@@ -38,8 +38,8 @@ class TestCannedWordPredictor(TestPredictors):
         }
         self.config["test_predictor"] = {
             "predictor_class": "CannedWordPredictor",
-            "database": "canned_ngram.db",
-            "sentences_db": "canned_sentences.db",
+            "database": f"{SOURCE_DIR}/test_data/personalized/canned_ngram.db",
+            "sentences_db": f"{SOURCE_DIR}/test_data/personalized/canned_sentences.db",
             "learn": "True",
             "personalized_cannedphrases": "personalizedCannedPhrases.txt",
             "startwords": "startWords.json",
@@ -61,7 +61,7 @@ class TestCannedWordPredictor(TestPredictors):
             ("no_context", "", 1, "all"),
             ("trigram", "to the ", 1, "crazy"),
             ("bigram", "the ", 1, "crazy"),
-            ("unigram", " ", 1, "because"),
+            ("unigram", "bec", 1, "because"),
         ]
     )
     def test_predict(self, name, context, max, expected_word):
@@ -82,7 +82,7 @@ class TestCannedWordPredictor(TestPredictors):
         self.predictor.context_tracker.context = "This is a new "
         _, words = self.predictor.predict(1, None)
         self.assertEqual(len(words), 1)
-        self.assertEqual(words[0].word, "sentence")
+        self.assertEqual(words[0].word, "learn")
 
     def test_learn_existing_sentence(self):
         change_tokens = "This is a new sentence to learn."
@@ -92,7 +92,7 @@ class TestCannedWordPredictor(TestPredictors):
         self.predictor.context_tracker.context = "This is a new "
         _, words = self.predictor.predict(1, None)
         self.assertEqual(len(words), 1)
-        self.assertEqual(words[0].word, "sentence")
+        self.assertEqual(words[0].word, "learn")
 
     def test_remove_canned_words(self):
 

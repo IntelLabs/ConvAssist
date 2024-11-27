@@ -7,6 +7,8 @@ import unittest
 
 import backpedal
 
+from convassist.utilities.ngram.ngramutil import NGramUtil
+
 SOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -97,6 +99,13 @@ def setup_personalized_resources():
         f"{SOURCE_DIR}/test_data/start_words.json",
         f"{SOURCE_DIR}/test_data/personalized/startWords.json",
     )
+
+    with NGramUtil(
+        f"{SOURCE_DIR}/test_data/personalized/canned_ngram.db", cardinality=3
+    ) as ngramutil:
+        with open(f"{SOURCE_DIR}/test_data/personalized/startSentences.txt", "r") as f:
+            for line in f:
+                ngramutil.learn(line.strip(".\n"))
 
 
 def teardown_personalized_resources():
