@@ -34,6 +34,8 @@ class TestSentenceCompletionPredictor(TestPredictors):
     @patch("torch.cuda.is_available", return_value=False)
     @patch("torch.backends.mps.is_available", return_value=False)
     def setUp(self, mock_cuda, mock_mps):
+        setup_utils.setup_static_resources()
+        setup_utils.setup_personalized_resources()
 
         SOURCE_DIR = setup_utils.SOURCE_DIR
 
@@ -51,7 +53,7 @@ class TestSentenceCompletionPredictor(TestPredictors):
             "predictor_class": "SentenceCompletionPredictor",
             "learn": "True",
             "test_generalsentenceprediction": "False",
-            "retrieveaac": "False",
+            "retrieveaac": "True",
             "sent_database": "sent_database.db",
             "retrieve_database": "all_aac.txt",
             "modelname": "IntelLabs/aac_gpt2",

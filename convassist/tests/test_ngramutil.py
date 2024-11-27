@@ -5,6 +5,7 @@ import unittest
 
 from parameterized import parameterized
 
+from convassist.context_tracker import ContextTracker
 from convassist.utilities.ngram.ngramutil import NGramUtil
 
 
@@ -58,8 +59,8 @@ class TestNGramUtil(unittest.TestCase):
     def test_fetch_like_multiple(self):
         # Test the fetch_like method of NGramUtil
         self.cardinality = 1
-        # database = ":memory:"
-        database = "test.db"
+        database = ":memory:"
+        # database = "test.db"
         with NGramUtil(database, self.cardinality) as ngramutil:
             assert ngramutil._table_exists(f"_{self.cardinality}_gram")
 
@@ -76,11 +77,11 @@ class TestNGramUtil(unittest.TestCase):
 
     @parameterized.expand(
         [
-            ("all your bases are mine", "bases are", "mine", 3),
-            ("all your bases are mine", "are", "mine", 2),
+            ("all your bases are mine", "bases are ", "mine", 3),
+            ("all your bases are mine", "are ", "mine", 2),
             ("all your bases are mine", "mine", "mine", 1),
-            ("it's a beautiful day in the neighborhood", "beautiful day", "in", 3),
-            ("it's beautiful", "it's", "beautiful", 2),
+            ("it's a beautiful day in the neighborhood", "beautiful day ", "in", 3),
+            ("it's beautiful", "it's ", "beautiful", 2),
             ("it's", "it's", "it's", 1),
         ]
     )
@@ -88,11 +89,16 @@ class TestNGramUtil(unittest.TestCase):
         database = ":memory:"
         # database = "test.db"
         with NGramUtil(database, card) as ngramutil:
-            assert ngramutil._table_exists(f"_{card}_gram")
+
+            for i in range(1, card + 1):
+                assert ngramutil._table_exists(f"_{i}_gram")
 
             ngramutil.learn(phrase)
 
-            assert ngramutil.fetch_like(str.split(fetch), 1) == [(expected, 1)]
+            ct = ContextTracker()
+            ct.context = fetch
+            _, tokens = ct.get_tokens(card)
+            assert ngramutil.fetch_like(tokens) == [(expected, 1)]
 
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ class TestNgramMap(unittest.TestCase):
 
     def testCreateNgramMap(self):
         phrase = "all your bases are mine"
-        cardinality = 2
+        cardinality = 3
         expected = [
             (["all", "your", "bases"], 1),
             (["your", "bases", "are"], 1),

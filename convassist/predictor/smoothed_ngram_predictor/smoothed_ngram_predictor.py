@@ -41,7 +41,7 @@ class SmoothedNgramPredictor(Predictor, ABC):
         try:
             partial = None
             prefix_ngram = None
-            for ngram_len in reversed(range(actual_tokens + 1)):
+            for ngram_len in reversed(range(1, actual_tokens + 1)):
                 if len(prefix_completion_candidates) >= max_partial_prediction_size:
                     break
 

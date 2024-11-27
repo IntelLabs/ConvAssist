@@ -315,27 +315,34 @@ class NGramUtil:
             for ngram, count in ngram_map.items():
                 self._insert_ngram(card, ngram, count, True)
 
-    def fetch_like(self, ngram, limit=-1):
+    def fetch_like(self, ngram: list, limit=-1):
         assert self._connection is not None
 
         try:
             query: str = ""
             table_name = f"_{self._cardinality}_gram"
             conditions = []
-            params = []
 
-            for i in range(self._cardinality - 1):
-                word_idx = self._cardinality - i - 1
-                if i == self._cardinality - 2:
-                    conditions.append(f"word_{word_idx} LIKE ? || '%'")
-                    params.append(ngram[-1])
+            for i in reversed(range(len(ngram))):
+                if i == 0:
+                    conditions.append("word LIKE ? || '%'")
+                    # params.append(ngram[i])
                 else:
-                    conditions.append(f"word_{word_idx} = ?")
-                    params.append(ngram[-(i + 2)])
+                    conditions.append(f"word_{i} = ?")
+                    # params.append(ngram[i])
 
-            if not conditions:
-                conditions.append("word LIKE ? || '%'")
-                params.append(ngram[-1])
+            # for i in range(self._cardinality - 1):
+            #     word_idx = self._cardinality - i - 1
+            #     if i == self._cardinality - 2:
+            #         conditions.append(f"word_{word_idx} LIKE ? || '%'")
+            #         params.append(ngram[-1])
+            #     else:
+            #         conditions.append(f"word_{word_idx} = ?")
+            #         params.append(ngram[-(i + 2)])
+
+            # if not conditions:
+            #     conditions.append("word LIKE ? || '%'")
+            #     params.append(ngram[-1])
 
             where_clause = " AND ".join(conditions)
             query = (
@@ -347,7 +354,7 @@ class NGramUtil:
             else:
                 query += f" LIMIT {limit};"
 
-            result = self._connection.fetch_all(query, params)
+            result = self._connection.fetch_all(query, ngram)
         except Exception as e:
             raise Exception(f"{__class__}{__name__} failed to fetch ngram: {e}")
 

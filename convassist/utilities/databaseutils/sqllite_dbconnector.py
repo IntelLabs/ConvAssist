@@ -32,6 +32,8 @@ class SQLiteDatabaseConnector(DatabaseConnector):
             cursor.execute(query, params or ())
             self.conn.commit()
 
+        except Exception as e:
+            raise DatabaseError(f"Error executing query:{e}")
         finally:
             cursor.close()
 
@@ -82,9 +84,10 @@ class SQLiteDatabaseConnector(DatabaseConnector):
         self.conn.rollback()
 
     def create_table(self, tablename: str, columns: List[str]) -> None:
-        try:
-            self.connect()
+        if not self.conn:
+            raise DatabaseError("Database connection is not established.")
 
+        try:
             self.execute_query(
                 f"""
                 CREATE TABLE IF NOT EXISTS {tablename}
