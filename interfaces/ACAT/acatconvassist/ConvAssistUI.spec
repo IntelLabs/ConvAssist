@@ -7,7 +7,7 @@ from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__name__))
 
 additionaldata = []
-# additionaldata = [('src\\assets', 'assets')]
+additionaldata = [('assets', 'assets')]
 additionaldata += copy_metadata('convassist')
 additionaldata += collect_data_files("sv_ttk")
 additionaldata += collect_data_files("en_core_web_sm")
@@ -49,7 +49,7 @@ exe = EXE(
     console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
-    icon=f'{SCRIPT_DIR}\\src\\assets\\icon_tray.ico'
+    icon=f'{SCRIPT_DIR}\\Assets\\icon_tray.ico'
 )
 
 

@@ -1,48 +1,47 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import os
 import shutil
 import unittest
 
 import backpedal
 
+from convassist.utilities.ngram.ngramutil import NGramUtil
+
 SOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def find_resources(dir_name):
-    return backpedal.find(dir_name, path=SOURCE_DIR, direction="up", item_type="directory")
+# def find_resources(dir_name):
+#     return backpedal.find(dir_name, path=SOURCE_DIR, direction="up", item_type="directory")
 
 
-STATIC_DIR = find_resources("3rd_party_resources")
+# STATIC_DIR = find_resources("3rd_party_resources")
 
 
 def copy_static_resources():
     if not os.path.exists(f"{SOURCE_DIR}/test_data/static"):
         os.makedirs(f"{SOURCE_DIR}/test_data/static")
 
-    third_party_files = find_resources("3rd_party_resources")
+    # third_party_files = find_resources("3rd_party_resources")
 
     try:
-        assert third_party_files
-        shutil.copytree(
-            f"{third_party_files}/aac_gpt2",
-            f"{SOURCE_DIR}/test_data/static/aac_gpt2",
-            dirs_exist_ok=True,
+        # assert third_party_files
+        # shutil.copytree(
+        #     f"{third_party_files}/aac_dataset/",
+        #     f"{SOURCE_DIR}/test_data/static",
+        #     dirs_exist_ok=True,
+        # )
+        # shutil.copytree(
+        #     f"{third_party_files}/daily_dialog/",
+        #     f"{SOURCE_DIR}/test_data/static",
+        #     dirs_exist_ok=True,
+        # )
+        shutil.copy(
+            f"{SOURCE_DIR}/test_data/token_data.txt",
+            f"{SOURCE_DIR}/test_data/static/all_aac.txt",
         )
 
-        shutil.copytree(
-            f"{third_party_files}/multi-qa-MiniLM-L6-cos-v1",
-            f"{SOURCE_DIR}/test_data/static/multi-qa-MiniLM-L6-cos-v1",
-            dirs_exist_ok=True,
-        )
-        shutil.copytree(
-            f"{third_party_files}/aac_dataset/",
-            f"{SOURCE_DIR}/test_data/static",
-            dirs_exist_ok=True,
-        )
-        shutil.copytree(
-            f"{third_party_files}/daily_dialog/",
-            f"{SOURCE_DIR}/test_data/static",
-            dirs_exist_ok=True,
-        )
     except Exception as e:
         print(f"Error copying files: {e}")
 
@@ -60,8 +59,12 @@ def setup_static_resources():
     with open(f"{SOURCE_DIR}/test_data/static/filter_words.txt", "w") as f:
         f.write("filter\n")
 
-    # with open(f"{SOURCE_DIR}/test_data/static/all_aac.txt", "w") as f:
-    #     f.write("all\nyour\nbases\nare\nmine\n")
+
+def setup_test_words_db():
+    with NGramUtil(f"{SOURCE_DIR}/test_data/static/test_words.db", cardinality=3) as ngramutil:
+        with open(f"{SOURCE_DIR}/test_data/personalized/startSentences.txt", "r") as f:
+            for line in f:
+                ngramutil.learn(line.strip(".\n"))
 
 
 def remove_directory(directory):
@@ -105,6 +108,13 @@ def setup_personalized_resources():
         f"{SOURCE_DIR}/test_data/start_words.json",
         f"{SOURCE_DIR}/test_data/personalized/startWords.json",
     )
+
+    with NGramUtil(
+        f"{SOURCE_DIR}/test_data/personalized/canned_ngram.db", cardinality=3
+    ) as ngramutil:
+        with open(f"{SOURCE_DIR}/test_data/personalized/startSentences.txt", "r") as f:
+            for line in f:
+                ngramutil.learn(line.strip(".\n"))
 
 
 def teardown_personalized_resources():

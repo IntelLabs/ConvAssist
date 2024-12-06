@@ -17,10 +17,12 @@ from nltk import sent_tokenize, word_tokenize
 from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
 
-from ..utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
-from .predictor import Predictor
-from .utilities.nlp import NLP
-from .utilities.prediction import Prediction, Suggestion
+from convassist.predictor import Predictor
+from convassist.predictor.utilities.nlp import NLP
+from convassist.predictor.utilities.prediction import Prediction, Suggestion
+from convassist.utilities.databaseutils.sqllite_dbconnector import (
+    SQLiteDatabaseConnector,
+)
 
 
 class SentenceCompletionPredictor(Predictor):
@@ -94,7 +96,6 @@ class SentenceCompletionPredictor(Predictor):
         self.embedder = SentenceTransformer(
             str(self.sentence_transformer_model),
             device=self.device,
-            local_files_only=True,
             tokenizer_kwargs={"clean_up_tokenization_spaces": "True"},
         )
         self.embedding_size = 384  # Size of embeddings
@@ -105,8 +106,11 @@ class SentenceCompletionPredictor(Predictor):
         # We will normalize our vectors to unit length, then is Inner Product equal to cosine similarity
         self.index = hnswlib.Index(space="cosine", dim=self.embedding_size)
 
-        with open(self.retrieve_database) as f:
-            self.corpus_sentences = [s.strip() for s in f.readlines()]
+        if self.retrieveaac:
+            with open(self.retrieve_database) as f:
+                self.corpus_sentences = [s.strip() for s in f.readlines()]
+        else:
+            self.corpus_sentences = []
 
         with open(self.blacklist_file) as f:
             self.blacklist_words = [s.strip() for s in f.readlines()]
@@ -172,7 +176,10 @@ class SentenceCompletionPredictor(Predictor):
         if not Path.is_file(Path(self.sent_database)):
             self.logger.debug(f"{self.sent_database} not found, creating it")
             columns = ["sentence TEXT UNIQUE", "count INTEGER"]
-            SQLiteDatabaseConnector(self.sent_database).create_table("sentences", columns)
+            conn = SQLiteDatabaseConnector(self.sent_database)
+            conn.connect()
+            conn.create_table("sentences", columns)
+            conn.close()
 
     def load_model(self) -> None:
         self.logger.debug(f"{__name__} loading model {str(self._modelname)}")
@@ -180,30 +187,29 @@ class SentenceCompletionPredictor(Predictor):
         if self.model_loaded:
             return
 
-        if os.path.exists(self.modelname):
-            try:
-                self.logger.debug(f"Loading gpt2 model from {str(self.modelname)}")
+        try:
+            self.logger.debug(f"Loading gpt2 model from {str(self.modelname)}")
 
-                device = 0 if self.device == "cuda" or self.device == "mps" else -1
+            device = 0 if self.device == "cuda" or self.device == "mps" else -1
 
-                tokenizer = transformers.GPT2Tokenizer.from_pretrained(self.tokenizer)
-                assert tokenizer is not None
-                model = transformers.GPT2LMHeadModel.from_pretrained(self.modelname)
-                assert model is not None
+            tokenizer = transformers.GPT2Tokenizer.from_pretrained(self.tokenizer)
+            assert tokenizer is not None
+            model = transformers.GPT2LMHeadModel.from_pretrained(self.modelname)
+            assert model is not None
 
-                tokenizer.pad_token_id = tokenizer.eos_token_id
+            tokenizer.pad_token_id = tokenizer.eos_token_id
 
-                self.sentence_generator = transformers.pipeline(
-                    "text-generation",
-                    model=model,
-                    tokenizer=tokenizer,
-                    device=device,
-                )
-                assert self.sentence_generator is not None
-                self._model_loaded = True
-            except Exception as e:
-                self.logger.error(f"Exception in SentenceCompletionPredictor load_model = {e}")
-                self._model_loaded = False
+            self.sentence_generator = transformers.pipeline(
+                "text-generation",
+                model=model,
+                tokenizer=tokenizer,
+                device=device,
+            )
+            assert self.sentence_generator is not None
+            self._model_loaded = True
+        except Exception as e:
+            self.logger.error(f"Exception in SentenceCompletionPredictor load_model = {e}")
+            self._model_loaded = False
 
         self.logger.debug(f"SentenceCompletionPredictor MODEL status: {self.model_loaded}")
 

@@ -1,8 +1,11 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import unittest
 
 from parameterized import parameterized
 
-from ..predictor.smoothed_ngram_predictor.ngram_map import NgramMap
+from ..utilities.ngram.ngram_map import NgramMap
 
 
 class TestNgramMap(unittest.TestCase):
@@ -14,7 +17,7 @@ class TestNgramMap(unittest.TestCase):
 
     def testCreateNgramMap(self):
         phrase = "all your bases are mine"
-        cardinality = 2
+        cardinality = 3
         expected = [
             (["all", "your", "bases"], 1),
             (["your", "bases", "are"], 1),

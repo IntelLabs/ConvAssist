@@ -59,6 +59,9 @@ class GeneralWordPredictor(SmoothedNgramPredictor):
     def startwords(self):
         return os.path.join(self._personalized_resources_path, self._startwords)
 
+    def extract_svo(self, sent):
+        return sent
+
     def predict(self, max_partial_prediction_size: int, filter):
         """
         Predicts the next word based on the context tracker and the n-gram model.

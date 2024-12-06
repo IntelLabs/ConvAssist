@@ -51,7 +51,6 @@ class CannedPhrasesPredictor(Predictor):
         self._model_loaded = False
         self.stemmer = PorterStemmer()
 
-        # TODO Fix this
         if os.path.exists(self.sbertmodel):
             sbertmodel = self.sbertmodel
             localfiles = True

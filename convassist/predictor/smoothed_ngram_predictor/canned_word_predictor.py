@@ -4,10 +4,11 @@
 import json
 import os
 
-from ..utilities.canned_data import cannedData
-from ..utilities.nlp import NLP
-from ..utilities.prediction import Prediction, Suggestion
-from .ngram_map import NgramMap
+from convassist.predictor.utilities.canned_data import cannedData
+from convassist.predictor.utilities.nlp import NLP
+from convassist.predictor.utilities.prediction import Prediction, Suggestion
+from convassist.utilities.ngram.ngram_map import NgramMap
+
 from .smoothed_ngram_predictor import SmoothedNgramPredictor
 
 
@@ -29,9 +30,6 @@ class CannedWordPredictor(SmoothedNgramPredictor):
     """
 
     def configure(self):
-
-        self.canned_data = cannedData(self.sentences_db, self.personalized_cannedphrases)
-
         # load the natural language processing model
         self.nlp = NLP().get_nlp()
 
@@ -60,10 +58,10 @@ class CannedWordPredictor(SmoothedNgramPredictor):
 
         super().configure()
 
-    # Override default properties
-    @property
-    def sentences_db(self):
-        return os.path.join(self._personalized_resources_path, self._sentences_db)
+    # # Override default properties
+    # @property
+    # def sentences_db(self):
+    #     return os.path.join(self._personalized_resources_path, self._sentences_db)
 
     def extract_svo(self, sent):
         doc = self.nlp(sent)

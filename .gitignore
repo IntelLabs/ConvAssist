@@ -3,9 +3,12 @@ tmp/
 htmlcov/
 __pycache__/
 ConvAssist.egg-info/
-tests/test_data/dbs/*
 build/
 dist/
+
+# Ignore 3rd party resources
+3rd_party_resources/aac_dataset
+3rd_party_resources/daily_dialog
 
 .coverage*
 .DS_Store
@@ -19,5 +22,4 @@ interfaces/Demos/continuous_predict/resources/static_resources
 interfaces/Demos/prompter/
 coverage.xml
 convassist/.coverage.*
-tests/test_data/static
-tests/test_data/personalized
+convassist/tests/test_data/*
