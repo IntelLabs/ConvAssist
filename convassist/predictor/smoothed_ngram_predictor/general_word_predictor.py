@@ -10,25 +10,6 @@ from .smoothed_ngram_predictor import SmoothedNgramPredictor
 
 
 class GeneralWordPredictor(SmoothedNgramPredictor):
-    """
-    GeneralWordPredictor is a class that extends SmoothedNgramPredictor to provide word predictions
-    based on a precomputed set of most frequent starting words from an AAC dataset. It overrides
-    certain properties and methods to achieve this functionality.
-    Methods:
-        configure():
-            Configures the predictor by precomputing the most frequent starting words from an AAC dataset
-            and storing them in a file if they are not already stored.
-        aac_dataset:
-            Property that returns the path to the AAC dataset file.
-        database:
-            Property that returns the path to the database file.
-        startwords:
-            Property that returns the path to the file where precomputed starting words are stored.
-        predict(max_partial_prediction_size: int, filter):
-            Predicts the next word based on the context tracker and the n-gram model. If no tokens are
-            available in the context tracker, it returns the most frequent starting words.
-    """
-
     def configure(self):
         super().configure()
 

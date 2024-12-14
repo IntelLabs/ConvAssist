@@ -99,12 +99,8 @@ class ContinuousPredict:
 
         # Create an instance of ConvAssist
         self.ContinuousPredictor = ConvAssist(
-            "CONT_PREDICT", config=config, log_level=logging.ERROR
+            "CONT_PREDICT", config=config, log_level=logging.DEBUG
         )
-
-        # Create an instance of ConvAssistMode
-        self.convAssistMode = ConvAssistMode(self.ContinuousPredictor)
-        self.convAssistMode.set_mode("sentence")
 
         self.command_dict = {
             "help": self.show_help,

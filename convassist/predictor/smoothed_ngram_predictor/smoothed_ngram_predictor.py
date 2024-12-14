@@ -2,8 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import string
-from abc import ABC, abstractmethod
-from io import FileIO
+from abc import ABC
 from typing import List
 
 from convassist.predictor import Predictor
@@ -25,14 +24,15 @@ class SmoothedNgramPredictor(Predictor, ABC):
         #             ngramutil.learn(line.strip('.\n'))
         pass
 
-    @abstractmethod
     def extract_svo(self, sent):
-        raise NotImplementedError(f"extract_svo not implemented in {self.predictor_name}")
+        return sent
 
     def predict(self, max_partial_prediction_size: int, filter):
 
         sentence_prediction = Prediction()
         word_prediction = Prediction()
+
+        self.logger.debug("Starting Ngram prediction")
 
         # get self.cardinality tokens from the context tracker
         actual_tokens, tokens = self.context_tracker.get_tokens(self.cardinality)
@@ -41,7 +41,8 @@ class SmoothedNgramPredictor(Predictor, ABC):
         try:
             partial = None
             prefix_ngram = None
-            for ngram_len in reversed(range(1, actual_tokens + 1)):
+            # for ngram_len in reversed(range(1, actual_tokens + 1)):
+            for ngram_len in range(actual_tokens, 0, -1):
                 if len(prefix_completion_candidates) >= max_partial_prediction_size:
                     break
 
@@ -63,12 +64,13 @@ class SmoothedNgramPredictor(Predictor, ABC):
                             self.logger.error(f"Error fetching ngrams for {prefix_ngram}: {e}")
                             continue
                     for p in partial:
-                        candidate = p[-2]
-                        if (
-                            candidate not in tokens
-                            and candidate not in prefix_completion_candidates
-                        ):
-                            prefix_completion_candidates.append(candidate)
+                        # candidate = p[-2]
+                        # if (
+                        #     candidate not in tokens
+                        #     and candidate not in prefix_completion_candidates
+                        # ):
+                        #     prefix_completion_candidates.append(candidate)
+                        prefix_completion_candidates.append(p[-2])
 
                         # smoothing
                         unigram_counts_sum = ngramutil.unigram_counts_sum()

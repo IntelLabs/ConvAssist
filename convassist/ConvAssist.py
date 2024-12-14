@@ -2,8 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
-import os
-from configparser import ConfigParser, ExtendedInterpolation
+from configparser import ConfigParser
 
 import nltk
 
@@ -24,7 +23,7 @@ class ConvAssist:
         ini_file: str | None = None,
         config: ConfigParser | None = None,
         log_location: str | None = None,
-        log_level: int = logging.ERROR,
+        log_level: int = logging.DEBUG,
     ):
         """
         Initializes an instance of the class.
