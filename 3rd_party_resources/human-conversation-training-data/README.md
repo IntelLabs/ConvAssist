@@ -7,7 +7,7 @@ Training data aggregated from various sources for training a chatbot with NLP.
 ## About Dataset
 Original Dataset Card from [projjail1/Human-Conversation-Training-Data](https://www.kaggle.com/datasets/projjal1/human-conversation-training-data/data)
 
-> [!INFO]
+> **Dataset Card**
 > ### Context
 > 
 > I was working with RNN models in Tensorflow and was searching about conversation bots. Then a idea struck me as to create a bot myself. I looked for chat data but was not able to find something useful. Then I came across Meena chatbot and Mitsoku chatbot data and so compiled them with some data from human chats corpus.
