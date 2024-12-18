@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import re
-from typing import List
+from typing import List, Optional
 
 from convassist.utilities.databaseutils.sqllite_dbconnector import (
     SQLiteDatabaseConnector,
@@ -23,7 +23,7 @@ class NGramUtil:
     def __enter__(self):
         try:
             self._connection.connect()
-            self._recreate_database()
+            self._create_card_tables()
         except Exception as e:
             raise Exception(f"{__class__}{__name__} failed to connect to db: {e}")
 
@@ -213,32 +213,8 @@ class NGramUtil:
             if i < (len(ngram) - 1):
                 where_clause += f" word_{len(ngram) - i - 1} = ? AND"
             else:
-                where_clause += " word = ?"
+                where_clause += " word LIKE ?"
         return where_clause
-
-    # def _build_select_like_clause(self, cardinality):
-    #     result = ""
-    #     for i in range(cardinality):
-    #         if i != 0:
-    #             result = ", ".join([f"word_{i}", result])
-    #         else:
-    #             result = "".join([result, "word"])
-
-    #     return result
-
-    # def _build_where_like_clause(self, ngram):
-    #     re_escape_singlequote = re.compile(r"(')")
-
-    #     where_clause = " WHERE"
-    #     escaped_ngram = [re_escape_singlequote.sub("''", item) for item in ngram]
-
-    #     for i, item in enumerate(escaped_ngram):
-    #         index = len(escaped_ngram) - i - 1
-    #         if i < (len(escaped_ngram) - 1):
-    #             where_clause += f" word_{index} = '{item}' AND"
-    #         else:
-    #             where_clause += f" word LIKE '{item}%' ESCAPE '\\'"
-    #     return where_clause
 
     def _extract_first_integer(self, table):
         count = 0
@@ -250,7 +226,7 @@ class NGramUtil:
             count = 0
         return count
 
-    def _recreate_database(self):
+    def _create_card_tables(self):
         try:
             for i in range(self._cardinality):
                 self._create_ngram_table(cardinality=i + 1)
@@ -283,26 +259,32 @@ class NGramUtil:
             return 0
         return self._extract_first_integer(result)
 
-    def update(self, phrases_toAdd=List | None, phrases_toRemove=List | None):
+    def update(
+        self,
+        phrases_toAdd: Optional[List[str]] = None,
+        phrases_toRemove: Optional[List[str]] = None,
+    ):
         assert self._connection is not None
 
         # Add phrases_toAdd to the ngram database
-        for phrase in phrases_toAdd:
-            for curr_card in range(self._cardinality):
-                ngram_map = NgramMap(curr_card, phrase)
+        if phrases_toAdd:
+            for phrase in phrases_toAdd:
+                for curr_card in range(1, self._cardinality + 1):
+                    ngram_map = NgramMap(curr_card, phrase)
 
-                # for every ngram, get db count, update or insert
-                for ngram, count in ngram_map.items():
-                    self._insert_ngram(curr_card + 1, ngram, count, update_on_conflict=False)
+                    # for every ngram, get db count, update or insert
+                    for ngram, count in ngram_map.items():
+                        self._insert_ngram(curr_card, ngram, count, update_on_conflict=False)
 
-        for phrase in phrases_toRemove:
-            for curr_card in range(self._cardinality):
-                # imp_words = self.extract_svo(phrase)
-                ngram_map = NgramMap(curr_card, phrase)
+        if phrases_toRemove:
+            for phrase in phrases_toRemove:
+                for curr_card in range(self._cardinality):
+                    # imp_words = self.extract_svo(phrase)
+                    ngram_map = NgramMap(curr_card, phrase)
 
-                # for every ngram, get db count, update or insert
-                for ngram, count in ngram_map.items():
-                    self._remove_ngram(ngram)
+                    # for every ngram, get db count, update or insert
+                    for ngram, count in ngram_map.items():
+                        self._remove_ngram(ngram)
 
     def learn(self, phrase: str):
         assert self._connection is not None
@@ -322,27 +304,17 @@ class NGramUtil:
             query: str = ""
             table_name = f"_{self._cardinality}_gram"
             conditions = []
+            params = []
 
-            for i in reversed(range(len(ngram))):
-                if i == 0:
-                    conditions.append("word LIKE ? || '%'")
-                    # params.append(ngram[i])
+            for index, _ in enumerate(ngram):
+                inverse_index = len(ngram) - 1 - index
+
+                if index == len(ngram) - 1:
+                    conditions.append("word LIKE ?")
+                    params.append(f"{ngram[index]}%") if ngram[index] else params.append("%")
                 else:
-                    conditions.append(f"word_{i} = ?")
-                    # params.append(ngram[i])
-
-            # for i in range(self._cardinality - 1):
-            #     word_idx = self._cardinality - i - 1
-            #     if i == self._cardinality - 2:
-            #         conditions.append(f"word_{word_idx} LIKE ? || '%'")
-            #         params.append(ngram[-1])
-            #     else:
-            #         conditions.append(f"word_{word_idx} = ?")
-            #         params.append(ngram[-(i + 2)])
-
-            # if not conditions:
-            #     conditions.append("word LIKE ? || '%'")
-            #     params.append(ngram[-1])
+                    conditions.append(f"word_{inverse_index} = ?")
+                    params.append(ngram[index])
 
             where_clause = " AND ".join(conditions)
             query = (
@@ -354,7 +326,7 @@ class NGramUtil:
             else:
                 query += f" LIMIT {limit};"
 
-            result = self._connection.fetch_all(query, ngram)
+            result = self._connection.fetch_all(query, params)
         except Exception as e:
             raise Exception(f"{__class__}{__name__} failed to fetch ngram: {e}")
 

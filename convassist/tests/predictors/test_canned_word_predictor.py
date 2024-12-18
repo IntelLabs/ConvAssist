@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import configparser
-import os
 import unittest
 from unittest.mock import patch
 
@@ -60,8 +59,11 @@ class TestCannedWordPredictor(TestPredictors):
         [
             ("no_context", "", 1, "all"),
             ("trigram", "to the ", 1, "crazy"),
+            ("trigram", "to the crazy", 1, "crazy"),
             ("bigram", "the ", 1, "crazy"),
-            ("unigram", "bec", 1, "because"),
+            ("bigram", "the crazy", 1, "crazy"),
+            ("unigram", "cra", 1, "crazy"),
+            ("unigram", "crazy", 1, "crazy"),
         ]
     )
     def test_predict(self, name, context, max, expected_word):
@@ -74,6 +76,7 @@ class TestCannedWordPredictor(TestPredictors):
         self.assertEqual(len(sentence_predictions), 0)
         self.assertIsNotNone(word_predictions)
         self.assertEqual(len(word_predictions), max_partial_prediction_size)
+        self.assertEqual(word_predictions[0].word, expected_word)
 
     def test_learn_new_sentence(self):
         change_tokens = "This is a new sentence to learn."

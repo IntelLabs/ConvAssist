@@ -12,8 +12,6 @@ from typing import TextIO
 if sys.platform == "win32":
     import pydebugstring
 
-from .singleton import Singleton
-
 
 class QueueHandler(logging.Handler):
     """

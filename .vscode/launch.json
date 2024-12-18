@@ -1,23 +1,18 @@
 {
     "version": "0.2.0",
     "configurations": [
-        // {
-        //     "name": "Python Debugger: Module",
-        //     "type": "debugpy",
-        //     "request": "launch",
-        //     "module": "pyinstaller"
-        // },
         {
-            "name": "Python Debugger: Current File",
+            "name": "Python Debugger: Main with Arguments",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "console": "internalConsole",
-            "justMyCode": false,
-            "redirectOutput": true,
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
+                "PYTHONPATH": "${workspaceFolder}/src/"
+            },
+            "justMyCode": false,
+            "args": "${command:pickArgs}"
         },
         {
             "name": "Continuous Predict Util",
