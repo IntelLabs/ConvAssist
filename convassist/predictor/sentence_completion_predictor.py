@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import collections
-import os
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -13,7 +12,7 @@ import nltk
 import numpy
 import torch
 import transformers
-from nltk import sent_tokenize, word_tokenize
+from nltk import word_tokenize
 from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
 

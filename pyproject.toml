@@ -22,6 +22,7 @@ pyinstaller = {version = "^6.10.0", optional = true, markers = "sys_platform == 
 pydebugstring = {version = "^1.0.0.2", markers = "sys_platform == 'win32'"}
 pyttsx3 = {version = "^2.97", optional = true }
 pefile = {version = "<2024.8.26", optional = true, markers = "sys_platform == 'win32'"} # pinned to avoid breaking changes in newer versions
+colorlog = "^6.9.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.3.4"

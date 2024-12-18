@@ -50,7 +50,8 @@ class Suggestion:
 
     @probability.setter
     def probability(self, value):
-        if value < MIN_PROBABILITY or value > MAX_PROBABILITY:
+        # value = round(value, 2)
+        if value < MIN_PROBABILITY or round(value, 2) > MAX_PROBABILITY:
             raise SuggestionException("Probability is too high or too low = " + str(value))
         self._probability = value
 

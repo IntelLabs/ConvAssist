@@ -66,7 +66,8 @@ class SQLiteDatabaseConnector(DatabaseConnector):
 
         finally:
             cursor.close()
-            return result
+
+        return result
 
     def begin_transaction(self) -> None:
         if not self.conn:
