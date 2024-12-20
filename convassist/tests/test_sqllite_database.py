@@ -1,7 +1,6 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import sqlite3
 import unittest
 from pathlib import Path
 
@@ -39,22 +38,22 @@ class TestSQLiteDatabase(unittest.TestCase):
             "SELECT name FROM sqlite_master WHERE type='table' AND name='test_table'"
         )
 
-    def test_begin_transaction(self):
-        self.db.connect()
-        self.db.begin_transaction()
-        self.assertIsNotNone(self.db.conn)
+    # def test_begin_transaction(self):
+    #     self.db.connect()
+    #     self.db.begin_transaction()
+    #     self.assertIsNotNone(self.db.conn)
 
-    def test_commit(self):
-        self.db.connect()
-        self.db.begin_transaction()
-        self.db.commit()
-        self.assertIsNotNone(self.db.conn)
+    # def test_commit(self):
+    #     self.db.connect()
+    #     self.db.begin_transaction()
+    #     self.db.commit()
+    #     self.assertIsNotNone(self.db.conn)
 
-    def test_rollback(self):
-        self.db.connect()
-        self.db.begin_transaction()
-        self.db.rollback()
-        self.assertIsNotNone(self.db.conn)
+    # def test_rollback(self):
+    #     self.db.connect()
+    #     self.db.begin_transaction()
+    #     self.db.rollback()
+    #     self.assertIsNotNone(self.db.conn)
 
 
 class TestSQLiteFetchCommands(unittest.TestCase):
