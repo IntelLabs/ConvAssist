@@ -1,15 +1,20 @@
-import configparser
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# import configparser
 import unittest
-from unittest.mock import patch
 
-from parameterized import parameterized
+from convassist.tests import setup_utils
 
-from convassist.context_tracker import ContextTracker
-from convassist.predictor.sentence_completion_predictor import (
-    SentenceCompletionPredictor,
-)
+# from unittest.mock import patch
 
-from .. import setup_utils
+# from parameterized import parameterized
+
+# from convassist.context_tracker import ContextTracker
+# from convassist.predictor.sentence_completion_predictor import (
+#     SentenceCompletionPredictor,
+# )
+
 
 class TestPredictors(unittest.TestCase):
     @classmethod
@@ -19,4 +24,3 @@ class TestPredictors(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         setup_utils.remove_static_resources()
-

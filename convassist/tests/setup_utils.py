@@ -5,9 +5,10 @@ import os
 import shutil
 import unittest
 
-import backpedal
-
 from convassist.utilities.ngram.ngramutil import NGramUtil
+
+# import backpedal
+
 
 SOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 

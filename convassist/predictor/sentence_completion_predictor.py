@@ -16,7 +16,7 @@ from nltk import word_tokenize
 from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
 
-from convassist.predictor import Predictor
+from convassist.predictor.predictor import Predictor
 from convassist.predictor.utilities.nlp import NLP
 from convassist.predictor.utilities.prediction import Prediction, Suggestion
 from convassist.utilities.databaseutils.sqllite_dbconnector import (

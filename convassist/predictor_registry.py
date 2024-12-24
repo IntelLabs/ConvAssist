@@ -5,23 +5,24 @@ import logging
 from configparser import ConfigParser
 from typing import Any
 
-from .context_tracker import ContextTracker
-from .predictor import (
-    CannedPhrasesPredictor,
+from convassist.context_tracker import ContextTracker
+from convassist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
+from convassist.predictor.sentence_completion_predictor import (
     SentenceCompletionPredictor,
-    SpellCorrectPredictor,
 )
-from .predictor.smoothed_ngram_predictor import (
-    CannedWordPredictor,
-    GeneralWordPredictor,
+from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
+
+from .predictor.smoothed_ngram_predictor.aac_word_predictor import AACNgramPredictor
+from .predictor.smoothed_ngram_predictor.nlp_word_predictor import NLPNgramPredictor
+from .predictor.smoothed_ngram_predictor.smoothed_ngram_predictor import (
     SmoothedNgramPredictor,
 )
 
 predictors = {
     "ShortHandPredictor": SmoothedNgramPredictor,
     "SmoothedNgramPredictor": SmoothedNgramPredictor,
-    "CannedWordPredictor": CannedWordPredictor,
-    "GeneralWordPredictor": GeneralWordPredictor,
+    "CannedWordPredictor": NLPNgramPredictor,
+    "GeneralWordPredictor": AACNgramPredictor,
     "SpellCorrectPredictor": SpellCorrectPredictor,
     "SentenceCompletionPredictor": SentenceCompletionPredictor,
     "CannedPhrasesPredictor": CannedPhrasesPredictor,

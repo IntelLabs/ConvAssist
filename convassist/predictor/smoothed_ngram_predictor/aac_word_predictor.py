@@ -9,7 +9,7 @@ from ..utilities.prediction import Prediction, Suggestion
 from .smoothed_ngram_predictor import SmoothedNgramPredictor
 
 
-class GeneralWordPredictor(SmoothedNgramPredictor):
+class AACNgramPredictor(SmoothedNgramPredictor):
     def configure(self):
         super().configure()
 

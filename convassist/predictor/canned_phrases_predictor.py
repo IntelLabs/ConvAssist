@@ -227,7 +227,7 @@ class CannedPhrasesPredictor(Predictor):
                 sent_prediction = self._find_semantic_matches(context, sent_prediction)
 
         except Exception as e:
-            self.logger.error("Exception in cannedPhrases Predict: {e} ")
+            self.logger.error(f"Exception in cannedPhrases Predict: {e}")
 
         if len(sent_prediction) == 0:
             self.logger.error("No canned phrases found")
@@ -256,4 +256,4 @@ class CannedPhrasesPredictor(Predictor):
                 self.cannedData.learn(phrase)
 
             except Exception as e:
-                self.logger.error("Exception in LEARN CANNED PHRASES SENTENCES  = {e}")
+                self.logger.error(f"Exception in LEARN CANNED PHRASES SENTENCES. {e}")

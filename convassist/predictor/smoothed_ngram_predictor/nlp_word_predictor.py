@@ -4,28 +4,20 @@
 import json
 import os
 
-from convassist.predictor.utilities.canned_data import cannedData
+# from convassist.predictor.utilities.canned_data import cannedData
 from convassist.predictor.utilities.nlp import NLP
 from convassist.predictor.utilities.prediction import Prediction, Suggestion
+
+# from convassist.utilities.ngram.ngramutil import NGramUtil
 from convassist.utilities.ngram.ngram_map import NgramMap
 
 from .smoothed_ngram_predictor import SmoothedNgramPredictor
 
 
-class CannedWordPredictor(SmoothedNgramPredictor):
+class NLPNgramPredictor(SmoothedNgramPredictor):
     """
-    CannedWordPredictor is a specialized predictor that extends the SmoothedNgramPredictor.
-    It is designed to handle canned responses using natural language processing (NLP) techniques.
+    NGram Database Predictor that uses Natural Language Processing
 
-    Methods:
-        configure():
-            Configures the predictor by loading the NLP model and initializing constants and stopwords.
-
-        extract_svo(sent: str) -> str:
-            Extracts significant subject-verb-object (SVO) tokens from a given sentence.
-
-        recreate_database():
-            Recreates the sentence and n-gram databases by adding new phrases and removing outdated ones.
 
     """
 
@@ -57,11 +49,6 @@ class CannedWordPredictor(SmoothedNgramPredictor):
             self.stopwordsList = [word.strip() for word in self.stopwordsList]
 
         super().configure()
-
-    # # Override default properties
-    # @property
-    # def sentences_db(self):
-    #     return os.path.join(self._personalized_resources_path, self._sentences_db)
 
     def extract_svo(self, sent):
         doc = self.nlp(sent)
@@ -97,7 +84,6 @@ class CannedWordPredictor(SmoothedNgramPredictor):
         return " ".join(imp_tokens).strip().lower()
 
     def recreate_database(self):
-
         # STEP 1: CREATE CANNED_NGRAM DATABASE IF IT DOES NOT EXIST
         try:
             assert self.ngram_db_conn

@@ -2,15 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import string
-from abc import ABC
 from typing import List
 
-from convassist.predictor import Predictor
+from convassist.predictor.predictor import Predictor
 from convassist.predictor.utilities.prediction import Prediction, Suggestion
 from convassist.utilities.ngram.ngramutil import NGramUtil
 
 
-class SmoothedNgramPredictor(Predictor, ABC):
+class SmoothedNgramPredictor(Predictor):
     """
     SmoothedNgramPredictor is a class that extends the Predictor class to provide
     functionality for predicting the next word(s) in a sequence using smoothed n-grams.
@@ -23,9 +22,6 @@ class SmoothedNgramPredictor(Predictor, ABC):
         #         for line in f:
         #             ngramutil.learn(line.strip('.\n'))
         pass
-
-    def extract_svo(self, sent):
-        return sent
 
     def predict(self, max_partial_prediction_size: int, filter):
 

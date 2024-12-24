@@ -1,15 +1,19 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import configparser
-import os
+
+# import os
 import unittest
-from unittest.mock import patch
 
 from parameterized import parameterized
 
 from convassist.context_tracker import ContextTracker
 from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
+from convassist.tests import setup_utils
+from convassist.tests.predictors import TestPredictors
 
-from .. import setup_utils
-from . import TestPredictors
+# from unittest.mock import patch
 
 
 class TestSpellCorrectPredictor(TestPredictors):
