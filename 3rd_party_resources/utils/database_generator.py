@@ -78,7 +78,6 @@ def main(argv=None):
     with NGramUtil(args.database, args.cardinality, args.lowercase, args.normalize) as ngramutil:
         threads = []
         for i in range(args.cardinality):
-            # p = Thread(target=insertngrambycardinality, args=(phrases, args.database, args.lowercase, args.normalize, i+1))
             p = Thread(target=insertngrambycardinality, args=(ngramutil, phrases, i+1))
             threads.append(p)
             p.start()
