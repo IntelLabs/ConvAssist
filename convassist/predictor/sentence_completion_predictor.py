@@ -105,11 +105,8 @@ class SentenceCompletionPredictor(Predictor):
         # We will normalize our vectors to unit length, then is Inner Product equal to cosine similarity
         self.index = hnswlib.Index(space="cosine", dim=self.embedding_size)
 
-        if self.retrieveaac:
-            with open(self.retrieve_database) as f:
-                self.corpus_sentences = [s.strip() for s in f.readlines()]
-        else:
-            self.corpus_sentences = []
+        with open(self.retrieve_database) as f:
+            self.corpus_sentences = [s.strip() for s in f.readlines()]
 
         with open(self.blacklist_file) as f:
             self.blacklist_words = [s.strip() for s in f.readlines()]
@@ -219,12 +216,6 @@ class SentenceCompletionPredictor(Predictor):
     @retrieve.setter
     def retrieve(self, value):
         self._retrieveaac = value
-
-    def _set_seed(self, seed):
-        numpy.random.seed(seed)
-        torch.manual_seed(seed)
-        if self.n_gpu > 0:
-            torch.cuda.manual_seed_all(seed)
 
     def _read_personalized_toxic_words(self):
 
