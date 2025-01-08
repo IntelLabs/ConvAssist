@@ -64,50 +64,44 @@ class SmoothedNgramPredictor(Predictor, ABC):
                             self.logger.error(f"Error fetching ngrams for {prefix_ngram}: {e}")
                             continue
                     for p in partial:
-                        # candidate = p[-2]
-                        # if (
-                        #     candidate not in tokens
-                        #     and candidate not in prefix_completion_candidates
-                        # ):
-                        #     prefix_completion_candidates.append(candidate)
                         prefix_completion_candidates.append(p[-2])
 
-                        # smoothing
-                        unigram_counts_sum = ngramutil.unigram_counts_sum()
+                    # smoothing
+                    unigram_counts_sum = ngramutil.unigram_counts_sum()
 
-                        candidate_tokens = [""] * ngram_len
-                        for i in range(actual_tokens):
-                            candidate_tokens[i] = tokens[i]
+                    candidate_tokens = [""] * ngram_len
+                    for i in range(actual_tokens):
+                        candidate_tokens[i] = tokens[i]
 
-                        for j, candidate in enumerate(prefix_completion_candidates):
-                            candidate_tokens[ngram_len - 1] = candidate
-                            probability = 0.0
-                            for k in range(ngram_len):
-                                numerator = ngramutil.count(candidate_tokens, 0, k + 1)
+                    for j, candidate in enumerate(prefix_completion_candidates):
+                        candidate_tokens[ngram_len - 1] = candidate
+                        probability = 0.0
+                        for k in range(ngram_len):
+                            numerator = ngramutil.count(candidate_tokens, 0, k + 1)
 
-                                denominator = unigram_counts_sum
-                                if numerator > 0:
-                                    denominator = ngramutil.count(candidate_tokens, -1, k)
-                                frequency = 0
-                                if denominator > 0:
-                                    frequency = float(numerator) / denominator
-                                probability += float(self.deltas[k]) * frequency
-                            if probability > 0:
-                                if all(
-                                    char in string.punctuation
-                                    for char in candidate_tokens[ngram_len - 1]
-                                ):
-                                    self.logger.debug(
-                                        candidate_tokens[ngram_len - 1] + " contains punctuations "
+                            denominator = unigram_counts_sum
+                            if numerator > 0:
+                                denominator = ngramutil.count(candidate_tokens, -1, k)
+                            frequency = 0
+                            if denominator > 0:
+                                frequency = float(numerator) / denominator
+                            probability += float(self.deltas[k]) * frequency
+                        if probability > 0:
+                            if all(
+                                char in string.punctuation
+                                for char in candidate_tokens[ngram_len - 1]
+                            ):
+                                self.logger.debug(
+                                    candidate_tokens[ngram_len - 1] + " contains punctuations "
+                                )
+                            else:
+                                word_prediction.add_suggestion(
+                                    Suggestion(
+                                        candidate_tokens[ngram_len - 1],
+                                        probability,
+                                        self.predictor_name,
                                     )
-                                else:
-                                    word_prediction.add_suggestion(
-                                        Suggestion(
-                                            candidate_tokens[ngram_len - 1],
-                                            probability,
-                                            self.predictor_name,
-                                        )
-                                    )
+                                )
         except Exception as e:
             self.logger.error(f"Exception in {self.predictor_name} predict function: {e}")
 
