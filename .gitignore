@@ -10,6 +10,9 @@ dist/
 3rd_party_resources/aac_dataset
 3rd_party_resources/daily_dialog
 
+# Ignore generated resources
+*.db
+*_Data.txt
 .coverage*
 .DS_Store
 results/
