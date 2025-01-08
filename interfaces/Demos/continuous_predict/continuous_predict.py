@@ -6,10 +6,11 @@ import logging
 import os
 from pathlib import Path
 
-import pyttsx3
-
 from convassist.context_tracker import ContextTracker
 from convassist.ConvAssist import ConvAssist
+
+# import pyttsx3
+
 
 SCRIPT_DIR = str(Path(__file__).resolve().parent)
 
@@ -24,7 +25,7 @@ conv_assist_modes = {
             "SentenceCompletionPredictor",
             "GeneralWordPredictor",
             "SpellCorrectPredictor",
-            "CannedPhrasesPredictor",
+            # "CannedPhrasesPredictor",
             "CannedWordPredictor",
             "ShortHandPredictor",
         ],
@@ -102,13 +103,15 @@ class ContinuousPredict:
             "CONT_PREDICT", config=config, log_level=logging.DEBUG
         )
 
+        self.convAssistMode = ConvAssistMode(self.ContinuousPredictor)
+
         self.command_dict = {
             "help": self.show_help,
             "word": self.handle_word,
             "sentence": self.handle_sentence,
             "loglevel": self.set_log_level,
             "context": self.show_context,
-            "speak": self.speak_context,
+            # "speak": self.speak_context,
             "learn": self.learn_phrase,
             "mode": self.set_mode,
             "quit": self.quit_program,
@@ -139,7 +142,7 @@ class ContinuousPredict:
         print(
             "Commands: \n"
             ":context - Display the current context. \n"
-            ":speak - Speak and learn the current context. \n"
+            # ":speak - Speak and learn the current context. \n"
             ":learn <text> - Learn a sentence, word, or phrase. \n"
             ":word <id> - Add a word to the context. (leave blank to print current list) \n"
             ":sentence <id> - Add a sentence to the context. (leave blank to print current list) \n"
@@ -188,14 +191,14 @@ class ContinuousPredict:
             else:
                 print(f"Invalid log level: {level}")
 
-    def speak_context(self, _):
-        engine = pyttsx3.init()
-        engine.setProperty("rate", 150)
-        engine.setProperty("volume", 1)
-        engine.say(self.ct)
-        engine.runAndWait()
+    # def speak_context(self, _):
+    #     engine = pyttsx3.init()
+    #     engine.setProperty("rate", 150)
+    #     engine.setProperty("volume", 1)
+    #     engine.say(self.ct)
+    #     engine.runAndWait()
 
-        self.ContinuousPredictor.learn_text(self.ct.context)
+    #     self.ContinuousPredictor.learn_text(self.ct.context)
 
     def learn_phrase(self, command):
         if len(command) > 1:
