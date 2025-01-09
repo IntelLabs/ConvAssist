@@ -482,11 +482,12 @@ class SentenceCompletionPredictor(Predictor):
             )
             count = 0
             for k, v in sorted_x.items():
+                new_sentence = self._clean_generated_text(k)[-1]
 
                 if count == num_gen:
                     break
-                self.logger.debug(f"sentence = {k} score = {v}")
-                predictions.add_suggestion(Suggestion(k, v, self.predictor_name))
+                self.logger.debug(f"sentence = {new_sentence} score = {v}")
+                predictions.add_suggestion(Suggestion(new_sentence, v, self.predictor_name))
                 count = count + 1
 
         except Exception as e:
@@ -497,8 +498,8 @@ class SentenceCompletionPredictor(Predictor):
     def _clean_generated_text(self, gentext):
         # Just clean the generated text of all the potential rubbish
         # return re.sub(r"[<>\[\]\d\n\t]|<bos>|<eos>|bos|eos", "", gentext)
-        return re.split(r"[<>\[\]\d\n\t]|<bos>|<eos>|bos|eos", gentext)
-        # return re.split(r"<bos> |<eos> |bos|eos|<bos>|<eos>|<|>|\[|\]|\d", gentext)
+        # return re.split(r"[<>\[\]\d\n\t]|<bos>|</bos>|<eos>|bos|eos", gentext)
+        return re.split(r"<bos> |<eos> |bos|eos|<bos>|<eos>|</bos>|<|>|\[|\]|\d", gentext)
 
     def extract_text_between_markers(
         self, text: str, start_marker: str = "<bos>", end_marker: str = "<eos>"

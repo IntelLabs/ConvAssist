@@ -69,14 +69,12 @@ class SmoothedNgramPredictor(Predictor, ABC):
                     # smoothing
                     unigram_counts_sum = ngramutil.unigram_counts_sum()
 
-                    candidate_tokens = [""] * ngram_len
-                    for i in range(actual_tokens):
-                        candidate_tokens[i] = tokens[i]
+                    candidate_tokens = prefix_ngram.copy()
 
                     for j, candidate in enumerate(prefix_completion_candidates):
-                        candidate_tokens[ngram_len - 1] = candidate
+                        candidate_tokens[-1] = candidate
                         probability = 0.0
-                        for k in range(ngram_len):
+                        for k in range(len(candidate_tokens)):
                             numerator = ngramutil.count(candidate_tokens, 0, k + 1)
 
                             denominator = unigram_counts_sum
