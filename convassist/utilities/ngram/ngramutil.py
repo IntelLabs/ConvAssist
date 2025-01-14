@@ -227,6 +227,10 @@ class NGramUtil:
         return count
 
     def _create_card_tables(self):
+        # Check if we have write access.  Fail silently if we don't.
+        if not self._connection.check_write_access():
+            return
+
         try:
             for i in range(self._cardinality):
                 self._create_ngram_table(cardinality=i + 1)

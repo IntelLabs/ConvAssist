@@ -97,3 +97,12 @@ class SQLiteDatabaseConnector(DatabaseConnector):
             )
         except Exception as e:
             raise Exception(f"Unable to create table {tablename} in {self.dbname}.", e)
+
+    def check_write_access(self) -> bool:
+        try:
+            self.execute_query("CREATE TABLE temp_table (id INTEGER)")
+            self.execute_query("DROP TABLE temp_table")
+            return True
+
+        except DatabaseError:
+            return False
