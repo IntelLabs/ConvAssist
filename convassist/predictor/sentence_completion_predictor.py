@@ -68,6 +68,10 @@ class SentenceCompletionPredictor(Predictor):
     """
 
     def __init__(self, *args, **kwargs):
+        import os
+
+        os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
         if torch.cuda.is_available():
             self.device = "cuda"
             self.n_gpu = torch.cuda.device_count()
