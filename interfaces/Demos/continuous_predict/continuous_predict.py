@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import argparse
 import configparser
 import logging
 import os
@@ -25,7 +26,7 @@ conv_assist_modes = {
             "SentenceCompletionPredictor",
             "GeneralWordPredictor",
             "SpellCorrectPredictor",
-            # "CannedPhrasesPredictor",
+            "CannedPhrasesPredictor",
             "CannedWordPredictor",
             "ShortHandPredictor",
         ],
@@ -79,14 +80,14 @@ class ConvAssistMode:
 
 
 class ContinuousPredict:
-    def __init__(self):
+    def __init__(self, ini_file):
         self.ct = CustomContextTracker()
 
         self.word_predictions = []
         self.sentence_predictions = []
 
         # config file for continuous predictions
-        config_file = os.path.join(SCRIPT_DIR, "resources/continuous_prediction.ini")
+        config_file = os.path.join(SCRIPT_DIR, ini_file)
         config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
 
         success_count = config.read(config_file)
@@ -111,7 +112,7 @@ class ContinuousPredict:
             "sentence": self.handle_sentence,
             "loglevel": self.set_log_level,
             "context": self.show_context,
-            # "speak": self.speak_context,
+            "speak": self.speak_context,
             "learn": self.learn_phrase,
             "mode": self.set_mode,
             "quit": self.quit_program,
@@ -142,7 +143,7 @@ class ContinuousPredict:
         print(
             "Commands: \n"
             ":context - Display the current context. \n"
-            # ":speak - Speak and learn the current context. \n"
+            ":speak - Speak and learn the current context. \n"
             ":learn <text> - Learn a sentence, word, or phrase. \n"
             ":word <id> - Add a word to the context. (leave blank to print current list) \n"
             ":sentence <id> - Add a sentence to the context. (leave blank to print current list) \n"
@@ -191,14 +192,14 @@ class ContinuousPredict:
             else:
                 print(f"Invalid log level: {level}")
 
-    # def speak_context(self, _):
-    #     engine = pyttsx3.init()
-    #     engine.setProperty("rate", 150)
-    #     engine.setProperty("volume", 1)
-    #     engine.say(self.ct)
-    #     engine.runAndWait()
-
-    #     self.ContinuousPredictor.learn_text(self.ct.context)
+    def speak_context(self, _):
+        # engine = pyttsx3.init()
+        # engine.setProperty("rate", 150)
+        # engine.setProperty("volume", 1)
+        # engine.say(self.ct)
+        # engine.runAndWait()
+        self.show_context(_)
+        self.ContinuousPredictor.learn_text(self.ct.context)
 
     def learn_phrase(self, command):
         if len(command) > 1:
@@ -266,8 +267,22 @@ class ContinuousPredict:
                 print(f"New context: {self.ct}")
 
 
-def main():
-    cp = ContinuousPredict()
+def main(argv=None):
+    # Get ini file argument
+    parser = argparse.ArgumentParser(description="Continuous Prediction Demo")
+
+    # File command
+    parser.add_argument(
+        "ini_file",
+        type=str,
+        nargs="?",
+        default="acat_continuous_prediction.ini",
+        help="Path to configuration file for continuous prediction. (Default: continuous_prediction.ini)",
+    )
+
+    args = parser.parse_args(argv)
+
+    cp = ContinuousPredict(args.ini_file)
     cp.main_loop()
 
 
