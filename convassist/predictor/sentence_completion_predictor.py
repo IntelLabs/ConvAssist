@@ -68,6 +68,10 @@ class SentenceCompletionPredictor(Predictor):
     """
 
     def __init__(self, *args, **kwargs):
+        import os
+
+        os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
         if torch.cuda.is_available():
             self.device = "cuda"
             self.n_gpu = torch.cuda.device_count()
@@ -105,11 +109,8 @@ class SentenceCompletionPredictor(Predictor):
         # We will normalize our vectors to unit length, then is Inner Product equal to cosine similarity
         self.index = hnswlib.Index(space="cosine", dim=self.embedding_size)
 
-        if self.retrieveaac:
-            with open(self.retrieve_database) as f:
-                self.corpus_sentences = [s.strip() for s in f.readlines()]
-        else:
-            self.corpus_sentences = []
+        with open(self.retrieve_database) as f:
+            self.corpus_sentences = [s.strip() for s in f.readlines()]
 
         with open(self.blacklist_file) as f:
             self.blacklist_words = [s.strip() for s in f.readlines()]
@@ -219,12 +220,6 @@ class SentenceCompletionPredictor(Predictor):
     @retrieve.setter
     def retrieve(self, value):
         self._retrieveaac = value
-
-    def _set_seed(self, seed):
-        numpy.random.seed(seed)
-        torch.manual_seed(seed)
-        if self.n_gpu > 0:
-            torch.cuda.manual_seed_all(seed)
 
     def _read_personalized_toxic_words(self):
 
@@ -491,11 +486,12 @@ class SentenceCompletionPredictor(Predictor):
             )
             count = 0
             for k, v in sorted_x.items():
+                new_sentence = self._clean_generated_text(k)[-1]
 
                 if count == num_gen:
                     break
-                self.logger.debug(f"sentence = {k} score = {v}")
-                predictions.add_suggestion(Suggestion(k, v, self.predictor_name))
+                self.logger.debug(f"sentence = {new_sentence} score = {v}")
+                predictions.add_suggestion(Suggestion(new_sentence, v, self.predictor_name))
                 count = count + 1
 
         except Exception as e:
@@ -506,8 +502,8 @@ class SentenceCompletionPredictor(Predictor):
     def _clean_generated_text(self, gentext):
         # Just clean the generated text of all the potential rubbish
         # return re.sub(r"[<>\[\]\d\n\t]|<bos>|<eos>|bos|eos", "", gentext)
-        return re.split(r"[<>\[\]\d\n\t]|<bos>|<eos>|bos|eos", gentext)
-        # return re.split(r"<bos> |<eos> |bos|eos|<bos>|<eos>|<|>|\[|\]|\d", gentext)
+        # return re.split(r"[<>\[\]\d\n\t]|<bos>|</bos>|<eos>|bos|eos", gentext)
+        return re.split(r"<bos> |<eos> |bos|eos|<bos>|<eos>|</bos>|<|>|\[|\]|\d", gentext)
 
     def extract_text_between_markers(
         self, text: str, start_marker: str = "<bos>", end_marker: str = "<eos>"
