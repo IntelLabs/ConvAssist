@@ -122,6 +122,7 @@ class CannedPhrasesPredictor(Predictor):
 
     # Uses the semantic search index to find the top_k_hits
     def _find_semantic_matches(self, context, sent_prediction: Prediction) -> Prediction:
+        self.logger.debug("Finding semantic matches")
         try:
             direct_matchedSentences = [s.word for s in sent_prediction]
             question_embedding = self.embedder.encode(context)
@@ -146,14 +147,15 @@ class CannedPhrasesPredictor(Predictor):
             self.logger.error(f"Exception in CannedPhrasePredictor find_semantic_matches {e}")
             raise e
 
+        self.logger.debug(f"Found {len(sent_prediction)} semantic matches")
         return sent_prediction
 
     def _find_direct_matches(self, context, sent_prediction: Prediction) -> Prediction:
+        self.logger.debug("Finding direct matches")
         try:
             canned_phrases = self.cannedData.all_phrases_as_dict()
 
             total_sent = sum(canned_phrases.values())
-            # context_StemmedWords = [self.stemmer.stem(w) for w in context.split()]
             context_StemmedWords = [self.stemmer.stem(w) for w in word_tokenize(context)]
 
             rows = []
@@ -169,6 +171,7 @@ class CannedPhrasesPredictor(Predictor):
                     "probability": float(canned_phrases[k] / total_sent),
                 }
                 rows.append(new_row)
+
             sorted_rows = sorted(
                 rows, key=lambda x: (x["matches"], x["probability"]), reverse=True
             )
@@ -184,6 +187,7 @@ class CannedPhrasesPredictor(Predictor):
         except Exception as e:
             self.logger.error(f"Exception in CannedPhrasePredictor find_direct_matches: {e}")
 
+        self.logger.debug(f"Found {len(sent_prediction)} direct matches")
         return sent_prediction
 
     def _getTopInitialPhrases(self, sent_prediction: Prediction, count=5) -> Prediction:
@@ -227,7 +231,7 @@ class CannedPhrasesPredictor(Predictor):
                 sent_prediction = self._find_semantic_matches(context, sent_prediction)
 
         except Exception as e:
-            self.logger.error("Exception in cannedPhrases Predict: {e} ")
+            self.logger.error(f"Exception in cannedPhrases Predict: {e} ")
 
         if len(sent_prediction) == 0:
             self.logger.error("No canned phrases found")

@@ -9,6 +9,8 @@ from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from typing import TextIO
 
+import colorlog
+
 if sys.platform == "win32":
     import pydebugstring
 
@@ -32,9 +34,18 @@ class QueueHandler(logging.Handler):
 
 class LoggingUtility:
     def __init__(self):
-        self._formatter: logging.Formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s %(message)s"
+        # color formatter
+        self._formatter = colorlog.ColoredFormatter(
+            "%(asctime)s - %(name)s - %(log_color)s%(levelname)-8s%(reset)s %(message)s",
+            log_colors={
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bg_white",
+            },
         )
+
         self._central_log_queue: queue.Queue = queue.Queue()
 
     @property
@@ -56,6 +67,8 @@ class LoggingUtility:
         logger = logging.getLogger(name)
         logger.setLevel(log_level)
         logger.propagate = False
+
+        logger.handlers.clear()
 
         # always add a stream handler
         self.add_stream_handler(logger, sys.stdout)

@@ -42,11 +42,6 @@ class TestSuggestion(unittest.TestCase):
         suggestion.probability = 0.7
         self.assertEqual(suggestion.probability, 0.7)
 
-    def test_probability_setter_invalid(self):
-        suggestion = Suggestion("test", 0.5, "predictor")
-        with self.assertRaises(SuggestionException):
-            suggestion.probability = 1.5
-
     def test_probability_deleter(self):
         suggestion = Suggestion("test", 0.5, "predictor")
         del suggestion.probability

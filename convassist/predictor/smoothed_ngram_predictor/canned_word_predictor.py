@@ -4,7 +4,6 @@
 import json
 import os
 
-from convassist.predictor.utilities.canned_data import cannedData
 from convassist.predictor.utilities.nlp import NLP
 from convassist.predictor.utilities.prediction import Prediction, Suggestion
 from convassist.utilities.ngram.ngram_map import NgramMap
