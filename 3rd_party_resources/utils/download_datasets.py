@@ -23,19 +23,21 @@ datasets = [
     }
 ]
 
+
 def clean_sentence(sentence: str):
     # Skip sentences containing redacted terms
     if '<' in sentence and '>' in sentence:
         return None
-    
+
     # Create a translation table that removes punctuation except apostrophes
     punct_to_remove = string.punctuation.replace("'", "")
     trans_table = str.maketrans("", "", punct_to_remove)
     cleaned = sentence.translate(trans_table)
     cleaned = " ".join(cleaned.split())
     cleaned = cleaned.replace(" ' ", " ")
-    
+
     return f"{cleaned}\n"
+
 
 def parse(text):
     sentences = []
@@ -57,17 +59,18 @@ def parse(text):
 
     return sentences
 
+
 for dataset in datasets:
     # Download latest version
     path = kagglehub.dataset_download(dataset['NAME'])
 
     df = pd.read_csv(
         f"{path}/{dataset['DATASET_FILENAME']}",
-        delimiter = dataset['DELIMITER'],
-        encoding = 'ascii',
-        encoding_errors = 'ignore',
-        usecols = dataset['COLS']
-        )
+        delimiter=dataset['DELIMITER'],
+        encoding='ascii',
+        encoding_errors='ignore',
+        usecols=dataset['COLS']
+    )
 
     with open(dataset['OUTPUT_FILENAME'], 'w') as fout:
         for row in tqdm(df.itertuples(index=False), desc="Processing sentences"):

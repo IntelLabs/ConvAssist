@@ -8,6 +8,7 @@ from convassist.utilities.ngram.ngram_map import NgramMap
 # from multiprocessing import Process, Thread
 from threading import Thread
 
+
 def configure():
     # Create top-level parser
     parser = argparse.ArgumentParser(description="Recreate an NGram Database for ConvAssist")
@@ -50,7 +51,8 @@ def configure():
     )
     return parser
 
-def insertngrambycardinality(ngramutil:NgramMap, phrases:List, cardinality:int):
+
+def insertngrambycardinality(ngramutil: NgramMap, phrases: List, cardinality: int):
 
     query = ngramutil.generate_ngram_insert_query(cardinality, True)
 
@@ -69,7 +71,7 @@ def insertngrambycardinality(ngramutil:NgramMap, phrases:List, cardinality:int):
 def main(argv=None):
     parser = configure()
     args = parser.parse_args(argv)
-    
+
     phrases = []
     with open(args.input_file) as f:
         for line in f:
@@ -78,12 +80,13 @@ def main(argv=None):
     with NGramUtil(args.database, args.cardinality, args.lowercase, args.normalize) as ngramutil:
         threads = []
         for i in range(args.cardinality):
-            p = Thread(target=insertngrambycardinality, args=(ngramutil, phrases, i+1))
+            p = Thread(target=insertngrambycardinality, args=(ngramutil, phrases, i + 1))
             threads.append(p)
             p.start()
 
         for p in threads:
             p.join()
+
 
 if __name__ == "__main__":
     main()
