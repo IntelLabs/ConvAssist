@@ -55,7 +55,7 @@ class ACATConvAssistInterface(threading.Thread):
     def __init__(
         self,
         app_quit_event: threading.Event,
-        queue_handler: bool = False,
+        queue_handler: bool = True,
         logging_level: int = log_level,
     ):
         super().__init__()

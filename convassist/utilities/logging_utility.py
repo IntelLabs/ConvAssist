@@ -33,19 +33,19 @@ class QueueHandler(logging.Handler):
 
 
 class LoggingUtility:
-    def __init__(self):
-        # color formatter
-        self._formatter = colorlog.ColoredFormatter(
-            "%(asctime)s - %(name)s - %(log_color)s%(levelname)-8s%(reset)s %(message)s",
-            log_colors={
-                "DEBUG": "cyan",
-                "INFO": "green",
-                "WARNING": "yellow",
-                "ERROR": "red",
-                "CRITICAL": "red,bg_white",
-            },
-        )
+    _instance = None
+    _initialized = False
 
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(LoggingUtility, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        self._formatter: logging.Formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s %(message)s"
+        )
+        
         self._central_log_queue: queue.Queue = queue.Queue()
 
     @property
@@ -104,5 +104,17 @@ class LoggingUtility:
 
     def add_stream_handler(self, logger: logging.Logger, textio: TextIO):
         stream_handler = logging.StreamHandler(textio)
-        stream_handler.setFormatter(self.formatter)
+
+        formatter = colorlog.ColoredFormatter(
+            "%(asctime)s - %(name)s - %(log_color)s%(levelname)-8s%(reset)s %(message)s",
+            log_colors={
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bg_white",
+            },
+        )
+
+        stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)

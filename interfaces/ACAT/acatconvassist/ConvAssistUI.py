@@ -20,9 +20,8 @@ else:
     import threading
     import time
     import tkinter as tk
-    from tkinter import BOTH, END, LEFT, messagebox, ttk
+    from tkinter import BOTH, END, messagebox, ttk
     from tkinter.scrolledtext import ScrolledText
-    from tkinter.ttk import Button
 
     import psutil
     import pystray
@@ -102,7 +101,8 @@ else:
             self.iconbitmap(os.path.join(working_dir, "Assets", "icon_tray.ico"))
 
             # Set up logging
-            self.logger = LoggingUtility().get_logger(
+            self.logutil = LoggingUtility()
+            self.logger = self.logutil.get_logger(
                 name="CONVASSISTUI", log_level=logging.DEBUG, queue_handler=True
             )
             self.logger.info("Application started")
@@ -182,14 +182,14 @@ else:
             """Check the log queue for new messages and update the log window."""
             try:
                 while True:
-                    message = LoggingUtility().central_log_queue.get_nowait()
+                    message = self.logutil.central_log_queue.get_nowait()
                     self.log_widget.insert(tk.END, message + "\n")
                     self.log_widget.see(tk.END)  # Auto-scroll to the end
             except queue.Empty:
                 pass
 
             # Schedule the next check
-            self.after(100, self.update_log_window)
+            self.after(50, self.update_log_window)
 
         def check_for_exit(self):
             """Check if the application should exit."""
