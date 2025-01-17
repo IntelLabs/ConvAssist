@@ -3,9 +3,9 @@
 
 import unittest
 
-from ..combiner.meritocrity_combiner import MeritocracyCombiner
-from ..predictor.utilities.prediction import Prediction
-from ..predictor.utilities.suggestion import Suggestion
+from convassist.combiner.meritocrity_combiner import MeritocracyCombiner
+from convassist.predictor.utilities.prediction import Prediction
+from convassist.predictor.utilities.suggestion import Suggestion
 
 
 class TestMeritocracyCombiner(unittest.TestCase):

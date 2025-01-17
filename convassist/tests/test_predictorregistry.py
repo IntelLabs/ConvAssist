@@ -4,10 +4,11 @@
 import configparser
 import logging
 import unittest
-from unittest.mock import mock_open, patch
 
-from ..context_tracker import ContextTracker
-from ..predictor_registry import PredictorRegistry
+from convassist.context_tracker import ContextTracker
+from convassist.predictor_registry import PredictorRegistry
+
+# from unittest.mock import mock_open, patch
 
 
 class TestPredictorRegistry(unittest.TestCase):

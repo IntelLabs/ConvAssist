@@ -9,9 +9,8 @@ from unittest.mock import patch
 
 from convassist.context_tracker import ContextTracker
 from convassist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
-
-from .. import setup_utils
-from . import TestPredictors
+from convassist.tests import setup_utils
+from convassist.tests.predictors import TestPredictors
 
 
 class TestCannedPhrasesPredictor(TestPredictors):

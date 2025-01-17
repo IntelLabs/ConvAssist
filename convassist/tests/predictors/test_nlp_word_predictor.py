@@ -8,15 +8,15 @@ from unittest.mock import patch
 from parameterized import parameterized
 
 from convassist.context_tracker import ContextTracker
-from convassist.predictor.smoothed_ngram_predictor.canned_word_predictor import (
-    CannedWordPredictor,
+from convassist.predictor.smoothed_ngram_predictor.nlp_word_predictor import (
+    NLPNgramPredictor,
 )
 
 from .. import setup_utils
 from . import TestPredictors
 
 
-class TestCannedWordPredictor(TestPredictors):
+class TestNLPWordPredictor(TestPredictors):
     @patch("torch.cuda.is_available", return_value=False)
     @patch("torch.backends.mps.is_available", return_value=False)
     def setUp(self, mock_cuda, mock_mps):
@@ -45,7 +45,7 @@ class TestCannedWordPredictor(TestPredictors):
         }
 
         self.context_tracker = ContextTracker(self.config)
-        self.predictor = CannedWordPredictor(self.config, self.context_tracker, "test_predictor")
+        self.predictor = NLPNgramPredictor(self.config, self.context_tracker, "test_predictor")
 
     def tearDown(self):
         setup_utils.teardown_static_resources()

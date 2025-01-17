@@ -2,20 +2,21 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import configparser
-import os
+
+# import os
 import unittest
 from unittest.mock import patch
 
 from parameterized import parameterized
 
 from convassist.context_tracker import ContextTracker
-from convassist.predictor.smoothed_ngram_predictor.general_word_predictor import (
-    GeneralWordPredictor,
+from convassist.predictor.smoothed_ngram_predictor.aac_word_predictor import (
+    AACNgramPredictor,
 )
-from convassist.utilities.ngram.ngramutil import NGramUtil
+from convassist.tests import setup_utils
+from convassist.tests.predictors import TestPredictors
 
-from .. import setup_utils
-from . import TestPredictors
+# from convassist.utilities.ngram.ngramutil import NGramUtil
 
 
 class TestGeneralWordPredictor(TestPredictors):
@@ -47,7 +48,7 @@ class TestGeneralWordPredictor(TestPredictors):
         }
 
         self.context_tracker = ContextTracker(self.config)
-        self.predictor = GeneralWordPredictor(self.config, self.context_tracker, "test_predictor")
+        self.predictor = AACNgramPredictor(self.config, self.context_tracker, "test_predictor")
 
     def tearDown(self):
         setup_utils.teardown_static_resources()

@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
-from configparser import ConfigParser
-from unittest.mock import MagicMock
 
-from ..context_tracker import ContextTracker
+from convassist.context_tracker import ContextTracker
+
+# from configparser import ConfigParser
+# from unittest.mock import MagicMock
 
 
 class TestContextTracker(unittest.TestCase):
