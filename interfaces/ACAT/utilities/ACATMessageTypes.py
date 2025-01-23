@@ -20,6 +20,7 @@ class ConvAssistMessageTypes(IntEnum):
     LEARNSHORTHAND = 8
     LEARNSENTENCES = 9
     FORCEQUITAPP = 10
+    NOTREADY = 11
 
 
 class ConvAssistPredictionTypes(IntEnum):
@@ -57,6 +58,7 @@ class ConvAssistMessage:
 
     def jsonSerialize(self) -> str:
         return json.dumps(dataclasses.asdict(self))
+        # Example output: '{"MessageType": 1, "PredictionType": 1, "Data": "test"}'
 
     def __repr__(self) -> str:
         return (

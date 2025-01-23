@@ -8,6 +8,7 @@
    Systray application for ConvAssist to be used with ACAT
 """
 
+import json
 import logging
 import os
 import sys
@@ -56,12 +57,12 @@ class ACATConvAssistInterface(threading.Thread):
         self,
         app_quit_event: threading.Event,
         queue_handler: bool = True,
-        logging_level: int = log_level,
+        log_level: int = log_level,
     ):
         super().__init__()
 
         self.logger = LoggingUtility().get_logger(
-            ca_main_id, logging_level, queue_handler=queue_handler
+            ca_main_id, log_level, queue_handler=queue_handler
         )
 
         self.app_quit_event = app_quit_event
@@ -71,6 +72,8 @@ class ACATConvAssistInterface(threading.Thread):
         self.pipeName = "ACATConvAssistPipe"
 
         self.clientConnected: bool = False
+
+        self.ready: bool = False
 
         # Message Handler
         self.messageHandler = MessageHandler.getMessageHandler(
@@ -214,24 +217,42 @@ class ACATConvAssistInterface(threading.Thread):
 
                 try:
                     message_json = self.messageHandler.receive_message()
+
                     messageReceived = ConvAssistMessage.jsonDeserialize(message_json)
                     self.logger.info(f"Message received: {messageReceived} ")
 
+                except AttributeError as e:
+                    self.logger.error(f"Attribute error: {e}.")
+                    continue
+                
                 except TimeoutError as e:
                     self.logger.info("Timeout Error waiting for named pipe.  Try again.")
                     continue
 
                 except BrokenPipeError as e:
-                    # If the pipe is broken, exit the loop
-                    self.logger.critical(f"Broken Pipe Error. Bailing. {e}.")
-                    send_response = False
-                    self.app_quit_event.set()
+                    if False:
+                        # If the pipe is broken, exit the loop
+                        self.logger.critical(f"Broken Pipe Error. Bailing. {e}.")
+                        send_response = False
+                        self.app_quit_event.set()
+                    else:
+                        # If the pipe is broken, try to reconnect
+                        self.logger.warning(f"Broken Pipe Error.  Reconnecting. {e}.")
+                        self.clientConnected = False
+                        self.ConnectToACAT()
                     continue
 
                 except Exception as e:
                     self.logger.critical(f"Catastrophic Error.  Bailing. {e}.")
                     send_response = False
                     self.app_quit_event.set()
+                    continue
+
+                # TODO - Handle more gracefully
+                if messageReceived.MessageType != ConvAssistMessageTypes.SETPARAM and not self.ready:
+                    self.logger.critical("Not ready to process messages.")
+                    PredictionResponse.MessageType = ConvAssistMessageTypes.NOTREADY
+                    self.messageHandler.send_message(PredictionResponse.jsonSerialize())
                     continue
 
                 match messageReceived.MessageType:
@@ -242,7 +263,9 @@ class ACATConvAssistInterface(threading.Thread):
                             try:
                                 self.initialize_or_configure_convassists()
                             except AttributeError as e:
-                                self.logger.warning(f"ConfigAssist not ready: {e}.")
+                                self.logger.error(f"ConvAssist not ready: {e}.")
+                                self.ready = False
+                                PredictionResponse.MessageType = ConvAssistMessageTypes.NOTREADY
                                 pass
 
                     case ConvAssistMessageTypes.NEXTWORDPREDICTION:
@@ -434,6 +457,7 @@ class ACATConvAssistInterface(threading.Thread):
 
                 except Exception as e:
                     self.logger.critical(f"Error initializing convassist {convassist.name}: {e}.")
+                    self.ready = False
                     raise e
 
             convassist.recreate_database()
@@ -442,8 +466,13 @@ class ACATConvAssistInterface(threading.Thread):
 
             self.logger.info(f"convassist {convassist.name} updated.")
 
+        #TODO - Check if all convassists are initialized
+        # I"m assuming that if I've made it here, they are all initialized
+        self.ready = True
+        
+
     def ConnectToACAT(self, connection_type=None) -> bool:
-        retries = 5
+        retries = 10000
         self.logger.info("Trying to connect to ACAT server.")
         try:
             while not self.clientConnected and not self.app_quit_event.is_set() and retries > 0:

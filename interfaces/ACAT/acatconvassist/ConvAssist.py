@@ -22,12 +22,15 @@ else:
     import tkinter as tk
     from tkinter import BOTH, END, messagebox, ttk
     from tkinter.scrolledtext import ScrolledText
+    from filelock import FileLock, Timeout
 
-    import psutil
     import pystray
     import sv_ttk
     from PIL import Image
     from pystray import MenuItem as item
+
+    from setproctitle import setproctitle
+    setproctitle("ConvAssist")
 
     from convassist.utilities.logging_utility import LoggingUtility
     from interfaces.ACAT.acatconvassist.acatconvassist import ACATConvAssistInterface
@@ -37,29 +40,10 @@ else:
     license_text_string += "Portions of ConvAssist were ported from the Pressage\n"
     license_text_string += "project, which is licensed under the GPL 3.0 license.\n"
 
+    LOCK_FILE = os.path.join(tempfile.gettempdir(), 'convassist.lock')
+
     working_dir = os.path.dirname(os.path.realpath(__file__))
 
-    def findProcessIdByName(process_name):
-        """
-        Get a list of all the PIDs of all the running process whose name contains
-        the given string processName
-
-        :param process_name: Name of process to look
-        :return: True if process is running
-        """
-        listOfProcessObjects = []
-        # Iterate over the all the running process
-        for proc in psutil.process_iter():
-            try:
-                pinfo = proc.as_dict(attrs=["pid", "name", "create_time"])
-                # Check if process name contains the given name string.
-                if process_name.lower() in pinfo["name"].lower():
-                    listOfProcessObjects.append(pinfo)
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                pass
-        if len(listOfProcessObjects) > 2:
-            return True
-        return False
 
     def deleteOldPyinstallerFolders(time_threshold=100):
         """
@@ -103,7 +87,7 @@ else:
             # Set up logging
             self.logutil = LoggingUtility()
             self.logger = self.logutil.get_logger(
-                name="CONVASSISTUI", log_level=logging.DEBUG, queue_handler=True
+                name="CONVASSIST", log_level=logging.WARNING, queue_handler=True
             )
             self.logger.info("Application started")
 
@@ -133,7 +117,7 @@ else:
             self.check_for_exit()
 
             # Start ACATConvAssistInterface
-            self.thread = ACATConvAssistInterface(self.app_quit_event, queue_handler=True)
+            self.thread = ACATConvAssistInterface(self.app_quit_event, queue_handler=True, log_level = logging.WARNING)
             self.thread.start()
 
             return super().mainloop(n)
@@ -144,9 +128,9 @@ else:
 
             self.create_buttons()
 
-            # self.withdraw()  # Hide the main window at startup
-
             sv_ttk.set_theme("light")
+
+            self.withdraw()  # Hide the main window at startup
 
         def create_buttons(self):
             button_frame = ttk.Frame(self, height=50)
@@ -263,6 +247,7 @@ else:
             self.tk_window.about_action()
 
     def main():
+
         # Create the main window
         tk_window = ConvAssistWindow()
 
@@ -277,4 +262,10 @@ else:
 
 
 if __name__ == "__main__":
-    main()
+    lock = FileLock(LOCK_FILE)
+
+    try:
+        with lock.acquire(timeout=1):
+            main()
+    except Timeout:
+        sys.exit()
