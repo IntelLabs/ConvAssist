@@ -29,11 +29,7 @@ else:
     from PIL import Image
     from pystray import MenuItem as item
 
-    from setproctitle import setproctitle
-    setproctitle("ConvAssist")
-
     from convassist.utilities.logging_utility import LoggingUtility
-    from interfaces.ACAT.acatconvassist.acatconvassist import ACATConvAssistInterface
 
     license_text_string = "Copyright (C) 2024 Intel Corporation\n"
     license_text_string += "SPDX-License-Identifier: GPL 3.0\n\n"
@@ -43,6 +39,8 @@ else:
     LOCK_FILE = os.path.join(tempfile.gettempdir(), 'convassist.lock')
 
     working_dir = os.path.dirname(os.path.realpath(__file__))
+
+    LOG_LEVEL = logging.DEBUG
 
 
     def deleteOldPyinstallerFolders(time_threshold=100):
@@ -84,10 +82,11 @@ else:
             self.title("ConvAssist")
             self.iconbitmap(os.path.join(working_dir, "Assets", "icon_tray.ico"))
 
+
             # Set up logging
             self.logutil = LoggingUtility()
             self.logger = self.logutil.get_logger(
-                name="CONVASSIST", log_level=logging.WARNING, queue_handler=True
+                name="CONVASSIST", log_level=LOG_LEVEL, queue_handler=True
             )
             self.logger.info("Application started")
 
@@ -117,7 +116,8 @@ else:
             self.check_for_exit()
 
             # Start ACATConvAssistInterface
-            self.thread = ACATConvAssistInterface(self.app_quit_event, queue_handler=True, log_level = logging.WARNING)
+            from interfaces.ACAT.acatconvassist.acatconvassist import ACATConvAssistInterface
+            self.thread = ACATConvAssistInterface(self.app_quit_event, queue_handler=True, log_level = LOG_LEVEL)
             self.thread.start()
 
             return super().mainloop(n)
@@ -268,4 +268,5 @@ if __name__ == "__main__":
         with lock.acquire(timeout=1):
             main()
     except Timeout:
+        print("Another instance of ConvAssist is already running.")
         sys.exit()

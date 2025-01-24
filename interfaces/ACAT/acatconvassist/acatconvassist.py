@@ -88,14 +88,8 @@ class ACATConvAssistInterface(threading.Thread):
         self.pathstatic: str = ""
         self.pathpersonalized: str = ""
         self.enablelogs: bool = False
-        self.loglevel: int = logging.DEBUG
+        self.loglevel: int = log_level
         self._pathlog = ""
-
-        # Variables for the configuration of the instances of ConvAssist
-        self.word_config: ConfigParser = ConfigParser()
-        self.sh_config: ConfigParser = ConfigParser()
-        self.sent_config: ConfigParser = ConfigParser()
-        self.canned_config: ConfigParser = ConfigParser()
 
         self.sent_config_change: bool = False
         self.enable_logs: bool = True
@@ -103,17 +97,23 @@ class ACATConvAssistInterface(threading.Thread):
         self.convAssists = {}
 
         # instances of ConvAssist
-        self.conv_normal: ConvAssist = ConvAssist(ca_normal_id, ca_normal_ini)
+        self.conv_normal: ConvAssist = ConvAssist(
+            ca_normal_id, ca_normal_ini, log_location=self.pathlog, log_level=self.loglevel
+        )
         self.convAssists.update({ConvAssistPredictionTypes.NORMAL: self.conv_normal})
 
-        self.conv_shorthand: ConvAssist = ConvAssist(ca_shorthand_id, ca_shorthand_ini)
+        self.conv_shorthand: ConvAssist = ConvAssist(
+            ca_shorthand_id, ca_shorthand_ini, log_location=self.pathlog, log_level=self.loglevel
+        )
         self.convAssists.update({ConvAssistPredictionTypes.SHORTHANDMODE: self.conv_shorthand})
 
-        self.conv_sentence: ConvAssist = ConvAssist(ca_sentence_id, ca_sentence_ini)
+        self.conv_sentence: ConvAssist = ConvAssist(
+            ca_sentence_id, ca_sentence_ini, log_location=self.pathlog, log_level=self.loglevel
+        )
         self.convAssists.update({ConvAssistPredictionTypes.SENTENCES: self.conv_sentence})
 
         self.conv_canned_phrases: ConvAssist = ConvAssist(
-            ca_cannedphrases_id, ca_cannedphrases_ini
+            ca_cannedphrases_id, ca_cannedphrases_ini, log_location=self.pathlog, log_level=self.loglevel
         )
         self.convAssists.update(
             {ConvAssistPredictionTypes.CANNEDPHRASESMODE: self.conv_canned_phrases}

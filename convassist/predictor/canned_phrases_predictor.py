@@ -105,6 +105,7 @@ class CannedPhrasesPredictor(Predictor):
 
         self._model_loaded = True
         self.logger.debug(f"cannedPhrases count: {len(self.corpus_phrases)}")
+        self.logger.info(f"Loaded {self.predictor_name} predictor.")
 
     def _create_index(self, ind):
         ind.add_items(self.corpus_embeddings, list(range(len(self.corpus_embeddings))))
