@@ -68,7 +68,7 @@ class PredictorRegistry(list):
     ):
         predictor: Any = None
 
-        predictor_class = config.get(predictor_name, "predictor_class")
+        predictor_class = self.get_predictor_class(predictor_name, config)
 
         if predictor_class in predictors:
             try:
@@ -86,6 +86,21 @@ class PredictorRegistry(list):
                 return
         if predictor:
             self.append(predictor)
+
+    def get_predictor_class(self, predictor_name, config):
+
+        #TODO: Fix this hack. 
+        # This is a hack to get the predictor class from the config file.
+        # The config file should have a mapping of predictor_name to predictor_class
+        # but two predictor classes were renamed and the config file was not updated.
+        # This hack will be removed once the config file is updated.
+
+        if predictor_name == "CannedWordPredictor":
+            return "CannedWordPredictor"
+        elif predictor_name == "DefaultSmoothedNgramPredictor":
+            return "GeneralWordPredictor"
+        else: 
+            return config.get(predictor_name, "predictor_class")
 
     def model_status(self) -> bool:
         model_status = False

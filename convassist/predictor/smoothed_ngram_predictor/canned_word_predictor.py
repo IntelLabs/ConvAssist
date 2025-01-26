@@ -95,40 +95,40 @@ class CannedWordPredictor(SmoothedNgramPredictor):
                     imp_tokens.append(token.text.lower())
         return " ".join(imp_tokens).strip().lower()
 
-    def recreate_database(self):
+    # def recreate_database(self):
 
-        # STEP 1: CREATE CANNED_NGRAM DATABASE IF IT DOES NOT EXIST
-        try:
-            assert self.ngram_db_conn
-            self.ngram_db_conn.connect()
-            for i in range(self.cardinality):
-                self.ngram_db_conn.create_ngram_table(cardinality=i + 1)
+    #     # STEP 1: CREATE CANNED_NGRAM DATABASE IF IT DOES NOT EXIST
+    #     try:
+    #         assert self.ngram_db_conn
+    #         self.ngram_db_conn.connect()
+    #         for i in range(self.cardinality):
+    #             self.ngram_db_conn.create_ngram_table(cardinality=i + 1)
 
-        except Exception as e:
-            self.logger.error(f"exception in creating personalized db : {e}")
+    #     except Exception as e:
+    #         self.logger.error(f"exception in creating personalized db : {e}")
 
-        phrases_toAdd = self.canned_data.all_phrases_as_list()
-        phrases_toRemove = []
+    #     phrases_toAdd = self.canned_data.all_phrases_as_list()
+    #     phrases_toRemove = []
 
-        # Add phrases_toAdd to the ngram database
-        for phrase in phrases_toAdd:
-            for curr_card in range(self.cardinality):
-                ngram_map = NgramMap(curr_card, phrase)
+    #     # Add phrases_toAdd to the ngram database
+    #     for phrase in phrases_toAdd:
+    #         for curr_card in range(self.cardinality):
+    #             ngram_map = NgramMap(curr_card, phrase)
 
-                # for every ngram, get db count, update or insert
-                for ngram, count in ngram_map.items():
-                    self.ngram_db_conn.insert_ngram(
-                        curr_card + 1, ngram, count, update_on_conflict=False
-                    )
+    #             # for every ngram, get db count, update or insert
+    #             for ngram, count in ngram_map.items():
+    #                 self.ngram_db_conn.insert_ngram(
+    #                     curr_card + 1, ngram, count, update_on_conflict=False
+    #                 )
 
-        for phrase in phrases_toRemove:
-            for curr_card in range(self.cardinality):
-                # imp_words = self.extract_svo(phrase)
-                ngram_map = NgramMap(curr_card, phrase)
+    #     for phrase in phrases_toRemove:
+    #         for curr_card in range(self.cardinality):
+    #             # imp_words = self.extract_svo(phrase)
+    #             ngram_map = NgramMap(curr_card, phrase)
 
-                # for every ngram, get db count, update or insert
-                for ngram, count in ngram_map.items():
-                    self.ngram_db_conn.remove_ngram(ngram)
+    #             # for every ngram, get db count, update or insert
+    #             for ngram, count in ngram_map.items():
+    #                 self.ngram_db_conn.remove_ngram(ngram)
 
     @property
     def startwords(self):

@@ -39,14 +39,14 @@ class LoggingUtility:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(LoggingUtility, cls).__new__(cls)
+
+            cls._central_log_queue = queue.Queue()
         return cls._instance
 
     def __init__(self):
         self._formatter: logging.Formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s %(message)s"
         )
-        
-        self._central_log_queue: queue.Queue = queue.Queue()
 
     @property
     def formatter(self):
@@ -54,7 +54,7 @@ class LoggingUtility:
 
     @property
     def central_log_queue(self):
-        return self._central_log_queue
+        return self._instance._central_log_queue
 
     @staticmethod
     def getLogFileName(name):
@@ -66,7 +66,8 @@ class LoggingUtility:
 
         logger = logging.getLogger(name)
         logger.setLevel(log_level)
-        logger.propagate = False
+
+        logger.propagate = True
 
         logger.handlers.clear()
 

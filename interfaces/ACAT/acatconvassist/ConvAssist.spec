@@ -2,7 +2,7 @@
 import os
 
 from PyInstaller.utils.hooks import copy_metadata, collect_data_files
-from PyInstaller.building.build_main import Analysis, PYZ, EXE
+from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__name__))
 
@@ -36,12 +36,13 @@ pyz = PYZ(a.pure, a.zipped_data)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
+    # a.binaries,
     a.zipfiles,
     a.datas,
     [('W ignore', None, 'OPTION')],
+    exclude_binaries=True,
     name='ConvAssist',
-    debug=True,
+    debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
@@ -52,3 +53,13 @@ exe = EXE(
     icon=f'{SCRIPT_DIR}\\Assets\\icon_tray.ico'
 )
 
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='ConvAssist',
+)

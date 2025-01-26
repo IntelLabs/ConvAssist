@@ -267,6 +267,7 @@ class NGramUtil:
         self,
         phrases_toAdd: Optional[List[str]] = None,
         phrases_toRemove: Optional[List[str]] = None,
+        update_on_conflict: bool = False,
     ):
         assert self._connection is not None
 
@@ -278,7 +279,7 @@ class NGramUtil:
 
                     # for every ngram, get db count, update or insert
                     for ngram, count in ngram_map.items():
-                        self._insert_ngram(curr_card, ngram, count, update_on_conflict=False)
+                        self._insert_ngram(curr_card, ngram, count, update_on_conflict)
 
         if phrases_toRemove:
             for phrase in phrases_toRemove:

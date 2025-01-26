@@ -3,7 +3,7 @@ $scriptPath = "ConvAssist.spec"
 
 # Measure the time taken to run the PyInstaller build
 $timeTaken = Measure-Command {
-    pyinstaller --clean --noconfirm --log-level INFO $scriptPath
+    pyinstaller --noconfirm --log-level INFO $scriptPath
 }
 
 # Output the time taken

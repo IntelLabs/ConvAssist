@@ -27,7 +27,7 @@ else:
     import pystray
     import sv_ttk
     from PIL import Image
-    from pystray import MenuItem as item
+    from pystray import MenuItem
 
     from convassist.utilities.logging_utility import LoggingUtility
 
@@ -216,10 +216,14 @@ else:
             self.icon = self.create_image()
 
             self.menu = (
-                item("Show", self.show_window),
-                item("About", self.about_message),
-                item("Quit", self.on_quit),
+                MenuItem("Show", self.show_window),
+                MenuItem("About", self.about_message),
+                MenuItem("Quit", self.on_quit),
             )
+
+        def __call__(self):
+            self.tk_window.show_window()
+            # return super().__call__()
 
         def check_for_exit(self):
             """Check if the application should exit."""
@@ -233,6 +237,10 @@ else:
             """Create an image for the systray icon."""
             image = Image.open(os.path.join(working_dir, "Assets", "icon_tray.ico"))
             return image
+        
+        def on_clicked(self, icon, item):
+            """Handle the systray icon click event."""
+            self.tk_window.show_window()
 
         def on_quit(self, icon, item):
             """Quit the application."""

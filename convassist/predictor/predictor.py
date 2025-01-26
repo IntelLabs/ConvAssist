@@ -123,6 +123,10 @@ class Predictor(ABC):
     @property
     def sbertmodel(self):
         return self._sbertmodel
+    
+    @sbertmodel.setter
+    def sbertmodel(self, value):
+        self._sbertmodel = value
 
     @property
     def sentence_transformer_model(self):
