@@ -3,6 +3,15 @@
 
 # CHATGpt Generated Code
 import sys
+import os
+import logging
+import tempfile
+from filelock import FileLock, Timeout
+LOCK_FILE = os.path.join(tempfile.gettempdir(), 'convassist.lock')
+
+working_dir = os.path.dirname(os.path.realpath(__file__))
+
+LOG_LEVEL = logging.DEBUG
 
 if not sys.platform == "win32":
 
@@ -11,18 +20,14 @@ if not sys.platform == "win32":
 
 else:
     import glob
-    import logging
-    import os
     import queue
     import shutil
     import sys
-    import tempfile
     import threading
     import time
     import tkinter as tk
     from tkinter import BOTH, END, messagebox, ttk
     from tkinter.scrolledtext import ScrolledText
-    from filelock import FileLock, Timeout
 
     import pystray
     import sv_ttk
@@ -35,12 +40,6 @@ else:
     license_text_string += "SPDX-License-Identifier: GPL 3.0\n\n"
     license_text_string += "Portions of ConvAssist were ported from the Pressage\n"
     license_text_string += "project, which is licensed under the GPL 3.0 license.\n"
-
-    LOCK_FILE = os.path.join(tempfile.gettempdir(), 'convassist.lock')
-
-    working_dir = os.path.dirname(os.path.realpath(__file__))
-
-    LOG_LEVEL = logging.DEBUG
 
 
     def deleteOldPyinstallerFolders(time_threshold=100):
