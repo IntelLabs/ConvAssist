@@ -1,10 +1,14 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Any, Dict
+from typing import Dict
 
-from ..predictor import SentenceCompletionPredictor, SpellCorrectPredictor
-from ..predictor.utilities.prediction import Prediction
+from convassist.predictor.sentence_completion_predictor import (
+    SentenceCompletionPredictor,
+)
+from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
+from convassist.predictor.utilities.prediction import Prediction
+
 from .combiner import Combiner
 
 # TODO - this isn't the best way to combine the probs (from ngram db and deep

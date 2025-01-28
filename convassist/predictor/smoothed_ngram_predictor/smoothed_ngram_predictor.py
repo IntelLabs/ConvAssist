@@ -5,12 +5,12 @@ import string
 from abc import ABC
 from typing import List
 
-from convassist.predictor import Predictor
+from convassist.predictor.predictor import Predictor
 from convassist.predictor.utilities.prediction import Prediction, Suggestion
 from convassist.utilities.ngram.ngramutil import NGramUtil
 
 
-class SmoothedNgramPredictor(Predictor, ABC):
+class SmoothedNgramPredictor(Predictor):
     """
     SmoothedNgramPredictor is a class that extends the Predictor class to provide
     functionality for predicting the next word(s) in a sequence using smoothed n-grams.

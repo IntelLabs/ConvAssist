@@ -33,6 +33,10 @@ class NGramUtil:
         if self._connection:
             self._connection.close()
 
+    @property
+    def connection(self):
+        return self._connection
+
     # Implemented NGRAM Functionality
     def _create_ngram_table(self, cardinality):
         """
@@ -152,6 +156,16 @@ class NGramUtil:
         DO UPDATE SET count
 
         """
+        query = self.generate_ngram_insert_query(cardinality, update_on_conflict)
+
+        try:
+            self._connection.execute_query(query, (*ngram, count))
+            # time.sleep(0.01)
+
+        except Exception as e:
+            raise Exception(f"{__class__}{__name__} failed to insert ngram: {e}")
+
+    def generate_ngram_insert_query(self, cardinality, update_on_conflict=True):
         table_name = f"_{cardinality}_gram"
         columns = ", ".join([f"word_{i + 1}" for i in reversed(range(cardinality - 1))])
         if columns:
@@ -166,12 +180,7 @@ class NGramUtil:
             query += f"ON CONFLICT ({unique_columns}) DO UPDATE SET count = count + 1;"
         else:
             query += f"ON CONFLICT ({unique_columns}) DO NOTHING;"
-
-        try:
-            self._connection.execute_query(query, (*ngram, count))
-            self._connection.commit()
-        except Exception as e:
-            raise Exception(f"{__class__}{__name__} failed to create ngram table: {e}")
+        return query
 
     def _remove_ngram(self, ngram):
         """
