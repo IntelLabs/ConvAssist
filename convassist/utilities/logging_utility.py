@@ -32,9 +32,11 @@ class QueueHandler(logging.Handler):
         self.log_queue.put(self.format(record))
 
 
+
 class LoggingUtility:
     _instance = None
     _initialized = False
+
 
     def __new__(cls):
         if cls._instance is None:
@@ -44,8 +46,10 @@ class LoggingUtility:
         return cls._instance
 
     def __init__(self):
+        self.log_format = "%(asctime)s - %(name)s - %(levelname)s %(message)s"
+        self.date_format = "%m-%d-%Y %H:%M:%S"
         self._formatter: logging.Formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s %(message)s"
+            fmt=self.log_format, datefmt=self.date_format
         )
 
     @property
@@ -115,6 +119,7 @@ class LoggingUtility:
                 "ERROR": "red",
                 "CRITICAL": "red,bg_white",
             },
+            datefmt=self.date_format,
         )
 
         stream_handler.setFormatter(formatter)

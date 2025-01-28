@@ -472,15 +472,19 @@ class ACATConvAssistInterface(threading.Thread):
         
 
     def ConnectToACAT(self, connection_type=None) -> bool:
-        retries = 10000
+        retries = 0
         self.logger.info("Trying to connect to ACAT server.")
         try:
-            while not self.clientConnected and not self.app_quit_event.is_set() and retries > 0:
+            while not self.clientConnected and not self.app_quit_event.is_set() and retries < 10000:
                 self.clientConnected, msg = self.messageHandler.connect()
 
-                self.logger.info(f"Connection Status: {msg}")
+                # Log the connection status the first 10 times
+                # then only every 10 times after that.
+                if retries < 10 or retries % 10 == 0:
+                    self.logger.info(f"Connection Status: {msg}")
+
                 if not self.clientConnected:
-                    retries -= 1
+                    retries += 1
                     time.sleep(5)
 
         except Exception as e:
