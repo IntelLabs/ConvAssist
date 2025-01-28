@@ -16,7 +16,7 @@ print(f'script dir: {SCRIPT_DIR}')
 print(f'additional data: {additionaldata}')
 
 a = Analysis(
-    [f'{SCRIPT_DIR}\\ConvAssistUI.py'],
+    [f'{SCRIPT_DIR}\\ConvAssist.py'],
     pathex=[],
     binaries=[],
     datas=additionaldata,
@@ -36,11 +36,12 @@ pyz = PYZ(a.pure, a.zipped_data)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
+    # a.binaries,
     a.zipfiles,
     a.datas,
     [('W ignore', None, 'OPTION')],
-    name='ConvAssistUI',
+    exclude_binaries=True,
+    name='ConvAssist',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -52,13 +53,13 @@ exe = EXE(
     icon=f'{SCRIPT_DIR}\\Assets\\icon_tray.ico'
 )
 
-
 coll = COLLECT(
     exe,
     a.binaries,
+    a.zipfiles,
     a.datas,
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='ConvAssistUI',
+    name='ConvAssist',
 )

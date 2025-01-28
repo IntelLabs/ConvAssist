@@ -57,12 +57,6 @@ class TestGeneralWordPredictor(TestPredictors):
         self.assertIsNotNone(self.predictor.aac_dataset)
         self.assertIsNotNone(self.predictor.database)
 
-    # def test_missing_start_words(self):
-    #     self.config["test_predictor"]["startwords"] = "new_start.json"
-
-    #     predictor = GeneralWordPredictor(self.config, self.context_tracker, "test_predictor")
-
-    #     self.assertFalse(os.path.exists(predictor.startwords))
 
     @parameterized.expand(
         [

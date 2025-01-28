@@ -1,5 +1,5 @@
 # Define the path to the Python script or .spec file you want to build
-$scriptPath = "ConvAssistUI.spec"
+$scriptPath = "ConvAssist.spec"
 
 # Measure the time taken to run the PyInstaller build
 $timeTaken = Measure-Command {

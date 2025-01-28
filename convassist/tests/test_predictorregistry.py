@@ -5,6 +5,7 @@ import configparser
 import logging
 import unittest
 from unittest.mock import mock_open, patch
+from parameterized import parameterized
 
 from ..context_tracker import ContextTracker
 from ..predictor_registry import PredictorRegistry
@@ -49,6 +50,20 @@ class TestPredictorRegistry(unittest.TestCase):
             self.config, self.context_tracker, logging.getLogger()
         )
         self.assertFalse(self.predictor_registry.model_status())
+
+    @parameterized.expand(
+        [
+            ("CannedWordPredictor", "CannedWordPredictor"),
+            ("DefaultSmoothedNgramPredictor", "GeneralWordPredictor"),
+            ("SpellCorrectPredictor", "SpellCorrectPredictor"),
+        ]
+    )
+    def test_get_predictor_class(self, predictor_name, expected_predictor_class):
+        # self.predictor_registry.set_predictors(
+        #     self.config, self.context_tracker, logging.getLogger()
+        # )
+        predictor_class = self.predictor_registry.get_predictor_class(predictor_name, self.config)
+        self.assertEqual(predictor_class, expected_predictor_class)
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ from typing import Any
 
 
 class ConvAssistMessageTypes(IntEnum):
-    NONE = 0
+    NOTREADY = 0
     SETPARAM = 1
     NEXTWORDPREDICTION = 2
     NEXTWORDPREDICTIONRESPONSE = 3
@@ -20,6 +20,7 @@ class ConvAssistMessageTypes(IntEnum):
     LEARNSHORTHAND = 8
     LEARNSENTENCES = 9
     FORCEQUITAPP = 10
+    READYFORPREDICTIONS = 11
 
 
 class ConvAssistPredictionTypes(IntEnum):
@@ -57,6 +58,7 @@ class ConvAssistMessage:
 
     def jsonSerialize(self) -> str:
         return json.dumps(dataclasses.asdict(self))
+        # Example output: '{"MessageType": 1, "PredictionType": 1, "Data": "test"}'
 
     def __repr__(self) -> str:
         return (
@@ -102,7 +104,7 @@ class ConvAssistSetParam:
 
 @dataclass
 class WordAndCharacterPredictionResponse:
-    MessageType: int = ConvAssistMessageTypes.NONE
+    MessageType: int = ConvAssistMessageTypes.NOTREADY
     PredictionType: int = ConvAssistPredictionTypes.NONE
     PredictedWords: str = ""
     NextCharacters: str = ""

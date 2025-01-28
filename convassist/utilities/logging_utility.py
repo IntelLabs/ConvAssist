@@ -32,21 +32,25 @@ class QueueHandler(logging.Handler):
         self.log_queue.put(self.format(record))
 
 
-class LoggingUtility:
-    def __init__(self):
-        # color formatter
-        self._formatter = colorlog.ColoredFormatter(
-            "%(asctime)s - %(name)s - %(log_color)s%(levelname)-8s%(reset)s %(message)s",
-            log_colors={
-                "DEBUG": "cyan",
-                "INFO": "green",
-                "WARNING": "yellow",
-                "ERROR": "red",
-                "CRITICAL": "red,bg_white",
-            },
-        )
 
-        self._central_log_queue: queue.Queue = queue.Queue()
+class LoggingUtility:
+    _instance = None
+    _initialized = False
+
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(LoggingUtility, cls).__new__(cls)
+
+            cls._central_log_queue = queue.Queue()
+        return cls._instance
+
+    def __init__(self):
+        self.log_format = "%(asctime)s - %(name)s - %(levelname)s %(message)s"
+        self.date_format = "%m-%d-%Y %H:%M:%S"
+        self._formatter: logging.Formatter = logging.Formatter(
+            fmt=self.log_format, datefmt=self.date_format
+        )
 
     @property
     def formatter(self):
@@ -54,7 +58,7 @@ class LoggingUtility:
 
     @property
     def central_log_queue(self):
-        return self._central_log_queue
+        return self._instance._central_log_queue
 
     @staticmethod
     def getLogFileName(name):
@@ -66,7 +70,10 @@ class LoggingUtility:
 
         logger = logging.getLogger(name)
         logger.setLevel(log_level)
-        logger.propagate = False
+
+        logger.propagate = True
+
+        logger.handlers.clear()
 
         logger.handlers.clear()
 
@@ -104,5 +111,18 @@ class LoggingUtility:
 
     def add_stream_handler(self, logger: logging.Logger, textio: TextIO):
         stream_handler = logging.StreamHandler(textio)
-        stream_handler.setFormatter(self.formatter)
+
+        formatter = colorlog.ColoredFormatter(
+            "%(asctime)s - %(name)s - %(log_color)s%(levelname)-8s%(reset)s %(message)s",
+            log_colors={
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bg_white",
+            },
+            datefmt=self.date_format,
+        )
+
+        stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
