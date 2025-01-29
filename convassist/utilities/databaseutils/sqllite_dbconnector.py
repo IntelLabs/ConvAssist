@@ -7,7 +7,7 @@ import sqlite3
 import threading
 from typing import Any, List, Optional, Tuple
 
-from .dbconnector import DatabaseConnector, DatabaseError
+from convassist.utilities.databaseutils.dbconnector import DatabaseConnector, DatabaseError
 
 
 class SQLiteDatabaseConnector(DatabaseConnector):

@@ -4,11 +4,11 @@
 import logging
 from configparser import ConfigParser
 
-from .combiner.meritocrity_combiner import MeritocracyCombiner
-from .predictor.spell_correct_predictor import SpellCorrectPredictor
-from .predictor.utilities.prediction import UnknownCombinerException
-from .predictor_registry import PredictorRegistry
-from .utilities.logging_utility import LoggingUtility
+from convassist.combiner.meritocrity_combiner import MeritocracyCombiner
+from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
+from convassist.predictor.utilities.prediction import UnknownCombinerException
+from convassist.predictor_registry import PredictorRegistry
+from convassist.utilities.logging_utility import LoggingUtility
 
 
 class PredictorActivator:

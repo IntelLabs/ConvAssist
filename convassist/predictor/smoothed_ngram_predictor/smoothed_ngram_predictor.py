@@ -17,11 +17,6 @@ class SmoothedNgramPredictor(Predictor):
     """
 
     def configure(self) -> None:
-        # # make sure personalized databases are updated
-        # with NGramUtil(self.database, cardinality=3) as ngramutil:
-        #     with open(self.personalized_cannedphrases, "r") as f:
-        #         for line in f:
-        #             ngramutil.learn(line.strip('.\n'))
         pass
 
     def extract_svo(self, sent):

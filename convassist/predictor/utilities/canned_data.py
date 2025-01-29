@@ -1,7 +1,7 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from ...utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
+from convassist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
 
 class cannedData:

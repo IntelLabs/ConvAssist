@@ -14,9 +14,10 @@ from nltk import word_tokenize
 from nltk.stem import PorterStemmer
 from sentence_transformers import SentenceTransformer
 
-from .predictor import Predictor
-from .utilities.canned_data import cannedData
-from .utilities.prediction import Prediction, Suggestion
+from convassist.predictor.predictor import Predictor
+from convassist.predictor.utilities.canned_data import cannedData
+from convassist.predictor.utilities.prediction import Prediction
+from convassist.predictor.utilities.suggestion import Suggestion
 
 
 class CannedPhrasesPredictor(Predictor):

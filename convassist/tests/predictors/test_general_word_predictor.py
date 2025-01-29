@@ -14,8 +14,8 @@ from convassist.predictor.smoothed_ngram_predictor.general_word_predictor import
 )
 from convassist.utilities.ngram.ngramutil import NGramUtil
 
-from .. import setup_utils
-from . import TestPredictors
+from convassist import setup_utils
+from convassist import TestPredictors
 
 
 class TestGeneralWordPredictor(TestPredictors):

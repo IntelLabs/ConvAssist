@@ -5,9 +5,6 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional, Tuple
 
-from ..logging_utility import LoggingUtility
-
-
 class DatabaseError(Exception):
     """Base class for database-related errors."""
 

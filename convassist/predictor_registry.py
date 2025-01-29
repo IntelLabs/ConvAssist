@@ -12,9 +12,9 @@ from convassist.predictor.sentence_completion_predictor import (
 )
 from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
 
-from .predictor.smoothed_ngram_predictor.canned_word_predictor import CannedWordPredictor
-from .predictor.smoothed_ngram_predictor.general_word_predictor import GeneralWordPredictor
-from .predictor.smoothed_ngram_predictor.smoothed_ngram_predictor import (
+from convassist.predictor.smoothed_ngram_predictor.canned_word_predictor import CannedWordPredictor
+from convassist.predictor.smoothed_ngram_predictor.general_word_predictor import GeneralWordPredictor
+from convassist.predictor.smoothed_ngram_predictor.smoothed_ngram_predictor import (
     SmoothedNgramPredictor,
 )
 

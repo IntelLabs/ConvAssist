@@ -6,10 +6,10 @@ from configparser import ConfigParser
 
 import nltk
 
-from .context_tracker import ContextTracker
-from .predictor_activator import PredictorActivator
-from .predictor_registry import PredictorRegistry
-from .utilities.logging_utility import LoggingUtility
+from convassist.context_tracker import ContextTracker
+from convassist.predictor_activator import PredictorActivator
+from convassist.predictor_registry import PredictorRegistry
+from convassist.utilities.logging_utility import LoggingUtility
 
 
 class ConvAssist:
