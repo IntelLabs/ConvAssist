@@ -3,17 +3,8 @@
 
 from typing import Dict
 
-from convassist.predictor.sentence_completion_predictor import (
-    SentenceCompletionPredictor,
-)
-from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
 from convassist.predictor.utilities.prediction import Prediction
-
 from convassist.combiner.combiner import Combiner
-
-# TODO - this isn't the best way to combine the probs (from ngram db and deep
-# learning based model, just concat m,n predictions and take the top n
-
 
 class MeritocracyCombiner(Combiner):
     """
@@ -32,12 +23,12 @@ class MeritocracyCombiner(Combiner):
             word_predicted = suggestion.word
 
             # TODO - refactor so the SpellCorrectPredictor has it's own combiner
-            if suggestion.predictor_name == SpellCorrectPredictor.__name__:
+            if suggestion.predictor_name == "SpellCorrectPredictor":
                 # skip predictions from the SpellCorrectPredictor?!?
                 continue
 
             # TODO - refactor so the SentenceCompletionPredictor has it's own combiner
-            elif suggestion.predictor_name == SentenceCompletionPredictor.__name__:
+            elif suggestion.predictor_name == "SentenceCompletionPredictor":
                 # result is a sentence. Make sure to get the first letter of the
                 # sentence
                 nextLetter = word_predicted.split()[0][0]

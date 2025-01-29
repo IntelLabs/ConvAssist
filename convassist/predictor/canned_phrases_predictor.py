@@ -4,7 +4,6 @@
 import collections
 import logging
 import os
-from pathlib import Path
 
 import hnswlib
 import joblib

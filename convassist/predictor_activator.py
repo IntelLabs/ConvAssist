@@ -4,10 +4,11 @@
 import logging
 from configparser import ConfigParser
 
+from convassist.predictor_registry import PredictorRegistry
+
 from convassist.combiner.meritocrity_combiner import MeritocracyCombiner
 from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
 from convassist.predictor.utilities.prediction import UnknownCombinerException
-from convassist.predictor_registry import PredictorRegistry
 from convassist.utilities.logging_utility import LoggingUtility
 
 

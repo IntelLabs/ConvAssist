@@ -33,19 +33,19 @@ if sys.platform == "win32":
 
     set_path_param = ConvAssistSetParam(
         ParameterType.PATH,
-        "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources",
+        r"C:\\Users\\mbeale\\OneDrive - Intel Corporation\\Documents\\ACAT\\Users\DefaultUser\\en\WordPredictors\\ConvAssist\\Settings",
     )
     set_static_path_param = ConvAssistSetParam(
         ParameterType.PATHSTATIC,
-        "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/static_resources",
+        r"C:\\Program Files (x86)\\ACAT\\en\\WordPredictors\\ConvAssist",
     )
     set_personalized_path_param = ConvAssistSetParam(
         ParameterType.PATHPERSONALIZED,
-        "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/personalized",
+        r"C:\\Users\\mbeale\\OneDrive - Intel Corporation\\Documents\\ACAT\\Users\\DefaultUser\\en\WordPredictors\\ConvAssist\\Database",
     )
     set_log_param = ConvAssistSetParam(
         ParameterType.PATHLOG,
-        "C:/Users/mbeale/source/repos/ConvAssist/ACAT_ConvAssist_Interface/ConvAssistCPApp/resources/logs",
+        r"C:\\Users\\mbeale\\OneDrive - Intel Corporation\\Documents\\ACAT\\Logs",
     )
     set_enable_logs_param = ConvAssistSetParam(ParameterType.ENABLELOGS, True)
     set_suggestions_param = ConvAssistSetParam(ParameterType.SUGGESTIONS, 10)

@@ -1,21 +1,17 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Copyright (C) 2023 Intel Corporation
-# SPDX-License-Identifier: GPL-3.0-or-later
-
 """
    Systray application for ConvAssist to be used with ACAT
 """
 
-import json
 import logging
 import os
 import sys
 import threading
 import time
 from configparser import ConfigParser
-from typing import Any
+import interfaces.ACAT.acatconvassist.preferences as preferences
 
 from convassist.ConvAssist import ConvAssist
 from convassist.utilities.logging_utility import LoggingUtility
@@ -80,19 +76,22 @@ class ACATConvAssistInterface(threading.Thread):
             {"type": "win32", "pipe_name": self.pipeName}
         )
 
+        # Preferences
+        self.prefs = preferences.Preferences("ACATConvAssist")
+
         # Parameters that ACAT will send to ConvAssist
-        self.path: str = ""
-        self.suggestions: int = 10
-        self.testgensentencepred: bool = False
-        self.retrieveaac: bool = False
-        self.pathstatic: str = ""
-        self.pathpersonalized: str = ""
-        self.enablelogs: bool = False
-        self.loglevel: int = log_level
-        self._pathlog = ""
+        self.path: str = self.prefs.load("path", "")
+        self.suggestions: int = self.prefs.load("suggestions", 10)
+        self.testgensentencepred: bool = self.prefs.load("testgensentencepred", False)
+        self.retrieveaac: bool = self.prefs.load("retrieveaac", False)
+        self.pathstatic: str = self.prefs.load("pathstatic", "")
+        self.pathpersonalized: str = self.prefs.load("pathpersonalized", "")
+        self.enablelogs: bool = self.prefs.load("enablelogs", False)
+        self.loglevel: int = self.prefs.load("loglevel", log_level)
+        self._pathlog = self.prefs.load("pathlog", "")
 
         self.sent_config_change: bool = False
-        self.enable_logs: bool = True
+        # self.enable_logs: bool = True
 
         self.convAssists = {}
 
@@ -250,7 +249,7 @@ class ACATConvAssistInterface(threading.Thread):
 
                 # TODO - Handle more gracefully
                 if messageReceived.MessageType != ConvAssistMessageTypes.SETPARAM and not self.ready:
-                    self.logger.critical("Not ready to process messages.")
+                    self.logger.warning("Not ready to process messages.")
                     PredictionResponse.MessageType = ConvAssistMessageTypes.NOTREADY
                     self.messageHandler.send_message(PredictionResponse.jsonSerialize())
                     continue
@@ -432,6 +431,7 @@ class ACATConvAssistInterface(threading.Thread):
             if old_value != param.Value:
                 changed = True
                 setattr(self, attr_name, param.Value)
+                self.prefs.save(attr_name, param.Value)
 
         except Exception as e:
             self.logger.error(f"handle_parameters exception: {e}.")
@@ -470,7 +470,6 @@ class ACATConvAssistInterface(threading.Thread):
         # I"m assuming that if I've made it here, they are all initialized
         self.ready = True
         
-
     def ConnectToACAT(self, connection_type=None) -> bool:
         retries = 0
         self.logger.info("Trying to connect to ACAT server.")
@@ -504,12 +503,15 @@ class ACATConvAssistInterface(threading.Thread):
         """
         self.logger.info("Starting ACATConvAssistInterface.")
 
+        starttime = time.time()
+        self.initialize_or_configure_convassists()
+        self.logger.debug(f"ACATConvAssistInterface initialized in {time.time() - starttime} seconds.")
+
         if not self.ConnectToACAT():
             self.logger.info("Failed to connect to ACAT server. Exiting.")
             self.app_quit_event.set()
             return
 
-        # self.initialize_or_configure_convassists()
         self.handle_incoming_messages()
 
         self.logger.info("Disconnecting from ACAT.")

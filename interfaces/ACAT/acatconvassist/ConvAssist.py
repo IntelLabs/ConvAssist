@@ -107,6 +107,8 @@ else:
             del self._tray_icon
 
         def mainloop(self, n: int = 0) -> None:
+
+            self.logger.debug("Starting main loop")
             # Start the log update loop
             self.update_log_window()
 
@@ -114,14 +116,21 @@ else:
             self.app_quit_event = threading.Event()
             self.check_for_exit()
 
+            self.logger.debug("Loading ACATConvAssistInterface")
+            # Time how long it takes to load the ACATConvAssistInterface
+            start_time = time.time()
+
             # Start ACATConvAssistInterface
             from interfaces.ACAT.acatconvassist.acatconvassist import ACATConvAssistInterface
             self.thread = ACATConvAssistInterface(self.app_quit_event, queue_handler=True, log_level = LOG_LEVEL)
+            self.logger.debug("ACATConvAssistInterface loaded in %s seconds", time.time() - start_time)
             self.thread.start()
 
             return super().mainloop(n)
 
         def configure(self):
+            self.withdraw()  # Hide the main window at startup
+
             self.log_widget = ScrolledText(self, height=10)
             self.log_widget.pack(fill=BOTH, expand=True, pady=10, padx=10)
 
@@ -129,18 +138,8 @@ else:
 
             sv_ttk.set_theme("light")
 
-            self.withdraw()  # Hide the main window at startup
-
         def create_buttons(self):
             button_frame = ttk.Frame(self, height=50)
-
-            # self.clear_image = ttk.PhotoImage(file=os.path.join(working_dir, "Assets", "button_clear.png"))
-            # self.license_image = ttk.PhotoImage(file=os.path.join(working_dir, "Assets", "button_license.png"))
-            # self.close_image = ttk.PhotoImage(file=os.path.join(working_dir, "Assets", "button_exit.png"))
-
-            # clear_button = ttk.Button(button_frame, image=self.clear_image, command=self.clear_action)
-            # license_button = ttk.Button(button_frame, image=self.license_image, command=self.license_action)
-            # close_button = ttk.Button(button_frame, image=self.close_image, command=self.close_action)
 
             clear_button = ttk.Button(button_frame, text="Clear", command=self.clear_action)
             license_button = ttk.Button(button_frame, text="About", command=self.about_action)
