@@ -64,7 +64,7 @@ class ACATConvAssistInterface(threading.Thread):
         self.app_quit_event = app_quit_event
         self.daemon = True
 
-        self.retries = 5
+        self.retries = 60
         self.pipeName = "ACATConvAssistPipe"
 
         self.clientConnected: bool = False
@@ -456,7 +456,6 @@ class ACATConvAssistInterface(threading.Thread):
                         self.logger.info(f"convassist {convassist.name} initialized.")
 
                 except Exception as e:
-                    self.logger.critical(f"Error initializing convassist {convassist.name}: {e}.")
                     self.ready = False
                     raise e
 
@@ -474,7 +473,7 @@ class ACATConvAssistInterface(threading.Thread):
         retries = 0
         self.logger.info("Trying to connect to ACAT server.")
         try:
-            while not self.clientConnected and not self.app_quit_event.is_set() and retries < 10000:
+            while not self.clientConnected and not self.app_quit_event.is_set() and retries < self.retries:
                 self.clientConnected, msg = self.messageHandler.connect()
 
                 # Log the connection status the first 10 times
@@ -504,17 +503,21 @@ class ACATConvAssistInterface(threading.Thread):
         self.logger.info("Starting ACATConvAssistInterface.")
 
         starttime = time.time()
-        self.initialize_or_configure_convassists()
+        try:
+            self.initialize_or_configure_convassists()
+        except Exception:
+            self.logger.warning(f"ConvAssist not ready.  Will wait for configuration.")
+            
         self.logger.debug(f"ACATConvAssistInterface initialized in {time.time() - starttime} seconds.")
 
         if not self.ConnectToACAT():
-            self.logger.info("Failed to connect to ACAT server. Exiting.")
+            self.logger.info("Shutting down.")
             self.app_quit_event.set()
             return
 
         self.handle_incoming_messages()
 
-        self.logger.info("Disconnecting from ACAT.")
+        self.logger.info("Shutting down.")
         self.DisconnectFromACAT()
 
         self.logger.info("ACATConvAssistInterface finished.")

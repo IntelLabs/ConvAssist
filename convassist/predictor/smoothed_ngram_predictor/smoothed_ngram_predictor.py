@@ -17,7 +17,12 @@ class SmoothedNgramPredictor(Predictor):
     """
 
     def configure(self) -> None:
-        pass
+        with NGramUtil(self.database, self.cardinality) as ngramutil:
+            try:
+                ngramutil.create_update_ngram_tables()
+
+            except Exception as e:
+                self.logger.error(f"Error creating ngram tables: {e}")
 
     def extract_svo(self, sent):
         return sent
@@ -113,10 +118,10 @@ class SmoothedNgramPredictor(Predictor):
         if self.learn_enabled:
             with NGramUtil(self.database, self.cardinality) as ngramutil:
                 try:
-                    self.logger.debug(f"learning ...{phrase}")
 
                     phrase = phrase.lower().translate(str.maketrans("", "", string.punctuation))
                     phrase = self.extract_svo(phrase)
+                    self.logger.debug(f"learning ... {phrase}")
 
                     ngramutil.learn(phrase)
 

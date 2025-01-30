@@ -8,3 +8,5 @@ $timeTaken = Measure-Command {
 
 # Output the time taken
 Write-Output "$timeTaken"
+
+Compress-Archive -Path "dist\ConvAssist\_internal","dist\ConvAssist\ConvAssist.exe" -DestinationPath "ConvAssist.zip" -Force

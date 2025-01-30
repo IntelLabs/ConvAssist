@@ -42,7 +42,7 @@ class LoggingUtility:
         if cls._instance is None:
             cls._instance = super(LoggingUtility, cls).__new__(cls)
 
-            cls._central_log_queue = queue.LifoQueue()
+            cls._central_log_queue = queue.Queue()
         return cls._instance
 
     def __init__(self):
