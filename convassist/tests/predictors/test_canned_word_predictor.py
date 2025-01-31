@@ -12,8 +12,8 @@ from convassist.predictor.smoothed_ngram_predictor.canned_word_predictor import 
     CannedWordPredictor,
 )
 
-from convassist import setup_utils
-from convassist import TestPredictors
+from convassist.tests import setup_utils
+from convassist.tests.predictors import TestPredictors
 
 
 class TestCannedWordPredictor(TestPredictors):

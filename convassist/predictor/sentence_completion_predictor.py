@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional
 import hnswlib
 import joblib
 import nltk
-import numpy
 import torch
 import transformers
 from nltk import word_tokenize

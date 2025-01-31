@@ -60,6 +60,7 @@ def setup_static_resources():
 
 def setup_test_words_db():
     with NGramUtil(f"{SOURCE_DIR}/test_data/static/test_words.db", cardinality=3) as ngramutil:
+        ngramutil.create_update_ngram_tables()
         with open(f"{SOURCE_DIR}/test_data/personalized/startSentences.txt", "r") as f:
             for line in f:
                 ngramutil.learn(line.strip(".\n"))
@@ -110,6 +111,8 @@ def setup_personalized_resources():
     with NGramUtil(
         f"{SOURCE_DIR}/test_data/personalized/canned_ngram.db", cardinality=3
     ) as ngramutil:
+        ngramutil.create_update_ngram_tables()
+
         with open(f"{SOURCE_DIR}/test_data/personalized/startSentences.txt", "r") as f:
             for line in f:
                 ngramutil.learn(line.strip(".\n"))

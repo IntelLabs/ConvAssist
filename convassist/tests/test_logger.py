@@ -39,7 +39,7 @@ class TestLoggingUtility(unittest.TestCase):
 
         logger = logging_utility.get_logger(logger_name, log_level, queue_handler=True)
 
-        # logging_utility.central_log_queue.queue.clear()
+        logging_utility.central_log_queue.queue.clear()
 
         # Test if logger has a queue handler
         self.assertTrue(any(isinstance(handler, QueueHandler) for handler in logger.handlers))

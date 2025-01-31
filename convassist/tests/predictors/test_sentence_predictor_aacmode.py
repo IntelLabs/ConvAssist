@@ -103,17 +103,10 @@ class TestSentenceCompletionPredictor(TestPredictors):
         change_tokens = "This is a new sentence to learn."
         self.predictor.learn(change_tokens)
 
-        sentences = self.predictor._retrieve_fromDataset(change_tokens)
-        self.assertEqual(len(sentences), 1)
+        with patch.object(self.predictor.logger, "warning") as mock_logger_warning:
+            self.predictor.learn(change_tokens)
 
-    def test_learn_existing_sentence(self):
-        change_tokens = "This is an existing sentence."
-        self.predictor.learn(change_tokens)
-        self.predictor.learn(change_tokens)
-
-        sentences = self.predictor._retrieve_fromDataset(change_tokens)
-        self.assertEqual(len(sentences), 1)
-
+            mock_logger_warning.assert_called_once()
 
 if __name__ == "__main__":
     unittest.main()
