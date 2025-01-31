@@ -5,8 +5,8 @@ import collections
 import json
 import os
 
-from ..utilities.prediction import Prediction, Suggestion
-from .smoothed_ngram_predictor import SmoothedNgramPredictor
+from convassist.predictor.smoothed_ngram_predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
+from convassist.predictor.utilities.prediction import Prediction, Suggestion
 
 
 class GeneralWordPredictor(SmoothedNgramPredictor):

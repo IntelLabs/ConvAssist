@@ -1,15 +1,7 @@
-import configparser
 import unittest
 from unittest.mock import patch
 
-from parameterized import parameterized
-
-from convassist.context_tracker import ContextTracker
-from convassist.predictor.sentence_completion_predictor import (
-    SentenceCompletionPredictor,
-)
-
-from .. import setup_utils
+from convassist.tests import setup_utils
 
 class TestPredictors(unittest.TestCase):
     @classmethod

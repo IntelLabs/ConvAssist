@@ -5,10 +5,10 @@ import unittest
 from configparser import ConfigParser
 from unittest.mock import MagicMock
 
-from ..context_tracker import ContextTracker
-from ..ConvAssist import ConvAssist
-from ..predictor_activator import PredictorActivator
-from ..predictor_registry import PredictorRegistry
+from convassist.context_tracker import ContextTracker
+from convassist.ConvAssist import ConvAssist
+from convassist.predictor_activator import PredictorActivator
+from convassist.predictor_registry import PredictorRegistry
 
 
 class TestConvAssist(unittest.TestCase):

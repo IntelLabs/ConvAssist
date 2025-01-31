@@ -12,8 +12,8 @@ from convassist.predictor.sentence_completion_predictor import (
     SentenceCompletionPredictor,
 )
 
-from .. import setup_utils
-from . import TestPredictors
+from convassist.tests import setup_utils
+from convassist.tests.predictors import TestPredictors
 
 
 class TestSentenceCompletionPredictor(TestPredictors):

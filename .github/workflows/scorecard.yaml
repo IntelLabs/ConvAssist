@@ -10,7 +10,7 @@ on:
   # To guarantee Maintained check is occasionally updated. See
   # https://github.com/ossf/scorecard/blob/main/docs/checks.md#maintained
   schedule:
-    - cron: '44 15 * * 0'
+    - cron: "44 15 * * 0"
   # push:
   #   branches: [ "main", "covassist-cleanup" ]
   # pull_request:

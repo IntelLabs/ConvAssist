@@ -78,7 +78,11 @@ else:
             finally:
                 # Load the data as json and return
                 if data:
-                    data = json.loads(data)
+                    try:
+                        data = json.loads(data)
+                    except json.JSONDecodeError as e:
+                        #TODO handle this properly, but for now just continue
+                        pass
 
             return data
 

@@ -3,8 +3,8 @@
 
 from spellchecker import SpellChecker
 
-from .predictor import Predictor
-from .utilities import Prediction, Suggestion
+from convassist.predictor.predictor import Predictor
+from convassist.predictor.utilities.prediction import Prediction, Suggestion
 
 
 class SpellCorrectPredictor(Predictor):

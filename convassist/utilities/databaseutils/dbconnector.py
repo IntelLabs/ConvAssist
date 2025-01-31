@@ -5,9 +5,6 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional, Tuple
 
-from ..logging_utility import LoggingUtility
-
-
 class DatabaseError(Exception):
     """Base class for database-related errors."""
 
@@ -19,19 +16,6 @@ class DatabaseConnector(ABC):
     Abstract base class for database interactions.
     """
 
-    @abstractmethod
-    def connect(self, **kwargs) -> Any:
-        """
-        Establish a connection to the database.
-        """
-        pass  # pragma: no cover
-
-    @abstractmethod
-    def close(self) -> None:
-        """
-        Close the database connection.
-        """
-        pass  # pragma: no cover
 
     @abstractmethod
     def execute_query(self, query: str, params: Optional[Tuple[Any, ...]] = None) -> None:
@@ -58,26 +42,6 @@ class DatabaseConnector(ABC):
         """
         pass  # pragma: no cover
 
-    @abstractmethod
-    def begin_transaction(self) -> None:
-        """
-        Begin a new database transaction.
-        """
-        pass  # pragma: no cover
-
-    @abstractmethod
-    def commit(self) -> None:
-        """
-        Commit the current transaction.
-        """
-        pass  # pragma: no cover
-
-    @abstractmethod
-    def rollback(self) -> None:
-        """
-        Roll back the current transaction.
-        """
-        pass  # pragma: no cover
 
     @abstractmethod
     def create_table(self, dbname: str, tablename: str, columns: List[str]) -> None:

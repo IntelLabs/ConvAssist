@@ -3,7 +3,7 @@
 
 import unittest
 
-from ..predictor.utilities.suggestion import Suggestion, SuggestionException
+from convassist.predictor.utilities.suggestion import Suggestion, SuggestionException
 
 
 class TestSuggestion(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestSuggestion(unittest.TestCase):
 
     def test_lt(self):
         suggestion1 = Suggestion("apple", 0.5, "predictor")
-        suggestion2 = Suggestion("banana", 0.5, "predictor")
+        # suggestion2 = Suggestion("banana", 0.5, "predictor")
         suggestion3 = Suggestion("apple", 0.3, "predictor")
         self.assertLess(suggestion3, suggestion1)
         # self.assertLess(suggestion2, suggestion1)

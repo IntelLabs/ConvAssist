@@ -5,24 +5,24 @@ import string
 from abc import ABC
 from typing import List
 
-from convassist.predictor import Predictor
+from convassist.predictor.predictor import Predictor
 from convassist.predictor.utilities.prediction import Prediction, Suggestion
 from convassist.utilities.ngram.ngramutil import NGramUtil
 
 
-class SmoothedNgramPredictor(Predictor, ABC):
+class SmoothedNgramPredictor(Predictor):
     """
     SmoothedNgramPredictor is a class that extends the Predictor class to provide
     functionality for predicting the next word(s) in a sequence using smoothed n-grams.
     """
 
     def configure(self) -> None:
-        # # make sure personalized databases are updated
-        # with NGramUtil(self.database, cardinality=3) as ngramutil:
-        #     with open(self.personalized_cannedphrases, "r") as f:
-        #         for line in f:
-        #             ngramutil.learn(line.strip('.\n'))
-        pass
+        with NGramUtil(self.database, self.cardinality) as ngramutil:
+            try:
+                ngramutil.create_update_ngram_tables()
+
+            except Exception as e:
+                self.logger.error(f"Error creating ngram tables: {e}")
 
     def extract_svo(self, sent):
         return sent
@@ -118,10 +118,10 @@ class SmoothedNgramPredictor(Predictor, ABC):
         if self.learn_enabled:
             with NGramUtil(self.database, self.cardinality) as ngramutil:
                 try:
-                    self.logger.debug(f"learning ...{phrase}")
 
                     phrase = phrase.lower().translate(str.maketrans("", "", string.punctuation))
                     phrase = self.extract_svo(phrase)
+                    self.logger.debug(f"learning ... {phrase}")
 
                     ngramutil.learn(phrase)
 

@@ -9,9 +9,9 @@ import os
 from abc import ABC, abstractmethod
 from configparser import ConfigParser
 
-from ..context_tracker import ContextTracker
-from ..utilities.logging_utility import LoggingUtility
-from .utilities.prediction import Prediction
+from convassist.context_tracker import ContextTracker
+from convassist.predictor.utilities.prediction import Prediction
+from convassist.utilities.logging_utility import LoggingUtility
 
 
 class Predictor(ABC):
@@ -123,6 +123,10 @@ class Predictor(ABC):
     @property
     def sbertmodel(self):
         return self._sbertmodel
+    
+    @sbertmodel.setter
+    def sbertmodel(self, value):
+        self._sbertmodel = value
 
     @property
     def sentence_transformer_model(self):

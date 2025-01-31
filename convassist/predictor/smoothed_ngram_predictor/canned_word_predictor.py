@@ -4,11 +4,14 @@
 import json
 import os
 
+from tqdm import tqdm
+
 from convassist.predictor.utilities.nlp import NLP
 from convassist.predictor.utilities.prediction import Prediction, Suggestion
 from convassist.utilities.ngram.ngram_map import NgramMap
+from convassist.utilities.ngram.ngramutil import NGramUtil
 
-from .smoothed_ngram_predictor import SmoothedNgramPredictor
+from convassist.predictor.smoothed_ngram_predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
 
 
 class CannedWordPredictor(SmoothedNgramPredictor):
@@ -57,10 +60,6 @@ class CannedWordPredictor(SmoothedNgramPredictor):
 
         super().configure()
 
-    # # Override default properties
-    # @property
-    # def sentences_db(self):
-    #     return os.path.join(self._personalized_resources_path, self._sentences_db)
 
     def extract_svo(self, sent):
         doc = self.nlp(sent)
@@ -96,39 +95,32 @@ class CannedWordPredictor(SmoothedNgramPredictor):
         return " ".join(imp_tokens).strip().lower()
 
     def recreate_database(self):
-
-        # STEP 1: CREATE CANNED_NGRAM DATABASE IF IT DOES NOT EXIST
+        """
+        Recreates the sentence and n-gram databases by adding new phrases and removing outdated ones.
+        """
         try:
-            assert self.ngram_db_conn
-            self.ngram_db_conn.connect()
-            for i in range(self.cardinality):
-                self.ngram_db_conn.create_ngram_table(cardinality=i + 1)
+            with open(self.personalized_cannedphrases) as f:
+                phrases = f.read().splitlines()
+
+            for cardinality in range(1, self.cardinality + 1):
+
+                with NGramUtil(self.database, self.cardinality) as ngramutil:
+
+                    query = ngramutil.generate_ngram_insert_query(cardinality, False)
+
+                    data = []
+                    for phrase in tqdm(phrases, desc=f"Processing {cardinality}-grams", unit=" phrases", leave=False):
+                        ngram_map = NgramMap(cardinality, phrase)
+                        for ngram, count in ngram_map.items():
+                            data.append((*ngram, count))
+
+                    batch_size = 3000
+                    for i in tqdm(range(0, len(data), batch_size), desc=f"Inserting {cardinality}-grams", unit=" batches", leave=True):
+                        batch = data[i:i + batch_size]
+                        ngramutil.connection.execute_many(query, batch)
 
         except Exception as e:
             self.logger.error(f"exception in creating personalized db : {e}")
-
-        phrases_toAdd = self.canned_data.all_phrases_as_list()
-        phrases_toRemove = []
-
-        # Add phrases_toAdd to the ngram database
-        for phrase in phrases_toAdd:
-            for curr_card in range(self.cardinality):
-                ngram_map = NgramMap(curr_card, phrase)
-
-                # for every ngram, get db count, update or insert
-                for ngram, count in ngram_map.items():
-                    self.ngram_db_conn.insert_ngram(
-                        curr_card + 1, ngram, count, update_on_conflict=False
-                    )
-
-        for phrase in phrases_toRemove:
-            for curr_card in range(self.cardinality):
-                # imp_words = self.extract_svo(phrase)
-                ngram_map = NgramMap(curr_card, phrase)
-
-                # for every ngram, get db count, update or insert
-                for ngram, count in ngram_map.items():
-                    self.ngram_db_conn.remove_ngram(ngram)
 
     @property
     def startwords(self):

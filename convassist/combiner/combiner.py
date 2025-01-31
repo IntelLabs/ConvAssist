@@ -9,8 +9,8 @@ Combiner classes to merge results from several predictors.
 import abc
 from typing import Set
 
-from ..predictor.utilities.prediction import Prediction
-from ..predictor.utilities.suggestion import MAX_PROBABILITY
+from convassist.predictor.utilities.prediction import Prediction
+from convassist.predictor.utilities.suggestion import MAX_PROBABILITY
 
 
 class Combiner(metaclass=abc.ABCMeta):

@@ -5,7 +5,7 @@ echo "Starting pyinstaller build..."
 start_time=$(date +%s)
 
 # Run pyinstaller
-pyinstaller --clean --noconfirm ConvAssistUI.spec
+pyinstaller --clean --noconfirm ConvAssist.spec
 
 # End timing the pyinstaller build
 end_time=$(date +%s)

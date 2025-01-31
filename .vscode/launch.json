@@ -25,10 +25,10 @@
             }
         },
         {
-            "name": "ConvAssistUI",
+            "name": "ConvAssist",
             "type": "debugpy",
             "request": "launch",
-            "program": "ConvAssistUI.py",
+            "program": "ConvAssist.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/interfaces/ACAT/acatconvassist",
             "justMyCode": false,

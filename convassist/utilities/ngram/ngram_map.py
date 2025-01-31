@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import collections
-import string
 from typing import Iterable, List, Tuple
 
 # from nltk import word_tokenize

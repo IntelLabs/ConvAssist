@@ -5,7 +5,7 @@ import unittest
 
 from parameterized import parameterized
 
-from ..utilities.ngram.ngram_map import NgramMap
+from convassist.utilities.ngram.ngram_map import NgramMap
 
 
 class TestNgramMap(unittest.TestCase):
