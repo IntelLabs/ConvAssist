@@ -29,3 +29,4 @@ convassist/.coverage.*
 convassist/tests/test_data/*
 3rd_party_resources/human-conversation/Human_Conversation_Data.txt
 3rd_party_resources/personachat/Persona_Chat_Data.txt
+interfaces/ACAT/acatconvassist/ConvAssist.zip
