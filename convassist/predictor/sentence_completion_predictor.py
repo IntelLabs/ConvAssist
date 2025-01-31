@@ -390,8 +390,6 @@ class SentenceCompletionPredictor(Predictor):
             predi: Prediction: object with generated completions
         """
         try:
-            # predictions = Prediction()
-
             gen_context = "<bos>" + context
 
             if gen_context.endswith((".", "!", "?")):
@@ -585,7 +583,9 @@ class SentenceCompletionPredictor(Predictor):
                         f"generating {remaining_predicitions_needed} more predictions"
                     )
                     sentence_predictions = self._generate(
-                        context.strip(), remaining_predicitions_needed
+                        context.strip(), 
+                        remaining_predicitions_needed,
+                        sentence_predictions
                     )
 
         return sentence_predictions, word_predictions
