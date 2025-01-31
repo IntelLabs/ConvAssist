@@ -274,7 +274,7 @@ class ACATConvAssistInterface(threading.Thread):
                         self.next_sentence_prediction(PredictionResponse, messageReceived)
 
                     case ConvAssistMessageTypes.LEARNWORDS:
-                        self.handle_learn(self.conv_sentence, messageReceived, "WORDS")
+                        self.handle_learn(self.conv_normal, messageReceived, "WORDS")
                         PredictionResponse.MessageType = ConvAssistMessageTypes.LEARNWORDS
 
                     case ConvAssistMessageTypes.LEARNSENTENCES:
@@ -413,9 +413,9 @@ class ACATConvAssistInterface(threading.Thread):
         PredictionResponse.PredictedSentence = result_Sentences
 
     def handle_learn(self, conv_assist: ConvAssist, messageReceived: ConvAssistMessage, mode: str):
-        self.logger.debug(f"Calling Learn_db for {conv_assist.name} with mode {mode}.")
+        self.logger.debug(f"Calling Learn for {conv_assist.name} with mode {mode}.")
         conv_assist.learn_text(messageReceived.Data)
-        self.logger.debug(f"Finished Learn_db for {conv_assist.name}.")
+        self.logger.debug(f"Finished Learn for {conv_assist.name}.")
 
     def handle_parameter_change(self, messageReceived: ConvAssistMessage):
         changed = False

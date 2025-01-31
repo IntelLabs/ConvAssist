@@ -604,96 +604,97 @@ class SentenceCompletionPredictor(Predictor):
 
     # Base class method
     def learn(self, change_tokens):
-        # For the sentence completion predictor, learning adds the sentence to the database
-        if self.learn_enabled:
-            change_tokens = change_tokens.strip()
-            self.logger.debug(f"learning, {change_tokens}")
-            # add to sentence database
-            try:
-                dbconn = SQLiteDatabaseConnector(self.sent_database)
-                dbconn.connect()
-                count = 0
-                # CHECK IF SENTENCE EXISTS IN THE DATABASE
-                res = dbconn.fetch_all(
-                    "SELECT count FROM sentences WHERE sentence = ?", (change_tokens,)
-                )
-                if res and len(res) > 0:
-                    if len(res[0]) > 0:
-                        count = int(res[0][0])
+        self.logger.warning(f"Learning not supported in {self.predictor_name}.")
+        pass
+        # # For the sentence completion predictor, learning adds the sentence to the database
+        # if self.learn_enabled:
+        #     change_tokens = change_tokens.strip()
+        #     self.logger.debug(f"learning, {change_tokens}")
+        #     # add to sentence database
+        #     try:
+        #         dbconn = SQLiteDatabaseConnector(self.sent_database)
+        #         dbconn.connect()
+        #         count = 0
+        #         # CHECK IF SENTENCE EXISTS IN THE DATABASE
+        #         res = dbconn.fetch_all(
+        #             "SELECT count FROM sentences WHERE sentence = ?", (change_tokens,)
+        #         )
+        #         if res and len(res) > 0:
+        #             if len(res[0]) > 0:
+        #                 count = int(res[0][0])
 
-                # IF SENTENCE DOES NOT EXIST, ADD INTO DATABASE WITH COUNT = 1
-                if count == 0:
-                    self.logger.debug("count is 0, inserting into database")
-                    dbconn.execute_query(
-                        """
-                    INSERT INTO sentences (sentence, count)
-                    VALUES (?,?)""",
-                        (change_tokens, 1),
-                    )
-                    # update retrieval index:
-                    # self.index.load_index(self.index_path)
-                    self.logger.debug(
-                        "shape before: {} len*self.corpus_sentences = {}".format(
-                            self.corpus_embeddings[0].shape, len(self.corpus_sentences)
-                        )
-                    )
+        #         # IF SENTENCE DOES NOT EXIST, ADD INTO DATABASE WITH COUNT = 1
+        #         if count == 0:
+        #             self.logger.debug("count is 0, inserting into database")
+        #             dbconn.execute_query(
+        #                 """
+        #             INSERT INTO sentences (sentence, count)
+        #             VALUES (?,?)""",
+        #                 (change_tokens, 1),
+        #             )
+        #             # update retrieval index:
+        #             # self.index.load_index(self.index_path)
+        #             self.logger.debug(
+        #                 "shape before: {} len*self.corpus_sentences = {}".format(
+        #                     self.corpus_embeddings[0].shape, len(self.corpus_sentences)
+        #                 )
+        #             )
 
-                    self.logger.debug(
-                        "sentence  {} not present, adding to embeddings and creating new index".format(
-                            change_tokens
-                        )
-                    )
-                    phrase_emb = self.embedder.encode(change_tokens.strip())
-                    phrase_id = len(self.corpus_embeddings)
-                    self.corpus_embeddings = numpy.vstack((self.corpus_embeddings, phrase_emb))
-                    self.corpus_sentences.append(change_tokens.strip())
-                    # np.save(self.embedding_cache_path,{'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings})
-                    joblib.dump(
-                        {"sentences": self.corpus_sentences, "embeddings": self.corpus_embeddings},
-                        self.embedding_cache_path,
-                    )
-                    # with open(self.embedding_cache_path, "wb") as fOut:
-                    #     pickle.dump({'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings}, fOut)
+        #             self.logger.debug(
+        #                 "sentence  {} not present, adding to embeddings and creating new index".format(
+        #                     change_tokens
+        #                 )
+        #             )
+        #             phrase_emb = self.embedder.encode(change_tokens.strip())
+        #             phrase_id = len(self.corpus_embeddings)
+        #             self.corpus_embeddings = numpy.vstack((self.corpus_embeddings, phrase_emb))
+        #             self.corpus_sentences.append(change_tokens.strip())
+        #             # np.save(self.embedding_cache_path,{'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings})
+        #             joblib.dump(
+        #                 {"sentences": self.corpus_sentences, "embeddings": self.corpus_embeddings},
+        #                 self.embedding_cache_path,
+        #             )
+        #             # with open(self.embedding_cache_path, "wb") as fOut:
+        #             #     pickle.dump({'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings}, fOut)
 
-                    # Then we train the index to find a suitable clustering
-                    self.logger.debug(
-                        "phrase_emb.shape = {} id= {}".format(
-                            str(phrase_emb[0].shape), str(len(self.corpus_embeddings))
-                        )
-                    )
-                    self.index.add_items(phrase_emb, phrase_id)
+        #             # Then we train the index to find a suitable clustering
+        #             self.logger.debug(
+        #                 "phrase_emb.shape = {} id= {}".format(
+        #                     str(phrase_emb[0].shape), str(len(self.corpus_embeddings))
+        #                 )
+        #             )
+        #             self.index.add_items(phrase_emb, phrase_id)
 
-                    self.logger.debug(f"Saving index to:{self.index_path}")
-                    self.index.save_index(self.index_path)
-                    self.logger.debug(
-                        "shape after: {} len*self.corpus_sentences =  {}".format(
-                            str(self.corpus_embeddings.shape), str(len(self.corpus_sentences))
-                        )
-                    )
+        #             self.logger.debug(f"Saving index to:{self.index_path}")
+        #             self.index.save_index(self.index_path)
+        #             self.logger.debug(
+        #                 "shape after: {} len*self.corpus_sentences =  {}".format(
+        #                     str(self.corpus_embeddings.shape), str(len(self.corpus_sentences))
+        #                 )
+        #             )
 
-                    # DEALING WITH PERSONALIZED, ALLOWED TOXIC WORDS
-                    # if sentence to be learnt contains a toxic word, add the toxic word to the "allowed" word list
-                    res, words = self._filter_text(change_tokens)
-                    if res:
-                        for tox in words:
-                            self.logger.debug(f"toxic words to be added to personalized db: {tox}")
-                            if tox not in self.personalized_allowed_toxicwords:
-                                self.personalized_allowed_toxicwords.append(tox)
-                                fout = open(self.personalized_allowed_toxicwords_file, "w")
-                                for tox_word in self.personalized_allowed_toxicwords:
-                                    fout.write(tox_word + "\n")
-                                fout.close()
+        #             # DEALING WITH PERSONALIZED, ALLOWED TOXIC WORDS
+        #             # if sentence to be learnt contains a toxic word, add the toxic word to the "allowed" word list
+        #             res, words = self._filter_text(change_tokens)
+        #             if res:
+        #                 for tox in words:
+        #                     self.logger.debug(f"toxic words to be added to personalized db: {tox}")
+        #                     if tox not in self.personalized_allowed_toxicwords:
+        #                         self.personalized_allowed_toxicwords.append(tox)
+        #                         fout = open(self.personalized_allowed_toxicwords_file, "w")
+        #                         for tox_word in self.personalized_allowed_toxicwords:
+        #                             fout.write(tox_word + "\n")
+        #                         fout.close()
 
-                # ELSE, IF SENTENCE EXIST, ADD INTO DATABASE WITH UPDATED COUNT
-                else:
-                    self.logger.debug("sentence exists, updating count")
-                    dbconn.execute_query(
-                        """
-                    UPDATE sentences SET count = ? where sentence = ?""",
-                        (count + 1, change_tokens),
-                    )
-                dbconn.commit()
-            except Exception as e:
-                self.logger.error(f"Exception in SentenceCompletionPredictor learn  = {e}")
-            finally:
-                dbconn.close()
+        #         # ELSE, IF SENTENCE EXIST, ADD INTO DATABASE WITH UPDATED COUNT
+        #         else:
+        #             self.logger.debug("sentence exists, updating count")
+        #             dbconn.execute_query(
+        #                 """
+        #             UPDATE sentences SET count = ? where sentence = ?""",
+        #                 (count + 1, change_tokens),
+        #             )
+        #     except Exception as e:
+        #         self.logger.error(f"Exception in SentenceCompletionPredictor learn  = {e}")
+        #     finally:
+        #         dbconn.close()

@@ -88,7 +88,7 @@ class PredictorActivator:
                 continue
             try:
                 self.logger.info(
-                    f"Predictor {predictor.predictor_name} - Predicting next words and sentences"
+                    f"Predictor {predictor.predictor_name} - Predicting next {self.max_partial_prediction_size} words and sentences"
                 )
                 # Get sentences and/or words from the predictor
                 sentences, words = predictor.predict(
