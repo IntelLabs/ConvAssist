@@ -379,7 +379,7 @@ class SentenceCompletionPredictor(Predictor):
             return True
         return False
 
-    def _generate(self, context: str, num_gen: int) -> Prediction:
+    def _generate(self, context: str, num_gen: int, predictions:Prediction) -> Prediction:
         """
         _generate: generates completions for the given context
         Args:
@@ -390,7 +390,7 @@ class SentenceCompletionPredictor(Predictor):
             predi: Prediction: object with generated completions
         """
         try:
-            predictions = Prediction()
+            # predictions = Prediction()
 
             gen_context = "<bos>" + context
 
@@ -564,7 +564,7 @@ class SentenceCompletionPredictor(Predictor):
             if self.test_generalsentenceprediction:
                 self.logger.warning("Testing general sentence prediction")
                 sentence_predictions = self._generate(
-                    "<bos> " + context.strip(), max_partial_prediction_size
+                    "<bos> " + context.strip(), max_partial_prediction_size, sentence_predictions
                 )
 
             else:
