@@ -88,7 +88,7 @@ class ACATConvAssistInterface(threading.Thread):
         self.pathpersonalized: str = self.prefs.load("pathpersonalized", "")
         self.enablelogs: bool = self.prefs.load("enablelogs", False)
         self.loglevel: int = self.prefs.load("loglevel", log_level)
-        self._pathlog = self.prefs.load("pathlog", "")
+        self._pathlog = self.prefs.load("pathlog", f"{self.prefs.get_config_dir()}/logs")
 
         self.sent_config_change: bool = False
         # self.enable_logs: bool = True

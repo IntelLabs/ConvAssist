@@ -15,12 +15,12 @@ class Preferences:
 
     def _ensure_config_dir(self):
         """Ensure the preferences file exists."""
-        self.config_dir = self._get_config_dir()
+        self.config_dir = self.get_config_dir()
         self.config_file = self.config_dir / f"{self.app_name}_preferences.json"
         if not self.config_file.exists():
             self.save_all()
 
-    def _get_config_dir(self) -> Path:
+    def get_config_dir(self) -> Path:
         """Get the appropriate config directory."""
         if sys.platform == "win32":  # Windows
             return Path(os.getenv("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / self.app_name

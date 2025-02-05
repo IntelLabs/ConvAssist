@@ -64,7 +64,7 @@ class LoggingUtility:
     def getLogFileName(name):
         now = datetime.now()
         date_time = now.strftime("%m-%d-%Y___%H-%M-%S")
-        return f"ConvAssist_Log{date_time}_{name}.log"
+        return f"ConvAssist_Log{date_time}.log"
 
     def get_logger(self, name, log_level, log_location=None, queue_handler=False):
 
