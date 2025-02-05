@@ -7,6 +7,7 @@ import queue
 import sys
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
+from concurrent_log_handler import ConcurrentRotatingFileHandler
 from typing import TextIO
 
 import colorlog
@@ -43,6 +44,7 @@ class LoggingUtility:
             cls._instance = super(LoggingUtility, cls).__new__(cls)
 
             cls._central_log_queue = queue.Queue()
+            # cls._file_handler = None
         return cls._instance
 
     def __init__(self):
@@ -51,6 +53,7 @@ class LoggingUtility:
         self._formatter: logging.Formatter = logging.Formatter(
             fmt=self.log_format, datefmt=self.date_format
         )
+
 
     @property
     def formatter(self):
@@ -61,12 +64,21 @@ class LoggingUtility:
         return self._instance._central_log_queue
 
     @staticmethod
-    def getLogFileName(name):
+    def getLogFileName():
         now = datetime.now()
-        date_time = now.strftime("%m-%d-%Y___%H-%M-%S")
+        date_time = now.strftime("%m-%d-%Y")
         return f"ConvAssist_Log{date_time}.log"
+    
+    def set_log_location(self, log_location):
+        if not os.path.exists(log_location):
+            os.makedirs(log_location)
 
-    def get_logger(self, name, log_level, log_location=None, queue_handler=False):
+        log_file = os.path.join(log_location, LoggingUtility.getLogFileName())
+        self.file_handler = ConcurrentRotatingFileHandler(log_file, maxBytes=1024 * 1024 * 3, backupCount=2)
+        self.file_handler.setFormatter(self.formatter)
+
+
+    def get_logger(self, name, log_level, log_file=True, queue_handler=False):
 
         logger = logging.getLogger(name)
         logger.setLevel(log_level)
@@ -79,8 +91,8 @@ class LoggingUtility:
         self.add_stream_handler(logger, sys.stdout)
 
         # # optionally add a file handler
-        if log_location:
-            self.add_file_handler(logger, log_location)
+        if log_file:
+            self.add_file_handler(logger)
 
         # optionally add a queue handler
         if queue_handler:
@@ -92,15 +104,8 @@ class LoggingUtility:
 
         return logger
 
-    def add_file_handler(self, logger: logging.Logger, log_location: str):
-        if not os.path.exists(log_location):
-            os.makedirs(log_location)
-
-        log_file = os.path.join(log_location, LoggingUtility.getLogFileName(logger.name))
-
-        file_handler = RotatingFileHandler(log_file, maxBytes=1024 * 1024 * 5, backupCount=2)
-        file_handler.setFormatter(self.formatter)
-        logger.addHandler(file_handler)
+    def add_file_handler(self, logger: logging.Logger):
+        logger.addHandler(self.file_handler)
 
     def add_queue_handler(self, logger: logging.Logger):
         queue_handler = QueueHandler(self.central_log_queue)

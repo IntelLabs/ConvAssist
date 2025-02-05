@@ -57,10 +57,6 @@ class ACATConvAssistInterface(threading.Thread):
     ):
         super().__init__()
 
-        self.logger = LoggingUtility().get_logger(
-            ca_main_id, log_level, queue_handler=queue_handler
-        )
-
         self.app_quit_event = app_quit_event
         self.daemon = True
 
@@ -91,28 +87,32 @@ class ACATConvAssistInterface(threading.Thread):
         self._pathlog = self.prefs.load("pathlog", f"{self.prefs.get_config_dir()}/logs")
 
         self.sent_config_change: bool = False
-        # self.enable_logs: bool = True
+        self.enable_logs: bool = True
+
+        self.logger = LoggingUtility().get_logger(
+            ca_main_id, log_level, log_file=self.enable_logs, queue_handler=queue_handler
+        )
 
         self.convAssists = {}
 
         # instances of ConvAssist
         self.conv_normal: ConvAssist = ConvAssist(
-            ca_normal_id, ca_normal_ini, log_location=self.pathlog, log_level=self.loglevel
+            ca_normal_id, ca_normal_ini, log_file=True, log_level=self.loglevel
         )
         self.convAssists.update({ConvAssistPredictionTypes.NORMAL: self.conv_normal})
 
         self.conv_shorthand: ConvAssist = ConvAssist(
-            ca_shorthand_id, ca_shorthand_ini, log_location=self.pathlog, log_level=self.loglevel
+            ca_shorthand_id, ca_shorthand_ini, log_file=True, log_level=self.loglevel
         )
         self.convAssists.update({ConvAssistPredictionTypes.SHORTHANDMODE: self.conv_shorthand})
 
         self.conv_sentence: ConvAssist = ConvAssist(
-            ca_sentence_id, ca_sentence_ini, log_location=self.pathlog, log_level=self.loglevel
+            ca_sentence_id, ca_sentence_ini, log_file=True, log_level=self.loglevel
         )
         self.convAssists.update({ConvAssistPredictionTypes.SENTENCES: self.conv_sentence})
 
         self.conv_canned_phrases: ConvAssist = ConvAssist(
-            ca_cannedphrases_id, ca_cannedphrases_ini, log_location=self.pathlog, log_level=self.loglevel
+            ca_cannedphrases_id, ca_cannedphrases_ini, log_file=True, log_level=self.loglevel
         )
         self.convAssists.update(
             {ConvAssistPredictionTypes.CANNEDPHRASESMODE: self.conv_canned_phrases}

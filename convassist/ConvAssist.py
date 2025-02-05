@@ -22,38 +22,22 @@ class ConvAssist:
         name: str,
         ini_file: str | None = None,
         config: ConfigParser | None = None,
-        log_location: str | None = None,
+        log_file: bool = True,
         log_level: int = logging.DEBUG,
     ):
-        """
-        Initializes an instance of the class.
-        Args:
-            id (str): The identifier of the instance.
-            ini_file (str): The path to the ini file.
-            config (ConfigParser | None, optional): The configuration parser object. Defaults to None.
-            log_location (str | None, optional): The location to store log files. Defaults to None.
-            log_level (int | None, optional): The log level. Defaults to None.
-        """
         self.config = config
         self.log_level = log_level
-        self.log_location = log_location
+        self.log_file = log_file
         self.initialized = False
         self.name = name
         self.ini_file = ini_file
 
         if self.config:
-            self.initialize(self.config, self.log_location, self.log_level)
+            self.initialize(self.config, self.log_file, self.log_level)
 
     def initialize(
-        self, config: ConfigParser, log_location: str | None = None, log_level: int | None = None
+        self, config: ConfigParser, log_file: bool, log_level: int | None = None
     ):
-        """
-        Initializes the ConvAssist object with the provided configuration, log location, and log level.
-        Args:
-            config (ConfigParser): The configuration parser object.
-            log_location (str | None, optional): The location to store log files. Defaults to None.
-            log_level (int | None, optional): The log level. Defaults to None.
-        """
         if not config:
             raise AttributeError("Config not provided.")
 
@@ -63,11 +47,8 @@ class ConvAssist:
         if log_level:
             self.log_level = log_level
 
-        if log_location:
-            self.log_location = log_location
-
         self.logger = LoggingUtility().get_logger(
-            self.name, self.log_level, self.log_location, True
+            self.name, self.log_level, self.log_file, True
         )
 
         # Verify that the nltk files are downloaded

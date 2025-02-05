@@ -34,6 +34,7 @@ else:
     from PIL import Image
     from pystray import MenuItem
 
+    from interfaces.ACAT.acatconvassist.preferences import Preferences
     from convassist.utilities.logging_utility import LoggingUtility
 
     license_text_string = "Copyright (C) 2024 Intel Corporation\n"
@@ -81,11 +82,17 @@ else:
             self.title("ConvAssist")
             self.iconbitmap(os.path.join(working_dir, "Assets", "icon_tray.ico"))
 
+            # Load preferences
+            self.preferences = Preferences("ACATConvAssist")
 
             # Set up logging
+            log_location = self.preferences.load("pathlog", f"{self.preferences.get_config_dir()}/logs")
             self.logutil = LoggingUtility()
-            self.logger = self.logutil.get_logger(
-                name="CONVASSIST", log_level=LOG_LEVEL, queue_handler=True
+            self.logutil.set_log_location(log_location)
+            self.logger = LoggingUtility().get_logger(
+                name="CONVASSIST", log_level=LOG_LEVEL, 
+                log_file=True,
+                queue_handler=True
             )
             self.logger.info("Application started")
 
