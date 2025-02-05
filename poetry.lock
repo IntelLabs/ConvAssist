@@ -295,6 +295,22 @@ files = [
 ]
 
 [[package]]
+name = "concurrent-log-handler"
+version = "0.9.25"
+description = "RotatingFileHandler replacement with concurrency, gzip and Windows support"
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+files = [
+    {file = "concurrent_log_handler-0.9.25-py3-none-any.whl", hash = "sha256:157bee12914aa2a72246d1d0641ce07c1aa7a55faa3322bed02f21e60395eb82"},
+    {file = "concurrent_log_handler-0.9.25.tar.gz", hash = "sha256:1e2c6f021414e214d3dac66107894827a3e78db63018304a4f29e55ba549ac22"},
+]
+
+[package.dependencies]
+portalocker = ">=1.6.0"
+
+[[package]]
 name = "confection"
 version = "0.1.5"
 description = "The sweetest config system for Python"
@@ -1485,6 +1501,27 @@ files = [
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
+
+[[package]]
+name = "portalocker"
+version = "3.1.1"
+description = "Wraps the portalocker recipe for easy usage"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+files = [
+    {file = "portalocker-3.1.1-py3-none-any.whl", hash = "sha256:80e984e24de292ff258a5bea0e4f3f778fff84c0ae1275dbaebc4658de4aacb3"},
+    {file = "portalocker-3.1.1.tar.gz", hash = "sha256:ec20f6dda2ad9ce89fa399a5f31f4f1495f515958f0cb7ca6543cef7bb5a749e"},
+]
+
+[package.dependencies]
+pywin32 = {version = ">=226", markers = "platform_system == \"Windows\""}
+
+[package.extras]
+docs = ["sphinx (>=1.7.1)"]
+redis = ["redis"]
+tests = ["pytest (>=5.4.1)", "pytest-cov (>=2.8.1)", "pytest-mypy (>=0.8.0)", "pytest-rerunfailures (>=15.0)", "pytest-timeout (>=2.1.0)", "redis", "sphinx (>=6.0.0)", "types-redis"]
 
 [[package]]
 name = "preshed"
@@ -5358,10 +5395,10 @@ files = [
 name = "pywin32"
 version = "306"
 description = "Python for Window Extensions"
-optional = true
+optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "python_version <= \"3.11\" and sys_platform == \"win32\" and extra == \"acat-interface\" or python_version <= \"3.11\" and extra == \"demos\" and platform_system == \"Windows\" or python_version >= \"3.12\" and sys_platform == \"win32\" and extra == \"acat-interface\" or python_version >= \"3.12\" and extra == \"demos\" and platform_system == \"Windows\""
+markers = "python_version <= \"3.11\" and sys_platform == \"win32\" and extra == \"acat-interface\" or python_version <= \"3.11\" and platform_system == \"Windows\" or python_version >= \"3.12\" and sys_platform == \"win32\" and extra == \"acat-interface\" or python_version >= \"3.12\" and platform_system == \"Windows\""
 files = [
     {file = "pywin32-306-cp310-cp310-win32.whl", hash = "sha256:06d3420a5155ba65f0b72f2699b5bacf3109f36acbe8923765c22938a69dfc8d"},
     {file = "pywin32-306-cp310-cp310-win_amd64.whl", hash = "sha256:84f4471dbca1887ea3803d8848a1616429ac94a4a8d05f4bc9c5dcfd42ca99c8"},
@@ -6677,4 +6714,4 @@ demos = ["pyttsx3"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "058bb825a610949b77852a1cdadbd51e479ce89ea26fb79f4817641f0785a4f1"
+content-hash = "61304ed8208812be403c85dace58827ab82acfe3c835e8782cf02589a66be87a"
