@@ -104,3 +104,19 @@ class SQLiteDatabaseConnector(DatabaseConnector):
 
         except DatabaseError:
             return False
+
+    def begin_transaction(self) -> None:
+        if not self.conn:
+            raise DatabaseError("Database connection is not established.")
+        self.conn.execute("BEGIN")
+
+    def commit(self) -> None:
+        if not self.conn:
+            raise DatabaseError("Database connection is not established.")
+        self.conn.commit()
+
+    def rollback(self) -> None:
+        if not self.conn:
+            raise DatabaseError("Database connection is not established.")
+        self.conn.rollback()
+
