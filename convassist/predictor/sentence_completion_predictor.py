@@ -595,7 +595,7 @@ class SentenceCompletionPredictor(Predictor):
         predictions = Prediction()
 
         with open(self.startsents) as f:
-            data = f.readlines(max_partial_prediction_size)
+            data = f.readlines()
             for sentence in data:
                 predictions.add_suggestion(
                     Suggestion(sentence.strip(), float(1 / len(data)), self.predictor_name)
