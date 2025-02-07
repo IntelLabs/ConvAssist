@@ -102,7 +102,7 @@ class ContinuousPredict:
 
         # Create an instance of ConvAssist
         self.ContinuousPredictor = ConvAssist(
-            "CONT_PREDICT", config=config, log_level=logging.DEBUG
+            "CONT_PREDICT", config=config, log_file=False, log_level=logging.DEBUG
         )
 
         self.convAssistMode = ConvAssistMode(self.ContinuousPredictor)
