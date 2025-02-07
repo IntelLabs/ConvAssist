@@ -11,6 +11,7 @@ additionaldata = [('assets', 'assets')]
 additionaldata += copy_metadata('convassist')
 additionaldata += collect_data_files("sv_ttk")
 additionaldata += collect_data_files("en_core_web_sm")
+additionaldata += collect_data_files("spellchecker")
 
 print(f'script dir: {SCRIPT_DIR}')
 print(f'additional data: {additionaldata}')
@@ -24,7 +25,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['tzdata','pytz'],
     noarchive=False,
     optimize=0,
 )
@@ -61,5 +62,6 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
+    excludes=['_include/transformers/models/deprecated'],
     name='ConvAssist',
 )
