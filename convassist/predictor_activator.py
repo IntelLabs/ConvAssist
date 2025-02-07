@@ -108,7 +108,7 @@ class PredictorActivator:
                 )
 
             except Exception as e:
-                self.logger.critical(f"Predictor {predictor.predictor_name}: {e}")
+                self.logger.critical(f"Predictor {predictor.predictor_name}: {e}", exc_info=True, stack_info=True)
                 continue
 
         # If the word predictor(s) return empty lists, use predictions from the spell predictor

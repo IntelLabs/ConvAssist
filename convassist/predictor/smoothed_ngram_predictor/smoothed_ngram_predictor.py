@@ -103,9 +103,6 @@ class SmoothedNgramPredictor(Predictor):
         except Exception as e:
             self.logger.error(f"Exception in {self.predictor_name} predict function: {e}")
 
-        if len(word_prediction) == 0:
-            self.logger.error(f"No predictions from {self.predictor_name}")
-
         self.logger.info(
             f"End prediction. got {len(word_prediction)} word suggestions and {len(sentence_prediction)} sentence suggestions"
         )

@@ -242,7 +242,7 @@ class ACATConvAssistInterface(threading.Thread):
                     continue
 
                 except Exception as e:
-                    self.logger.critical(f"Catastrophic Error.  Bailing. {e}.")
+                    self.logger.critical(f"Catastrophic Error.  Bailing. {e}.", stack_info=True, exc_info=True)
                     send_response = False
                     self.app_quit_event.set()
                     continue
@@ -306,7 +306,7 @@ class ACATConvAssistInterface(threading.Thread):
 
             # TODO - Handle more gracefully
             except Exception as e:
-                self.logger.critical(f"Critical Error in Handle incoming message. Bailing {e}.")
+                self.logger.critical(f"Critical Error in Handle incoming message. Bailing {e}.", stack_info=True, exc_info=True)
                 self.messageHandler.disconnect()
                 self.app_quit_event.set()
 
