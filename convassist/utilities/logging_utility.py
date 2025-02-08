@@ -66,8 +66,8 @@ class LoggingUtility:
     @staticmethod
     def getLogFileName():
         now = datetime.now()
-        date_time = now.strftime("%m-%d-%Y")
-        return f"ConvAssist_Log{date_time}.log"
+        date_time = now.strftime("%Y-%m-%dT%H_%M_%S")
+        return f"ConvAssist_Log_{date_time}.txt"
     
     def set_log_location(self, log_location):
         if not os.path.exists(log_location):
