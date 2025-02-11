@@ -9,7 +9,6 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
 torch = "^2.4.1"
-pyspellchecker = "^0.8.1"
 websockets = "^13.0.1"
 nltk = "^3.9.1"
 hnswlib = "^0.8.0"
@@ -27,6 +26,7 @@ kagglehub = "^0.3.5"
 pandas = "^2.2.3"
 psutil = "^6.1.1"
 concurrent-log-handler = "^0.9.25"
+pyspellchecker = "^0.8.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"

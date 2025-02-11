@@ -99,7 +99,7 @@ class TestPredictorActivator(unittest.TestCase):
         result = self.activator.predict()
 
         self.assertEqual(result, ([], [], [], []))
-        self.logger.critical.assert_called_with("Predictor MockPredictor: Test Exception")
+        self.logger.critical.assert_called_with("Predictor MockPredictor: Test Exception", exc_info=True, stack_info=True)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # from spellchecker import SpellChecker
-import spellchecker
+from spellchecker import SpellChecker
 
 from convassist.predictor.predictor import Predictor
 from convassist.predictor.utilities.prediction import Prediction, Suggestion
@@ -41,7 +41,7 @@ class SpellCorrectPredictor(Predictor):
         word_predictions = Prediction()
 
         if token:
-            spell = spellchecker.SpellChecker()
+            spell = SpellChecker()
             suggestions = spell.candidates(token)
             if suggestions:
                 for suggestion in suggestions:

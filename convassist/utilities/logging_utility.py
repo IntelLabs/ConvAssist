@@ -44,7 +44,7 @@ class LoggingUtility:
             cls._instance = super(LoggingUtility, cls).__new__(cls)
 
             cls._central_log_queue = queue.Queue()
-            # cls._file_handler = None
+            cls._log_location = None
         return cls._instance
 
     def __init__(self):
@@ -53,6 +53,7 @@ class LoggingUtility:
         self._formatter: logging.Formatter = logging.Formatter(
             fmt=self.log_format, datefmt=self.date_format
         )
+        self.file_handler = None
 
 
     @property
@@ -73,8 +74,8 @@ class LoggingUtility:
         if not os.path.exists(log_location):
             os.makedirs(log_location)
 
-        log_file = os.path.join(log_location, LoggingUtility.getLogFileName())
-        self.file_handler = ConcurrentRotatingFileHandler(log_file, maxBytes=1024 * 1024 * 3, backupCount=2)
+        self._instance._log_location = os.path.join(log_location, LoggingUtility.getLogFileName())
+        self.file_handler = ConcurrentRotatingFileHandler(self._instance._log_location, maxBytes=1024 * 1024 * 3, backupCount=2)
         self.file_handler.setFormatter(self.formatter)
 
 
@@ -105,6 +106,13 @@ class LoggingUtility:
         return logger
 
     def add_file_handler(self, logger: logging.Logger):
+        #TODO FIXME
+        if not self._instance._log_location:
+            return
+
+        if not self.file_handler:
+            self.file_handler = self.set_log_location(self._instance._log_location)
+
         logger.addHandler(self.file_handler)
 
     def add_queue_handler(self, logger: logging.Logger):

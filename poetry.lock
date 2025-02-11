@@ -7444,4 +7444,4 @@ demos = ["pyttsx3"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "61304ed8208812be403c85dace58827ab82acfe3c835e8782cf02589a66be87a"
+content-hash = "1c91d9f8b33dadf819234e63805c9b9620e9d6be773d1cfb81b77e8a7b25d169"
