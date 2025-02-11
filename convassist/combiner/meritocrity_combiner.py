@@ -1,15 +1,10 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Any, Dict
+from typing import Dict
 
-from ..predictor import SentenceCompletionPredictor, SpellCorrectPredictor
-from ..predictor.utilities.prediction import Prediction
-from .combiner import Combiner
-
-# TODO - this isn't the best way to combine the probs (from ngram db and deep
-# learning based model, just concat m,n predictions and take the top n
-
+from convassist.predictor.utilities.prediction import Prediction
+from convassist.combiner.combiner import Combiner
 
 class MeritocracyCombiner(Combiner):
     """
@@ -28,12 +23,12 @@ class MeritocracyCombiner(Combiner):
             word_predicted = suggestion.word
 
             # TODO - refactor so the SpellCorrectPredictor has it's own combiner
-            if suggestion.predictor_name == SpellCorrectPredictor.__name__:
+            if suggestion.predictor_name == "SpellCorrectPredictor":
                 # skip predictions from the SpellCorrectPredictor?!?
                 continue
 
             # TODO - refactor so the SentenceCompletionPredictor has it's own combiner
-            elif suggestion.predictor_name == SentenceCompletionPredictor.__name__:
+            elif suggestion.predictor_name == "SentenceCompletionPredictor":
                 # result is a sentence. Make sure to get the first letter of the
                 # sentence
                 nextLetter = word_predicted.split()[0][0]

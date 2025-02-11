@@ -23,7 +23,6 @@ class NGramUtil:
     def __enter__(self):
         try:
             self._connection.connect()
-            self._create_card_tables()
         except Exception as e:
             raise Exception(f"{__class__}{__name__} failed to connect to db: {e}")
 
@@ -33,8 +32,12 @@ class NGramUtil:
         if self._connection:
             self._connection.close()
 
+    @property
+    def connection(self):
+        return self._connection
+
     # Implemented NGRAM Functionality
-    def _create_ngram_table(self, cardinality):
+    def _create_ngram_table(self, cardinality) -> str:
         """
         Creates a table for n-gram of a given cardinality. The table name is
         constructed from this parameter, for example for cardinality `2` there
@@ -57,11 +60,10 @@ class NGramUtil:
                 unique = "".join([unique, "word"])
         columns.append("count INTEGER")
 
-        # unique = ", ".join([f"word_{i}" for i in reversed(range(cardinality - 1))]) if cardinality > 1 else ""
-        # unique = ", ".join([unique, "word"]) if cardinality > 1 else "word"
         columns.append(f"UNIQUE({unique})")
 
         self._connection.create_table(f"_{cardinality}_gram", columns)
+        return f"_{cardinality}_gram"
 
     def _delete_ngram_table(self, cardinality):
         """
@@ -152,6 +154,16 @@ class NGramUtil:
         DO UPDATE SET count
 
         """
+        query = self.generate_ngram_insert_query(cardinality, update_on_conflict)
+
+        try:
+            self._connection.execute_query(query, (*ngram, count))
+            # time.sleep(0.01)
+
+        except Exception as e:
+            raise Exception(f"{__class__}{__name__} failed to insert ngram: {e}")
+
+    def generate_ngram_insert_query(self, cardinality, update_on_conflict=True):
         table_name = f"_{cardinality}_gram"
         columns = ", ".join([f"word_{i + 1}" for i in reversed(range(cardinality - 1))])
         if columns:
@@ -166,12 +178,7 @@ class NGramUtil:
             query += f"ON CONFLICT ({unique_columns}) DO UPDATE SET count = count + 1;"
         else:
             query += f"ON CONFLICT ({unique_columns}) DO NOTHING;"
-
-        try:
-            self._connection.execute_query(query, (*ngram, count))
-            self._connection.commit()
-        except Exception as e:
-            raise Exception(f"{__class__}{__name__} failed to create ngram table: {e}")
+        return query
 
     def _remove_ngram(self, ngram):
         """
@@ -226,18 +233,39 @@ class NGramUtil:
             count = 0
         return count
 
-    def _create_card_tables(self):
-        # Check if we have write access.  Fail silently if we don't.
-        if not self._connection.check_write_access():
-            return
+    def create_update_ngram_tables(self):
+        
+        for i in range(self._cardinality):
+            if not self._table_exists(f"_{i + 1}_gram"):
+                self._create_ngram_table(i + 1)
+                self._create_index(i + 1)
+            else:
+                self._check_upgrade_table(i + 1)
 
-        try:
-            for i in range(self._cardinality):
-                self._create_ngram_table(cardinality=i + 1)
-                self._create_index(cardinality=i + 1)
+    def _check_upgrade_table(self, cardinality):
+        unique_count = 0
+        query = f"PRAGMA index_list('_{cardinality}_gram');" # nosec
 
-        except Exception as e:
-            raise Exception(f"{__class__}{__name__} failed to create ngram table: {e}")
+        indexes = self._connection.fetch_all(query)
+        if any(index[2] == 1 for index in indexes):
+            unique_count += 1
+        
+        if unique_count == 0:
+            self._upgrade_table(cardinality)
+
+    def _upgrade_table(self, cardinality):
+        table_name = f"_{cardinality}_gram"
+        query = f"ALTER TABLE {table_name} RENAME TO {table_name}_temp;" # nosec
+        self._connection.execute_query(query)
+
+        self._create_ngram_table(cardinality)
+        self._create_index(cardinality)
+
+        query = f"INSERT INTO {table_name} SELECT DISTINCT * FROM {table_name}_temp;" # nosec
+        self._connection.execute_query(query)
+
+        query = f"DROP TABLE {table_name}_temp" # nosec
+        self._connection.execute_query(query)
 
     def count(self, tokens, offset, ngram_size):
         result = 0
@@ -267,6 +295,7 @@ class NGramUtil:
         self,
         phrases_toAdd: Optional[List[str]] = None,
         phrases_toRemove: Optional[List[str]] = None,
+        update_on_conflict: bool = False,
     ):
         assert self._connection is not None
 
@@ -278,7 +307,7 @@ class NGramUtil:
 
                     # for every ngram, get db count, update or insert
                     for ngram, count in ngram_map.items():
-                        self._insert_ngram(curr_card, ngram, count, update_on_conflict=False)
+                        self._insert_ngram(curr_card, ngram, count, update_on_conflict)
 
         if phrases_toRemove:
             for phrase in phrases_toRemove:

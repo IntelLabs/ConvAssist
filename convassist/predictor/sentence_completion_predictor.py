@@ -16,7 +16,7 @@ from nltk import word_tokenize
 from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
 
-from convassist.predictor import Predictor
+from convassist.predictor.predictor import Predictor
 from convassist.predictor.utilities.nlp import NLP
 from convassist.predictor.utilities.prediction import Prediction, Suggestion
 from convassist.utilities.databaseutils.sqllite_dbconnector import (
@@ -380,7 +380,7 @@ class SentenceCompletionPredictor(Predictor):
             return True
         return False
 
-    def _generate(self, context: str, num_gen: int) -> Prediction:
+    def _generate(self, context: str, num_gen: int, predictions:Prediction) -> Prediction:
         """
         _generate: generates completions for the given context
         Args:
@@ -391,8 +391,6 @@ class SentenceCompletionPredictor(Predictor):
             predi: Prediction: object with generated completions
         """
         try:
-            predictions = Prediction()
-
             gen_context = "<bos>" + context
 
             if gen_context.endswith((".", "!", "?")):
@@ -565,7 +563,7 @@ class SentenceCompletionPredictor(Predictor):
             if self.test_generalsentenceprediction:
                 self.logger.warning("Testing general sentence prediction")
                 sentence_predictions = self._generate(
-                    "<bos> " + context.strip(), max_partial_prediction_size
+                    "<bos> " + context.strip(), max_partial_prediction_size, sentence_predictions
                 )
 
             else:
@@ -586,7 +584,9 @@ class SentenceCompletionPredictor(Predictor):
                         f"generating {remaining_predicitions_needed} more predictions"
                     )
                     sentence_predictions = self._generate(
-                        context.strip(), remaining_predicitions_needed
+                        context.strip(), 
+                        remaining_predicitions_needed,
+                        sentence_predictions
                     )
 
         return sentence_predictions, word_predictions
@@ -595,8 +595,8 @@ class SentenceCompletionPredictor(Predictor):
         predictions = Prediction()
 
         with open(self.startsents) as f:
-            data = f.readlines(max_partial_prediction_size)
-            for sentence in data:
+            data = f.readlines()
+            for sentence in data[0:max_partial_prediction_size]:
                 predictions.add_suggestion(
                     Suggestion(sentence.strip(), float(1 / len(data)), self.predictor_name)
                 )
@@ -604,6 +604,8 @@ class SentenceCompletionPredictor(Predictor):
 
     # Base class method
     def learn(self, change_tokens):
+        # self.logger.warning(f"Learning not supported in {self.predictor_name}.")
+        # pass
         # For the sentence completion predictor, learning adds the sentence to the database
         if self.learn_enabled:
             change_tokens = change_tokens.strip()
@@ -692,7 +694,6 @@ class SentenceCompletionPredictor(Predictor):
                     UPDATE sentences SET count = ? where sentence = ?""",
                         (count + 1, change_tokens),
                     )
-                dbconn.commit()
             except Exception as e:
                 self.logger.error(f"Exception in SentenceCompletionPredictor learn  = {e}")
             finally:

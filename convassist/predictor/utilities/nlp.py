@@ -7,7 +7,7 @@ from pathlib import Path
 
 import spacy
 
-from ...utilities.singleton import Singleton
+from convassist.utilities.singleton import Singleton
 
 
 class NLP(metaclass=Singleton):

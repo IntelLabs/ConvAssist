@@ -93,7 +93,8 @@ class ContinuousPredict:
         success_count = config.read(config_file)
 
         # Customize file paths
-        config["Common"]["home_dir"] = SCRIPT_DIR
+        if "Common" in config and "home_dir" in config["Common"]:
+            config["Common"]["home_dir"] = SCRIPT_DIR
 
         if not success_count:
             print("Config file not found. Exiting.")
@@ -101,7 +102,7 @@ class ContinuousPredict:
 
         # Create an instance of ConvAssist
         self.ContinuousPredictor = ConvAssist(
-            "CONT_PREDICT", config=config, log_level=logging.DEBUG
+            "CONT_PREDICT", config=config, log_file=False, log_level=logging.DEBUG
         )
 
         self.convAssistMode = ConvAssistMode(self.ContinuousPredictor)
@@ -276,7 +277,7 @@ def main(argv=None):
         "ini_file",
         type=str,
         nargs="?",
-        default="acat_continuous_prediction.ini",
+        default="continuous_prediction.ini",
         help="Path to configuration file for continuous prediction. (Default: continuous_prediction.ini)",
     )
 

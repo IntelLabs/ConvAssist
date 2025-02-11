@@ -13,9 +13,10 @@ from nltk import word_tokenize
 from nltk.stem import PorterStemmer
 from sentence_transformers import SentenceTransformer
 
-from .predictor import Predictor
-from .utilities.canned_data import cannedData
-from .utilities.prediction import Prediction, Suggestion
+from convassist.predictor.predictor import Predictor
+from convassist.predictor.utilities.canned_data import cannedData
+from convassist.predictor.utilities.prediction import Prediction
+from convassist.predictor.utilities.suggestion import Suggestion
 
 
 class CannedPhrasesPredictor(Predictor):
@@ -51,15 +52,13 @@ class CannedPhrasesPredictor(Predictor):
         self._model_loaded = False
         self.stemmer = PorterStemmer()
 
-        if os.path.exists(self.sbertmodel):
-            sbertmodel = self.sbertmodel
+        if os.path.exists(os.path.join(self._static_resources_path, self.sbertmodel)):
             localfiles = True
         else:
-            sbertmodel = self._sbertmodel
             localfiles = False
 
         self.embedder = SentenceTransformer(
-            sbertmodel,
+            self.sbertmodel,
             device=self.device,
             local_files_only=localfiles,
             tokenizer_kwargs={"clean_up_tokenization_spaces": True},
@@ -105,6 +104,7 @@ class CannedPhrasesPredictor(Predictor):
 
         self._model_loaded = True
         self.logger.debug(f"cannedPhrases count: {len(self.corpus_phrases)}")
+        self.logger.info(f"Loaded {self.predictor_name} predictor.")
 
     def _create_index(self, ind):
         ind.add_items(self.corpus_embeddings, list(range(len(self.corpus_embeddings))))
@@ -140,7 +140,7 @@ class CannedPhrasesPredictor(Predictor):
                 ret_sent = self.corpus_phrases[hits[i]["corpus_id"]]
                 if ret_sent.strip() not in direct_matchedSentences:
                     sent_prediction.add_suggestion(
-                        Suggestion(ret_sent.strip(), hits[i]["score"], self.predictor_name)
+                        Suggestion(ret_sent.strip(), float(hits[i]["score"]), self.predictor_name)
                     )
 
         except Exception as e:
@@ -212,10 +212,9 @@ class CannedPhrasesPredictor(Predictor):
         word_prediction = Prediction()  # Not used in this predictor
 
         try:
-            # context = self.context_tracker.context.strip()
             context = self.context_tracker.context
 
-            if context == "":
+            if context.strip() == "":
                 # GET max_partial_prediction_size MOST FREQUENT SENTENCES
                 sent_prediction = self._getTopInitialPhrases(
                     sent_prediction, max_partial_prediction_size
@@ -231,7 +230,7 @@ class CannedPhrasesPredictor(Predictor):
                 sent_prediction = self._find_semantic_matches(context, sent_prediction)
 
         except Exception as e:
-            self.logger.error(f"Exception in cannedPhrases Predict: {e} ")
+            self.logger.error(f"Exception in cannedPhrases Predict: {e}")
 
         if len(sent_prediction) == 0:
             self.logger.error("No canned phrases found")
@@ -260,4 +259,4 @@ class CannedPhrasesPredictor(Predictor):
                 self.cannedData.learn(phrase)
 
             except Exception as e:
-                self.logger.error("Exception in LEARN CANNED PHRASES SENTENCES  = {e}")
+                self.logger.error(f"Exception in LEARN CANNED PHRASES SENTENCES. {e}")

@@ -14,8 +14,8 @@ from convassist.predictor.smoothed_ngram_predictor.general_word_predictor import
 )
 from convassist.utilities.ngram.ngramutil import NGramUtil
 
-from .. import setup_utils
-from . import TestPredictors
+from convassist.tests import setup_utils
+from convassist.tests.predictors import TestPredictors
 
 
 class TestGeneralWordPredictor(TestPredictors):
@@ -57,12 +57,6 @@ class TestGeneralWordPredictor(TestPredictors):
         self.assertIsNotNone(self.predictor.aac_dataset)
         self.assertIsNotNone(self.predictor.database)
 
-    # def test_missing_start_words(self):
-    #     self.config["test_predictor"]["startwords"] = "new_start.json"
-
-    #     predictor = GeneralWordPredictor(self.config, self.context_tracker, "test_predictor")
-
-    #     self.assertFalse(os.path.exists(predictor.startwords))
 
     @parameterized.expand(
         [

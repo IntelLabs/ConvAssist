@@ -11,9 +11,8 @@ from convassist.context_tracker import ContextTracker
 from convassist.predictor.sentence_completion_predictor import (
     SentenceCompletionPredictor,
 )
-
-from .. import setup_utils
-from . import TestPredictors
+from convassist.tests import setup_utils
+from convassist.tests.predictors import TestPredictors
 
 
 class TestSentenceCompletionPredictor(TestPredictors):
@@ -101,19 +100,14 @@ class TestSentenceCompletionPredictor(TestPredictors):
         self.assertLessEqual(len(sentence_predictions), max_partial_prediction_size)
 
     def test_learn_new_sentence(self):
-        change_tokens = "This is a new sentence to learn."
+        change_tokens = "This is a new sentence to learn"
         self.predictor.learn(change_tokens)
 
-        sentences = self.predictor._retrieve_fromDataset(change_tokens)
-        self.assertEqual(len(sentences), 1)
-
-    def test_learn_existing_sentence(self):
-        change_tokens = "This is an existing sentence."
-        self.predictor.learn(change_tokens)
-        self.predictor.learn(change_tokens)
-
-        sentences = self.predictor._retrieve_fromDataset(change_tokens)
-        self.assertEqual(len(sentences), 1)
+        self.predictor.context_tracker.context = "This is a new sentence"
+        sentence_predictions, _ = self.predictor.predict(5)
+        self.assertIsNotNone(sentence_predictions)
+        self.assertLessEqual(len(sentence_predictions), 5)
+        self.assertEqual(sentence_predictions[0].word, " to learn") 
 
 
 if __name__ == "__main__":

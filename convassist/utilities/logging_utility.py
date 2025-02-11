@@ -7,6 +7,7 @@ import queue
 import sys
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
+from concurrent_log_handler import ConcurrentRotatingFileHandler
 from typing import TextIO
 
 import colorlog
@@ -32,21 +33,28 @@ class QueueHandler(logging.Handler):
         self.log_queue.put(self.format(record))
 
 
-class LoggingUtility:
-    def __init__(self):
-        # color formatter
-        self._formatter = colorlog.ColoredFormatter(
-            "%(asctime)s - %(name)s - %(log_color)s%(levelname)-8s%(reset)s %(message)s",
-            log_colors={
-                "DEBUG": "cyan",
-                "INFO": "green",
-                "WARNING": "yellow",
-                "ERROR": "red",
-                "CRITICAL": "red,bg_white",
-            },
-        )
 
-        self._central_log_queue: queue.Queue = queue.Queue()
+class LoggingUtility:
+    _instance = None
+    _initialized = False
+
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(LoggingUtility, cls).__new__(cls)
+
+            cls._central_log_queue = queue.Queue()
+            cls._log_location = None
+        return cls._instance
+
+    def __init__(self):
+        self.log_format = "%(asctime)s - %(name)s - %(levelname)s %(message)s"
+        self.date_format = "%m-%d-%Y %H:%M:%S"
+        self._formatter: logging.Formatter = logging.Formatter(
+            fmt=self.log_format, datefmt=self.date_format
+        )
+        self.file_handler = None
+
 
     @property
     def formatter(self):
@@ -54,19 +62,29 @@ class LoggingUtility:
 
     @property
     def central_log_queue(self):
-        return self._central_log_queue
+        return self._instance._central_log_queue
 
     @staticmethod
-    def getLogFileName(name):
+    def getLogFileName():
         now = datetime.now()
-        date_time = now.strftime("%m-%d-%Y___%H-%M-%S")
-        return f"ConvAssist_Log{date_time}_{name}.log"
+        date_time = now.strftime("%Y-%m-%dT%H_%M_%S")
+        return f"ConvAssist_Log_{date_time}.txt"
+    
+    def set_log_location(self, log_location):
+        if not os.path.exists(log_location):
+            os.makedirs(log_location)
 
-    def get_logger(self, name, log_level, log_location=None, queue_handler=False):
+        self._instance._log_location = os.path.join(log_location, LoggingUtility.getLogFileName())
+        self.file_handler = ConcurrentRotatingFileHandler(self._instance._log_location, maxBytes=1024 * 1024 * 3, backupCount=2)
+        self.file_handler.setFormatter(self.formatter)
+
+
+    def get_logger(self, name, log_level, log_file=True, queue_handler=False):
 
         logger = logging.getLogger(name)
         logger.setLevel(log_level)
-        logger.propagate = False
+
+        logger.propagate = True
 
         logger.handlers.clear()
 
@@ -74,8 +92,8 @@ class LoggingUtility:
         self.add_stream_handler(logger, sys.stdout)
 
         # # optionally add a file handler
-        if log_location:
-            self.add_file_handler(logger, log_location)
+        if log_file:
+            self.add_file_handler(logger)
 
         # optionally add a queue handler
         if queue_handler:
@@ -87,15 +105,15 @@ class LoggingUtility:
 
         return logger
 
-    def add_file_handler(self, logger: logging.Logger, log_location: str):
-        if not os.path.exists(log_location):
-            os.makedirs(log_location)
+    def add_file_handler(self, logger: logging.Logger):
+        #TODO FIXME
+        if not self._instance._log_location:
+            return
 
-        log_file = os.path.join(log_location, LoggingUtility.getLogFileName(logger.name))
+        if not self.file_handler:
+            self.file_handler = self.set_log_location(self._instance._log_location)
 
-        file_handler = RotatingFileHandler(log_file, maxBytes=1024 * 1024 * 5, backupCount=2)
-        file_handler.setFormatter(self.formatter)
-        logger.addHandler(file_handler)
+        logger.addHandler(self.file_handler)
 
     def add_queue_handler(self, logger: logging.Logger):
         queue_handler = QueueHandler(self.central_log_queue)
@@ -104,5 +122,18 @@ class LoggingUtility:
 
     def add_stream_handler(self, logger: logging.Logger, textio: TextIO):
         stream_handler = logging.StreamHandler(textio)
-        stream_handler.setFormatter(self.formatter)
+
+        formatter = colorlog.ColoredFormatter(
+            "%(asctime)s - %(name)s - %(log_color)s%(levelname)-8s%(reset)s %(message)s",
+            log_colors={
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bg_white",
+            },
+            datefmt=self.date_format,
+        )
+
+        stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)

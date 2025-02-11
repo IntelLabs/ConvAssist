@@ -21,11 +21,13 @@ class TestNGramUtil(unittest.TestCase):
             assert ngramutil._database == self.database
             assert ngramutil._cardinality == self.cardinality
 
+            ngramutil.create_update_ngram_tables()
             assert ngramutil._table_exists(f"_{self.cardinality}_gram")
 
     def test_learn(self):
         # Test the learn method of NGramUtil
         with NGramUtil(":memory:", self.cardinality) as ngramutil:
+            ngramutil.create_update_ngram_tables()
             assert ngramutil._table_exists(f"_{self.cardinality}_gram")
 
             ngramutil.learn("test")
@@ -34,6 +36,8 @@ class TestNGramUtil(unittest.TestCase):
     def test_learn_updates(self):
         # Test the learn method of NGramUtil
         with NGramUtil(":memory:", self.cardinality) as ngramutil:
+
+            ngramutil.create_update_ngram_tables()
             assert ngramutil._table_exists(f"_{self.cardinality}_gram")
 
             ngramutil.learn("test")
@@ -46,6 +50,7 @@ class TestNGramUtil(unittest.TestCase):
         # Test the fetch_like method of NGramUtil
         self.cardinality = 1
         with NGramUtil(":memory:", self.cardinality) as ngramutil:
+            ngramutil.create_update_ngram_tables()
             assert ngramutil._table_exists(f"_{self.cardinality}_gram")
 
             ngramutil.learn("test")
@@ -62,6 +67,7 @@ class TestNGramUtil(unittest.TestCase):
         database = ":memory:"
         # database = "test.db"
         with NGramUtil(database, self.cardinality) as ngramutil:
+            ngramutil.create_update_ngram_tables()
             assert ngramutil._table_exists(f"_{self.cardinality}_gram")
 
             ngramutil.learn("test")
@@ -91,7 +97,8 @@ class TestNGramUtil(unittest.TestCase):
         with NGramUtil(database, card) as ngramutil:
 
             for i in range(1, card + 1):
-                assert ngramutil._table_exists(f"_{i}_gram")
+                ngramutil.create_update_ngram_tables()
+                assert ngramutil._table_exists(f"_{self.cardinality}_gram")
 
             ngramutil.learn(phrase)
 

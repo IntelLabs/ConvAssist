@@ -3,6 +3,15 @@
 
 # CHATGpt Generated Code
 import sys
+import os
+import logging
+import tempfile
+from filelock import FileLock, Timeout
+LOCK_FILE = os.path.join(tempfile.gettempdir(), 'convassist.lock')
+
+working_dir = os.path.dirname(os.path.realpath(__file__))
+
+LOG_LEVEL = logging.DEBUG
 
 if not sys.platform == "win32":
 
@@ -11,56 +20,28 @@ if not sys.platform == "win32":
 
 else:
     import glob
-    import logging
-    import os
     import queue
     import shutil
     import sys
-    import tempfile
     import threading
     import time
     import tkinter as tk
-    from tkinter import BOTH, END, LEFT, messagebox, ttk
+    from tkinter import BOTH, END, messagebox, ttk
     from tkinter.scrolledtext import ScrolledText
-    from tkinter.ttk import Button
 
-    import psutil
     import pystray
     import sv_ttk
     from PIL import Image
-    from pystray import MenuItem as item
+    from pystray import MenuItem
 
+    from interfaces.ACAT.acatconvassist.preferences import Preferences
     from convassist.utilities.logging_utility import LoggingUtility
-    from interfaces.ACAT.acatconvassist.acatconvassist import ACATConvAssistInterface
 
     license_text_string = "Copyright (C) 2024 Intel Corporation\n"
     license_text_string += "SPDX-License-Identifier: GPL 3.0\n\n"
     license_text_string += "Portions of ConvAssist were ported from the Pressage\n"
     license_text_string += "project, which is licensed under the GPL 3.0 license.\n"
 
-    working_dir = os.path.dirname(os.path.realpath(__file__))
-
-    def findProcessIdByName(process_name):
-        """
-        Get a list of all the PIDs of all the running process whose name contains
-        the given string processName
-
-        :param process_name: Name of process to look
-        :return: True if process is running
-        """
-        listOfProcessObjects = []
-        # Iterate over the all the running process
-        for proc in psutil.process_iter():
-            try:
-                pinfo = proc.as_dict(attrs=["pid", "name", "create_time"])
-                # Check if process name contains the given name string.
-                if process_name.lower() in pinfo["name"].lower():
-                    listOfProcessObjects.append(pinfo)
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                pass
-        if len(listOfProcessObjects) > 2:
-            return True
-        return False
 
     def deleteOldPyinstallerFolders(time_threshold=100):
         """
@@ -101,9 +82,17 @@ else:
             self.title("ConvAssist")
             self.iconbitmap(os.path.join(working_dir, "Assets", "icon_tray.ico"))
 
+            # Load preferences
+            self.preferences = Preferences("ACATConvAssist")
+
             # Set up logging
+            log_location = self.preferences.load("pathlog", f"{self.preferences.get_config_dir()}/logs")
+            self.logutil = LoggingUtility()
+            self.logutil.set_log_location(log_location)
             self.logger = LoggingUtility().get_logger(
-                name="CONVASSISTUI", log_level=logging.DEBUG, queue_handler=True
+                name="CONVASSIST", log_level=LOG_LEVEL, 
+                log_file=True,
+                queue_handler=True
             )
             self.logger.info("Application started")
 
@@ -125,6 +114,8 @@ else:
             del self._tray_icon
 
         def mainloop(self, n: int = 0) -> None:
+
+            self.logger.debug("Starting main loop")
             # Start the log update loop
             self.update_log_window()
 
@@ -132,32 +123,30 @@ else:
             self.app_quit_event = threading.Event()
             self.check_for_exit()
 
+            self.logger.debug("Loading ACATConvAssistInterface")
+            # Time how long it takes to load the ACATConvAssistInterface
+            start_time = time.time()
+
             # Start ACATConvAssistInterface
-            self.thread = ACATConvAssistInterface(self.app_quit_event, queue_handler=True)
+            from interfaces.ACAT.acatconvassist.acatconvassist import ACATConvAssistInterface
+            self.thread = ACATConvAssistInterface(self.app_quit_event, queue_handler=True, log_level = LOG_LEVEL)
+            self.logger.debug("ACATConvAssistInterface loaded in %s seconds", time.time() - start_time)
             self.thread.start()
 
             return super().mainloop(n)
 
         def configure(self):
+            self.withdraw()  # Hide the main window at startup
+
             self.log_widget = ScrolledText(self, height=10)
             self.log_widget.pack(fill=BOTH, expand=True, pady=10, padx=10)
 
             self.create_buttons()
 
-            # self.withdraw()  # Hide the main window at startup
-
             sv_ttk.set_theme("light")
 
         def create_buttons(self):
             button_frame = ttk.Frame(self, height=50)
-
-            # self.clear_image = ttk.PhotoImage(file=os.path.join(working_dir, "Assets", "button_clear.png"))
-            # self.license_image = ttk.PhotoImage(file=os.path.join(working_dir, "Assets", "button_license.png"))
-            # self.close_image = ttk.PhotoImage(file=os.path.join(working_dir, "Assets", "button_exit.png"))
-
-            # clear_button = ttk.Button(button_frame, image=self.clear_image, command=self.clear_action)
-            # license_button = ttk.Button(button_frame, image=self.license_image, command=self.license_action)
-            # close_button = ttk.Button(button_frame, image=self.close_image, command=self.close_action)
 
             clear_button = ttk.Button(button_frame, text="Clear", command=self.clear_action)
             license_button = ttk.Button(button_frame, text="About", command=self.about_action)
@@ -182,14 +171,14 @@ else:
             """Check the log queue for new messages and update the log window."""
             try:
                 while True:
-                    message = LoggingUtility().central_log_queue.get_nowait()
+                    message = self.logutil.central_log_queue.get_nowait()
                     self.log_widget.insert(tk.END, message + "\n")
                     self.log_widget.see(tk.END)  # Auto-scroll to the end
             except queue.Empty:
                 pass
 
             # Schedule the next check
-            self.after(100, self.update_log_window)
+            self.after(50, self.update_log_window)
 
         def check_for_exit(self):
             """Check if the application should exit."""
@@ -232,10 +221,14 @@ else:
             self.icon = self.create_image()
 
             self.menu = (
-                item("Show", self.show_window),
-                item("About", self.about_message),
-                item("Quit", self.on_quit),
+                MenuItem("Show", self.show_window),
+                MenuItem("About", self.about_message),
+                MenuItem("Quit", self.on_quit),
             )
+
+        def __call__(self):
+            self.tk_window.show_window()
+            # return super().__call__()
 
         def check_for_exit(self):
             """Check if the application should exit."""
@@ -249,6 +242,10 @@ else:
             """Create an image for the systray icon."""
             image = Image.open(os.path.join(working_dir, "Assets", "icon_tray.ico"))
             return image
+        
+        def on_clicked(self, icon, item):
+            """Handle the systray icon click event."""
+            self.tk_window.show_window()
 
         def on_quit(self, icon, item):
             """Quit the application."""
@@ -263,6 +260,7 @@ else:
             self.tk_window.about_action()
 
     def main():
+
         # Create the main window
         tk_window = ConvAssistWindow()
 
@@ -277,4 +275,11 @@ else:
 
 
 if __name__ == "__main__":
-    main()
+    lock = FileLock(LOCK_FILE)
+
+    try:
+        with lock.acquire(timeout=1):
+            main()
+    except Timeout:
+        print("Another instance of ConvAssist is already running.")
+        sys.exit()

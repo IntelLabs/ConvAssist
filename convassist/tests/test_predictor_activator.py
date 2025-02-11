@@ -1,11 +1,14 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import unittest
 from configparser import ConfigParser
 from unittest.mock import MagicMock, patch
 
-from ..combiner.meritocrity_combiner import MeritocracyCombiner
-from ..predictor.spell_correct_predictor import SpellCorrectPredictor
-from ..predictor_activator import PredictorActivator
-from ..predictor_registry import PredictorRegistry
+from convassist.combiner.meritocrity_combiner import MeritocracyCombiner
+from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
+from convassist.predictor_activator import PredictorActivator
+from convassist.predictor_registry import PredictorRegistry
 
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
@@ -96,7 +99,7 @@ class TestPredictorActivator(unittest.TestCase):
         result = self.activator.predict()
 
         self.assertEqual(result, ([], [], [], []))
-        self.logger.critical.assert_called_with("Predictor MockPredictor: Test Exception")
+        self.logger.critical.assert_called_with("Predictor MockPredictor: Test Exception", exc_info=True, stack_info=True)
 
 
 if __name__ == "__main__":

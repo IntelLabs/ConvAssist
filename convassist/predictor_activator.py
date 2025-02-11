@@ -4,11 +4,12 @@
 import logging
 from configparser import ConfigParser
 
-from .combiner.meritocrity_combiner import MeritocracyCombiner
-from .predictor.spell_correct_predictor import SpellCorrectPredictor
-from .predictor.utilities.prediction import UnknownCombinerException
-from .predictor_registry import PredictorRegistry
-from .utilities.logging_utility import LoggingUtility
+from convassist.predictor_registry import PredictorRegistry
+
+from convassist.combiner.meritocrity_combiner import MeritocracyCombiner
+from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
+from convassist.predictor.utilities.prediction import UnknownCombinerException
+from convassist.utilities.logging_utility import LoggingUtility
 
 
 class PredictorActivator:
@@ -87,7 +88,7 @@ class PredictorActivator:
                 continue
             try:
                 self.logger.info(
-                    f"Predictor {predictor.predictor_name} - Predicting next words and sentences"
+                    f"Predictor {predictor.predictor_name} - Predicting next {self.max_partial_prediction_size} words and sentences"
                 )
                 # Get sentences and/or words from the predictor
                 sentences, words = predictor.predict(
@@ -107,7 +108,7 @@ class PredictorActivator:
                 )
 
             except Exception as e:
-                self.logger.critical(f"Predictor {predictor.predictor_name}: {e}")
+                self.logger.critical(f"Predictor {predictor.predictor_name}: {e}", exc_info=True, stack_info=True)
                 continue
 
         # If the word predictor(s) return empty lists, use predictions from the spell predictor

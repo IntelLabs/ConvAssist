@@ -1,7 +1,7 @@
-import os
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: GPL-3.0-or-later
 
-from ...utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
-from ...utilities.singleton import Singleton
+from convassist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 
 
 class cannedData:
@@ -11,16 +11,13 @@ class cannedData:
         self._add_data = []
         self._remove_data = []
 
-        # Check if sentences_db exists
-        if not os.path.exists(db_path):
+        # Create sentences_db
+        self.sentence_db.connect()
+        columns = ["sentence TEXT PRIMARY KEY", "count INTEGER"]
+        self.sentence_db.create_table("sentences", columns)
 
-            # Create sentences_db
-            self.sentence_db.connect()
-            columns = ["sentence TEXT PRIMARY KEY", "count INTEGER"]
-            self.sentence_db.create_table("sentences", columns)
-
-            # Close sentences_db
-            self.sentence_db.close()
+        # Close sentences_db
+        self.sentence_db.close()
 
         self.update()
 
