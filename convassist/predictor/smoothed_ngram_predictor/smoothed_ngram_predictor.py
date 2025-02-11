@@ -28,14 +28,14 @@ class SmoothedNgramPredictor(Predictor):
     def extract_svo(self, sent):
         return sent
     
-    def get_frequent_start_words(self) -> Prediction:
+    def get_frequent_start_words(self, max_count = 10) -> Prediction:
         word_predictions = Prediction()
 
         try:
             with open(self.startwords) as f:
                 self.precomputed_StartWords = json.load(f)
 
-            for w, prob in list(self.precomputed_StartWords.items())[:self.max_partial_prediction_size]:
+            for w, prob in list(self.precomputed_StartWords.items())[:max_count]:
                 word_predictions.add_suggestion(Suggestion(w, prob, self.predictor_name))
 
         except FileNotFoundError:
@@ -58,7 +58,7 @@ class SmoothedNgramPredictor(Predictor):
             self.logger.info(
                 f"No tokens in the context tracker.  Getting {max_partial_prediction_size} most frequent start words if supported."
             )
-            word_prediction = self.get_frequent_start_words()
+            word_prediction = self.get_frequent_start_words(max_count=max_partial_prediction_size)
 
         else:
             self.logger.debug(f"Actual tokens: {actual_tokens}, tokens: {tokens}")

@@ -52,7 +52,7 @@ class TestCannedWordPredictor(TestPredictors):
         setup_utils.teardown_personalized_resources()
 
     def test_configure(self):
-        self.assertIsNotNone(self.predictor.nlp)
+        self.assertIsNotNone(self.predictor.svo_utils)
         self.assertIsNotNone(self.predictor.database)
 
     @parameterized.expand(

@@ -21,7 +21,7 @@ class CannedWordPredictor(SmoothedNgramPredictor):
         super().configure()
 
     def extract_svo(self, sent) -> str:
-        return self.svo_utils.extract_svo(sent)
+        return " ".join(self.svo_utils.extract_svo(sent))
 
 
     def recreate_database(self):
