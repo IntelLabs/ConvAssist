@@ -27,6 +27,7 @@ pandas = "^2.2.3"
 psutil = "^6.1.1"
 concurrent-log-handler = "^0.9.25"
 pyspellchecker = "^0.8.2"
+textual = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"

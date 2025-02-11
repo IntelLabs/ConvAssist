@@ -91,9 +91,10 @@ class LoggingUtility:
         # always add a stream handler
         self.add_stream_handler(logger, sys.stdout)
 
-        # # optionally add a file handler
-        if log_file:
-            self.add_file_handler(logger)
+        # # # optionally add a file handler
+        #TODO FIXME
+        # if log_file:
+        #     self.add_file_handler(logger)
 
         # optionally add a queue handler
         if queue_handler:
