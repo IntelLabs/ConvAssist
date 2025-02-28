@@ -6,7 +6,6 @@ import json
 import os
 
 from convassist.predictor.smoothed_ngram_predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
-from convassist.predictor.utilities.prediction import Prediction, Suggestion
 
 
 class GeneralWordPredictor(SmoothedNgramPredictor):
@@ -27,6 +26,9 @@ class GeneralWordPredictor(SmoothedNgramPredictor):
             with open(self.startwords, "w") as fp:
                 json.dump(self.precomputed_StartWords, fp)
 
+    def extract_svo(self, sent):
+        return sent
+
     # Override default properties
     @property
     def aac_dataset(self):
@@ -36,37 +38,3 @@ class GeneralWordPredictor(SmoothedNgramPredictor):
     def database(self):
         return os.path.join(self._static_resources_path, self._database)
 
-    @property
-    def startwords(self):
-        return os.path.join(self._personalized_resources_path, self._startwords)
-
-    def extract_svo(self, sent):
-        return sent
-
-    def predict(self, max_partial_prediction_size: int, filter):
-        """
-        Predicts the next word based on the context tracker and the n-gram model.
-        """
-        sentence_predictions = Prediction()  # Not used in this predictor
-        word_predictions = Prediction()
-
-        actual_tokens, _ = self.context_tracker.get_tokens(self.cardinality)
-
-        if actual_tokens == 0:
-            self.logger.warning(
-                f"No tokens in the context tracker.  Getting {max_partial_prediction_size} most frequent start words..."
-            )
-
-            with open(self.startwords) as f:
-                self.precomputed_StartWords = json.load(f)
-
-            for w, prob in list(self.precomputed_StartWords.items())[:max_partial_prediction_size]:
-                word_predictions.add_suggestion(Suggestion(w, prob, self.predictor_name))
-
-            if len(word_predictions) == 0:
-                self.logger.error("Error getting most frequent start words.")
-
-            return sentence_predictions, word_predictions
-
-        else:
-            return super().predict(max_partial_prediction_size, filter)

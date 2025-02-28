@@ -58,8 +58,8 @@ class Predictor(ABC):
         self._sentence_transformer_model: str = ""  # Path
         self._sentences_db: str = ""  # Path
         self._spellingdatabase: str = ""  # Path
-        self._startsents: str = ""  # Path
-        self._startwords: str = ""  # Path
+        self._startsents: str = "start_sentences.txt"  # Filename
+        self._startwords: str = "start_words.txt"  # Filename
         self._static_resources_path: str = ""
         self._stopwords: str = ""  # Path
         self._test_generalsentenceprediction: bool = False

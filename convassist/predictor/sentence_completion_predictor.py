@@ -12,60 +12,20 @@ import nltk
 import numpy
 import torch
 import transformers
+import tqdm
 from nltk import word_tokenize
 from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
 
 from convassist.predictor.predictor import Predictor
-from convassist.predictor.utilities.nlp import NLP
 from convassist.predictor.utilities.prediction import Prediction, Suggestion
 from convassist.utilities.databaseutils.sqllite_dbconnector import (
     SQLiteDatabaseConnector,
 )
+from convassist.predictor.utilities.svo_util import SVOUtil
 
 
 class SentenceCompletionPredictor(Predictor):
-    """
-    SentenceCompletionPredictor is a class that provides functionality for sentence completion prediction using a pre-trained language model and a corpus of sentences.
-
-    Methods:
-        configure(self):
-            Configures the predictor by loading the necessary models, embeddings, and indexes.
-        load_model(self) -> None:
-            Loads the pre-trained language model for sentence generation.
-        retrieve(self):
-            Property to get the retrieve attribute.
-        retrieve(self, value):
-            Property to set the retrieve attribute.
-        _set_seed(self, seed):
-            Sets the random seed for reproducibility.
-        _read_personalized_toxic_words(self):
-            Reads personalized allowed toxic words from a file.
-        _extract_svo(self, sent):
-            Extracts subject-verb-object (SVO) from a given sentence.
-        _ngram_to_string(self, ngram):
-            Converts an n-gram to a string.
-        _filter_text(self, text):
-            Filters the text to check for blacklisted words.
-        _textInCorpus(self, text):
-            Checks if the given text is in the corpus and returns the similarity score.
-        _retrieve_fromDataset(self, context):
-            Retrieves sentences from the dataset that match the given context.
-        _checkRepetition(self, text):
-            Checks for repetitive bigrams and trigrams in the text.
-        _generate(self, context: str, num_gen: int) -> Prediction:
-            Generates sentence completions for the given context.
-        model_loaded(self):
-            Property to check if the model is loaded.
-        predict(self, max_partial_prediction_size: int, filter: Optional[str] = None):
-            Predicts sentence completions based on the given context.
-        learn(self, change_tokens):
-            Learns from the given change tokens by adding them to the database.
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-                self._retrieveaac = None
-                self._model_loaded = False
-    """
 
     def __init__(self, *args, **kwargs):
         import os
@@ -89,7 +49,6 @@ class SentenceCompletionPredictor(Predictor):
         super().__init__(*args, **kwargs)
 
     def configure(self):
-        self.nlp = NLP().get_nlp()
 
         # check if saved torch model exists
         self.load_model()
@@ -117,25 +76,7 @@ class SentenceCompletionPredictor(Predictor):
 
         self.personalized_allowed_toxicwords = self._read_personalized_toxic_words()
 
-        self.OBJECT_DEPS = {
-            "dobj",
-            "pobj",
-            "dative",
-            "attr",
-            "oprd",
-            "npadvmod",
-            "amod",
-            "acomp",
-            "advmod",
-        }
-        self.SUBJECT_DEPS = {"nsubj", "nsubjpass", "csubj", "agent", "expl"}
-
-        # tags that define wether the word is wh-
-        self.WH_WORDS = {"WP", "WP$", "WRB"}
-        self.stopwords = []
-        stoplist = open(self.stopwordsFile).readlines()
-        for s in stoplist:
-            self.stopwords.append(s.strip())
+        self.svo_util = SVOUtil(self.stopwordsFile)
 
         if not Path.is_file(Path(self.embedding_cache_path)):
             self.corpus_embeddings = self.embedder.encode(
@@ -162,10 +103,15 @@ class SentenceCompletionPredictor(Predictor):
 
             # Create the HNSWLIB index
             self.logger.debug("Start creating HNSWLIB index")
-            self.index.init_index(max_elements=20000, ef_construction=400, M=64)
+            self.logger.debug(f"len(corpus_sentences) = {len(self.corpus_sentences)}")
+            max_elements = 20000 if len(self.corpus_sentences) > 20000 else len(self.corpus_sentences)
+            self.index.init_index(max_elements=max_elements, ef_construction=400, M=64)
 
             # Then we train the index to find a suitable clustering
-            self.index.add_items(self.corpus_embeddings, list(range(len(self.corpus_embeddings))))
+            with tqdm.tqdm(total=max_elements) as pbar:
+                for idx, emb in enumerate(self.corpus_embeddings[:max_elements]):
+                    self.index.add_items(emb, idx)
+                    pbar.update(1)
 
             self.logger.debug(f"Saving index to: {self.index_path}")
             self.index.save_index(self.index_path)
@@ -237,41 +183,10 @@ class SentenceCompletionPredictor(Predictor):
         self.logger.debug(f"UPDATED TOXIC WORDS = {self.personalized_allowed_toxicwords}")
         return self.personalized_allowed_toxicwords
 
-    def _extract_svo(self, sent):
-        doc = self.nlp(sent)
-        sub = []
-        at = []
-        ve = []
-        imp_tokens = []
-        for token in doc:
-            # is this a verb?
-            if token.pos_ == "VERB":
-                ve.append(token.text)
-                if (
-                    token.text.lower() not in self.stopwords
-                    and token.text.lower() not in imp_tokens
-                ):
-                    imp_tokens.append(token.text.lower())
-            # is this the object?
-            if token.dep_ in self.OBJECT_DEPS or token.head.dep_ in self.OBJECT_DEPS:
-                at.append(token.text)
-                if (
-                    token.text.lower() not in self.stopwords
-                    and token.text.lower() not in imp_tokens
-                ):
-                    imp_tokens.append(token.text.lower())
-            # is this the subject?
-            if token.dep_ in self.SUBJECT_DEPS or token.head.dep_ in self.SUBJECT_DEPS:
-                sub.append(token.text)
-                if (
-                    token.text.lower() not in self.stopwords
-                    and token.text.lower() not in imp_tokens
-                ):
-                    imp_tokens.append(token.text.lower())
-        return imp_tokens
 
-    def _ngram_to_string(self, ngram):
-        "|".join(ngram)
+
+    # def _ngram_to_string(self, ngram):
+    #     "|".join(ngram)
 
     def _filter_text(self, text):
         res = False
@@ -448,7 +363,7 @@ class SentenceCompletionPredictor(Predictor):
 
                     if remainderTextForFilter != "":
                         if clean_sentence not in allsent:
-                            imp_tokens = self._extract_svo(clean_sentence)
+                            imp_tokens = self.svo_util.extract_svo(clean_sentence)
                             imp_tokens_reminder = []
                             # get important tokens only of the generated completion
                             for imp in imp_tokens:
@@ -654,8 +569,6 @@ class SentenceCompletionPredictor(Predictor):
                         {"sentences": self.corpus_sentences, "embeddings": self.corpus_embeddings},
                         self.embedding_cache_path,
                     )
-                    # with open(self.embedding_cache_path, "wb") as fOut:
-                    #     pickle.dump({'sentences': self.corpus_sentences, 'embeddings': self.corpus_embeddings}, fOut)
 
                     # Then we train the index to find a suitable clustering
                     self.logger.debug(
