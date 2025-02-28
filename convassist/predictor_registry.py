@@ -14,13 +14,12 @@ from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
 
 from convassist.predictor.smoothed_ngram_predictor.canned_word_predictor import CannedWordPredictor
 from convassist.predictor.smoothed_ngram_predictor.general_word_predictor import GeneralWordPredictor
-from convassist.predictor.smoothed_ngram_predictor.svo_predictor import SVOPredictor
 from convassist.predictor.smoothed_ngram_predictor.smoothed_ngram_predictor import (
     SmoothedNgramPredictor,
 )
 
 predictors = {
-    "ShortHandPredictor": SVOPredictor,
+    "ShortHandPredictor": SmoothedNgramPredictor,
     "SmoothedNgramPredictor": SmoothedNgramPredictor,
     "CannedWordPredictor": CannedWordPredictor,
     "GeneralWordPredictor": GeneralWordPredictor,
