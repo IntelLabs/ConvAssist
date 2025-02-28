@@ -22,7 +22,8 @@
             "justMyCode": false,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
+            },
+            "args": "${command:pickArgs}"
         },
         {
             "name": "ConvAssist",
