@@ -12,6 +12,7 @@ import nltk
 import numpy
 import torch
 import transformers
+import tqdm
 from nltk import word_tokenize
 from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
@@ -102,10 +103,15 @@ class SentenceCompletionPredictor(Predictor):
 
             # Create the HNSWLIB index
             self.logger.debug("Start creating HNSWLIB index")
-            self.index.init_index(max_elements=20000, ef_construction=400, M=64)
+            self.logger.debug(f"len(corpus_sentences) = {len(self.corpus_sentences)}")
+            max_elements = 20000 if len(self.corpus_sentences) > 20000 else len(self.corpus_sentences)
+            self.index.init_index(max_elements=max_elements, ef_construction=400, M=64)
 
             # Then we train the index to find a suitable clustering
-            self.index.add_items(self.corpus_embeddings, list(range(len(self.corpus_embeddings))))
+            with tqdm.tqdm(total=max_elements) as pbar:
+                for idx, emb in enumerate(self.corpus_embeddings[:max_elements]):
+                    self.index.add_items(emb, idx)
+                    pbar.update(1)
 
             self.logger.debug(f"Saving index to: {self.index_path}")
             self.index.save_index(self.index_path)
