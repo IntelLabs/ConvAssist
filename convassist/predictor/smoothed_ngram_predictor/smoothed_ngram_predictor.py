@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
+import os
 import string
 from abc import ABC
 from typing import List
@@ -16,6 +17,10 @@ class SmoothedNgramPredictor(Predictor):
     SmoothedNgramPredictor is a class that extends the Predictor class to provide
     functionality for predicting the next word(s) in a sequence using smoothed n-grams.
     """
+
+    @property
+    def startwords(self):
+        return os.path.join(self._personalized_resources_path, self._startwords)
 
     def configure(self) -> None:
         with NGramUtil(self.database, self.cardinality) as ngramutil:
