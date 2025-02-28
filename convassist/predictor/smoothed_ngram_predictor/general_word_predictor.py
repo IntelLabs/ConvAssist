@@ -38,7 +38,3 @@ class GeneralWordPredictor(SmoothedNgramPredictor):
     def database(self):
         return os.path.join(self._static_resources_path, self._database)
 
-    @property
-    def startwords(self):
-        return os.path.join(self._personalized_resources_path, self._startwords)
-
