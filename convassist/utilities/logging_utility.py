@@ -111,9 +111,8 @@ class LoggingUtility:
             return
 
         if not self.file_handler:
-            self.file_handler = self.set_log_location(self._instance._log_location)
-
-        logger.addHandler(self.file_handler)
+            self.set_log_location(self._instance._log_location)
+            logger.addHandler(self.file_handler)
 
     def add_queue_handler(self, logger: logging.Logger):
         queue_handler = QueueHandler(self.central_log_queue)
