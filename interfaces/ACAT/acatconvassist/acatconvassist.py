@@ -23,7 +23,7 @@ from interfaces.ACAT.utilities.ACATMessageTypes import (
     ParameterType,
     WordAndCharacterPredictionResponse,
 )
-from interfaces.ACAT.utilities.message_handler.MessageHandler import MessageHandler
+from interfaces.ACAT.utilities.message_handler.MessageHandler import MessageHandler, MessageHandlerException
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 if current_path not in sys.path:
@@ -200,7 +200,7 @@ class ACATConvAssistInterface(threading.Thread):
         # return the ConfigParser object
         return config_parser
 
-    def handle_incoming_messages(self):
+    def process_incoming_message(self, message: str) -> str:
         """
         Main Thread, called when a server was found: Receives and send messages, Event message terminate App
 
@@ -215,31 +215,14 @@ class ACATConvAssistInterface(threading.Thread):
                 PredictionResponse = WordAndCharacterPredictionResponse()
 
                 try:
-                    message_json = self.messageHandler.receive_message()
+                    # message_json = self.messageHandler.receive_message()
 
-                    messageReceived = ConvAssistMessage.jsonDeserialize(message_json)
+                    messageReceived = ConvAssistMessage.jsonDeserialize(message)
                     self.logger.info(f"Message received: {messageReceived} ")
 
-                except AttributeError as e:
-                    self.logger.error(f"Attribute error: {e}.")
-                    continue
-                
-                except TimeoutError as e:
-                    self.logger.info("Timeout Error waiting for named pipe.  Try again.")
-                    continue
-
-                except BrokenPipeError as e:
-                    if False:
-                        # If the pipe is broken, exit the loop
-                        self.logger.critical(f"Broken Pipe Error. Bailing. {e}.")
-                        send_response = False
-                        self.app_quit_event.set()
-                    else:
-                        # If the pipe is broken, try to reconnect
-                        self.logger.warning(f"Broken Pipe Error.  Reconnecting. {e}.")
-                        self.clientConnected = False
-                        self.ConnectToACAT()
-                    continue
+                # except MessageHandlerException as e:
+                #     self.logger.error(f"MessageHandler exception: {e}.")
+                #     continue
 
                 except Exception as e:
                     self.logger.critical(f"Catastrophic Error.  Bailing. {e}.", stack_info=True, exc_info=True)
@@ -468,33 +451,47 @@ class ACATConvAssistInterface(threading.Thread):
         #TODO - Check if all convassists are initialized
         # I"m assuming that if I've made it here, they are all initialized
         self.ready = True
-        
-    def ConnectToACAT(self, connection_type=None) -> bool:
-        retries = 0
-        self.logger.info("Trying to connect to ACAT server.")
-        try:
-            while not self.clientConnected and not self.app_quit_event.is_set() and retries < self.retries:
-                self.clientConnected, msg = self.messageHandler.connect()
 
-                # Log the connection status the first 10 times
-                # then only every 10 times after that.
-                if retries < 10 or retries % 10 == 0:
-                    self.logger.info(f"Connection Status: {msg}")
+    def startMainEventLoop(self):
+        self.logger.info("Starting main event loop.")
 
-                if not self.clientConnected:
-                    retries += 1
-                    time.sleep(5)
+        #TODO - Check preferences for Message Handler Type (Win32, WebSocket)
 
-        except Exception as e:
-            self.logger.error(f"Error connecting to named pipe: {e}")
+        config = {
+            "type": "WebSocket", 
+            "port": "8765",
+            "message_processor": self.process_incoming_message
+        }
 
-        finally:
-            return self.clientConnected
+        self.messageHandler = MessageHandler.getMessageHandler(config)
+        self.messageHandler.startMessageHandler()
 
-    def DisconnectFromACAT(self):
-        if self.clientConnected:
-            self.messageHandler.disconnect()
-            self.clientConnected = False
+    # def ConnectToACAT(self, connection_type=None) -> bool:
+    #     retries = 0
+    #     self.logger.info("Trying to connect to ACAT server.")
+    #     try:
+    #         while not self.clientConnected and not self.app_quit_event.is_set() and retries < self.retries:
+    #             self.clientConnected, msg = self.messageHandler.connect()
+
+    #             # Log the connection status the first 10 times
+    #             # then only every 10 times after that.
+    #             if retries < 10 or retries % 10 == 0:
+    #                 self.logger.info(f"Connection Status: {msg}")
+
+    #             if not self.clientConnected:
+    #                 retries += 1
+    #                 time.sleep(5)
+
+    #     except Exception as e:
+    #         self.logger.error(f"Error connecting to named pipe: {e}")
+
+    #     finally:
+    #         return self.clientConnected
+
+    # def DisconnectFromACAT(self):
+    #     if self.clientConnected:
+    #         self.messageHandler.disconnect()
+    #         self.clientConnected = False
 
     def run(self):
         """
@@ -510,14 +507,7 @@ class ACATConvAssistInterface(threading.Thread):
             
         self.logger.debug(f"ACATConvAssistInterface initialized in {time.time() - starttime} seconds.")
 
-        if not self.ConnectToACAT():
-            self.logger.info("Shutting down.")
-            self.app_quit_event.set()
-            return
-
-        self.handle_incoming_messages()
+        self.startMainEventLoop()
 
         self.logger.info("Shutting down.")
-        self.DisconnectFromACAT()
-
         self.logger.info("ACATConvAssistInterface finished.")
