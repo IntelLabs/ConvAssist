@@ -1,40 +1,39 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from __future__ import annotations
 from abc import ABC, abstractmethod
+from typing import Type
 
+class MessageHandlerException(Exception):
+    def __init__(self, message: str):
+        self.message = message
+
+    def __str__(self):
+        return self.message
 
 class MessageHandler(ABC):
-    @abstractmethod
-    def send_message(self, message: str) -> None:
-        pass
+
+    config: dict[str, object] = {}
+
+    def set_config(self, config: dict[str, object]) -> None:
+        self.config = config
 
     @abstractmethod
-    def receive_message(self) -> str:
-        pass
-
-    @abstractmethod
-    def connect(self) -> tuple[bool, str]:
-        pass
-
-    @abstractmethod
-    def disconnect(self) -> None:
-        pass
-
-    @abstractmethod
-    def create_connection(self) -> None:
+    def startMessageHandler(self) -> None:
         pass
 
     @staticmethod
-    def getMessageHandler(config):
-        if config["type"] == "win32":
+    def getMessageHandler(config: dict[str, object]) -> MessageHandler:
+        if type == "win32pipe":
             from .Win32PipeHandler import Win32PipeMessageHandler
+            raise NotImplementedError("Win32PipeMessageHandler not implemented")
 
-            return Win32PipeMessageHandler(config["pipe_name"])
-        elif config["type"] == "WebSocket":
+        elif type == "WebSocket":
             from .WebSocketHandler import WebSocketHandler
-
-            return WebSocketHandler(config["url"])
+            handler = WebSocketHandler()
+            handler.set_config(config)
+            return handler
 
         else:
-            raise Exception("Invalid message handler configuration")
+            raise MessageHandlerException("Invalid message handler configuration")

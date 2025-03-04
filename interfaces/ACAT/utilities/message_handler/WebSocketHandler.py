@@ -2,40 +2,51 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import warnings
+import websockets.sync.server
 
-from websockets.server import serve
-from websockets.sync.client import connect
-
-from .MessageHandler import MessageHandler
-
+from MessageHandler import MessageHandler, MessageHandlerException
 
 class WebSocketHandler(MessageHandler):
-    def __init__(self, config):
-        self.config = config
+    def __init__(self):
+        pass
 
-    def connect(self) -> tuple[bool, str]:
-        if not self.config["use_tls"]:
-            warnings.warn(
-                f"{self.__class__.__name__} is being used in an insecure manner, and should be used with caution.",
-                RuntimeWarning,
-                stacklevel=2,
-            )
+    def _handler(self, ws, message_processor):
 
-        else:
-            # TODO Implement TLS Support
-            pass
+        try:
+            while True:
+                message = ws.recv()
+                response = message_processor(message)
+                ws.send(response)
+        
+        except Exception as e:
+            print(f"Error: {e}")
 
-        self.ws = connect(self.config["url"])
-        return True, ""
+    def startMessageHandler(self) -> None:
+        warnings.warn(
+            f"{self.__class__.__name__} is being used in an insecure manner, and should be used with caution.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
 
-    def send_message(self, message: str) -> None:
-        self.ws.send(message)
+        # Make sure the config is set
+        if not self.config:
+            error = ValueError("Config not set")
+            raise MessageHandlerException(str(error))
+        
+        elif "port" not in self.config:
+            error = ValueError("Port not set in config")
+            raise MessageHandlerException(str(error))
+        
+        elif "message_processor" not in self.config:
+            error = ValueError("Message Processor not set in config")
+            raise MessageHandlerException(str(error))
+        
+        elif not callable(self.config["message_processor"]):
+            error = ValueError("Message Processor is not callable")
+            raise MessageHandlerException(str(error))
 
-    def receive_message(self) -> str:
-        return str(self.ws.recv())
-
-    def disconnect(self) -> None:
-        self.ws.close()
-
-    def create_connection(self) -> None:
-        return super().create_connection()
+        self.server = websockets.sync.server.serve(self._handler, "localhost", self.config["port"])
+        with self.server:
+            print (f"WebSocket Server running on ws://localhost:{self.config["port"]}")
+            print ("Waiting for clients to connect...")
+            self.server.serve_forever()
