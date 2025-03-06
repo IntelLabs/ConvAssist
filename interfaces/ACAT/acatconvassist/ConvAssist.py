@@ -89,7 +89,7 @@ else:
             log_location = self.preferences.load("pathlog", f"{self.preferences.get_config_dir()}/logs")
             self.logutil = LoggingUtility()
             self.logutil.set_log_location(log_location)
-            self.logger = LoggingUtility().get_logger(
+            self.logger = self.logutil.get_logger(
                 name="CONVASSIST", log_level=LOG_LEVEL, 
                 log_file=True,
                 queue_handler=True

@@ -43,6 +43,7 @@ class LoggingUtility:
         if cls._instance is None:
             cls._instance = super(LoggingUtility, cls).__new__(cls)
 
+            cls._file_handler: RotatingFileHandler = None
             cls._central_log_queue = queue.Queue()
             cls._log_location = None
         return cls._instance
@@ -53,7 +54,6 @@ class LoggingUtility:
         self._formatter: logging.Formatter = logging.Formatter(
             fmt=self.log_format, datefmt=self.date_format
         )
-        self.file_handler = None
 
 
     @property
@@ -63,6 +63,13 @@ class LoggingUtility:
     @property
     def central_log_queue(self):
         return self._instance._central_log_queue
+    
+    @property
+    def file_handler(self):
+        return self._instance._file_handler
+    
+    def file_handler(self, value):
+        self._instance._file_handler = value
 
     @staticmethod
     def getLogFileName():
@@ -106,12 +113,8 @@ class LoggingUtility:
         return logger
 
     def add_file_handler(self, logger: logging.Logger):
-        #TODO FIXME
-        if not self._instance._log_location:
-            return
-
-        if not self.file_handler:
-            self.file_handler = self.set_log_location(self._instance._log_location)
+        assert self._instance._log_location, "Log location not set"
+        assert self.file_handler, "File handler not set"
 
         logger.addHandler(self.file_handler)
 
