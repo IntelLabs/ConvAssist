@@ -23,13 +23,17 @@ class MessageHandler(ABC):
     def startMessageHandler(self) -> None:
         pass
 
+    @abstractmethod
+    def stopMessageHandler(self) -> None:
+        pass
+
     @staticmethod
     def getMessageHandler(config: dict[str, object]) -> MessageHandler:
-        if type == "win32pipe":
+        if config["type"] == "win32pipe":
             from .Win32PipeHandler import Win32PipeMessageHandler
             raise NotImplementedError("Win32PipeMessageHandler not implemented")
 
-        elif type == "WebSocket":
+        elif config["type"] == "WebSocket":
             from .WebSocketHandler import WebSocketHandler
             handler = WebSocketHandler()
             handler.set_config(config)

@@ -55,6 +55,11 @@ class ConvAssistMessage:
         _PredictionType = int(obj.get("PredictionType"))
         _Data = str(obj.get("Data"))
         return ConvAssistMessage(_MessageType, _PredictionType, _Data)
+    
+    @staticmethod
+    def jsonDeserialize(json_str: str) -> "ConvAssistMessage":
+        data = json.loads(json_str)
+        return ConvAssistMessage(**data)
 
     def jsonSerialize(self) -> str:
         return json.dumps(dataclasses.asdict(self))

@@ -68,9 +68,7 @@ class ACATConvAssistInterface(threading.Thread):
         self.ready: bool = False
 
         # Message Handler
-        self.messageHandler = MessageHandler.getMessageHandler(
-            {"type": "win32", "pipe_name": self.pipeName}
-        )
+        self.messageHandler = None
 
         # Preferences
         self.prefs = preferences.Preferences("ACATConvAssist")
@@ -207,47 +205,33 @@ class ACATConvAssistInterface(threading.Thread):
         :param Pipehandle: Handle of the pipe
         :return: none
         """
-        while not self.app_quit_event.is_set():
-            self.logger.info("Handle incoming message start.")
-            send_response = True
+        # while not self.app_quit_event.is_set():
+        self.logger.info("Handle incoming message start.")
+        send_response = True
 
-            try:
-                PredictionResponse = WordAndCharacterPredictionResponse()
+        try:
+            PredictionResponse = WordAndCharacterPredictionResponse()
+            messageReceived = ConvAssistMessage.jsonDeserialize(message)
+            self.logger.info(f"Message received: {messageReceived} ")
 
-                try:
-                    # message_json = self.messageHandler.receive_message()
+            # TODO - Handle more gracefully
+            if not self.ready and messageReceived.MessageType != ConvAssistMessageTypes.SETPARAM:
+                self.logger.warning("Not ready to process messages.")
+                PredictionResponse.MessageType = ConvAssistMessageTypes.NOTREADY
 
-                    messageReceived = ConvAssistMessage.jsonDeserialize(message)
-                    self.logger.info(f"Message received: {messageReceived} ")
-
-                # except MessageHandlerException as e:
-                #     self.logger.error(f"MessageHandler exception: {e}.")
-                #     continue
-
-                except Exception as e:
-                    self.logger.critical(f"Catastrophic Error.  Bailing. {e}.", stack_info=True, exc_info=True)
-                    send_response = False
-                    self.app_quit_event.set()
-                    continue
-
-                # TODO - Handle more gracefully
-                if messageReceived.MessageType != ConvAssistMessageTypes.SETPARAM and not self.ready:
-                    self.logger.warning("Not ready to process messages.")
-                    PredictionResponse.MessageType = ConvAssistMessageTypes.NOTREADY
-                    self.messageHandler.send_message(PredictionResponse.jsonSerialize())
-                    continue
-
+            else:
                 match messageReceived.MessageType:
                     case ConvAssistMessageTypes.SETPARAM:
                         config_changed = self.handle_parameter_change(messageReceived)
 
                         if config_changed:
-                            try:
-                                self.initialize_or_configure_convassists()
-                            except AttributeError as e:
-                                self.logger.error(f"ConvAssist not ready: {e}.")
-                                self.ready = False
-                                PredictionResponse.MessageType = ConvAssistMessageTypes.NOTREADY
+                                self.ready = self.initialize_or_configure_convassists()
+
+                                if self.ready:
+                                    PredictionResponse.MessageType = ConvAssistMessageTypes.READYFORPREDICTIONS
+                                else:
+                                    PredictionResponse.MessageType = ConvAssistMessageTypes.NOTREADY
+                                
                                 pass
 
                     case ConvAssistMessageTypes.NEXTWORDPREDICTION:
@@ -276,24 +260,28 @@ class ACATConvAssistInterface(threading.Thread):
 
                     case ConvAssistMessageTypes.FORCEQUITAPP:
                         self.logger.info("Force Quit App message received.")
-                        self.messageHandler.disconnect()
                         send_response = False
                         self.app_quit_event.set()
 
                     case _:
                         send_response = False
 
-                if send_response:
-                    self.logger.info(f"Sending message: {PredictionResponse}.")
-                    self.messageHandler.send_message(PredictionResponse.jsonSerialize())
+        # TODO - Handle more gracefully
+        except Exception as e:
+            self.logger.critical(f"Critical Error in Handle incoming message. Bailing {e}.", stack_info=True, exc_info=True)
+            self.messageHandler.stopMessageHandler()
+            send_response = False
+            # self.app_quit_event.set()
 
-            # TODO - Handle more gracefully
-            except Exception as e:
-                self.logger.critical(f"Critical Error in Handle incoming message. Bailing {e}.", stack_info=True, exc_info=True)
-                self.messageHandler.disconnect()
-                self.app_quit_event.set()
+        finally:
+            if send_response:
+                self.logger.info("Handle incoming message finished.")
+                self.logger.info(f"Sending message: {PredictionResponse}.")
+                return PredictionResponse.jsonSerialize()
+            
+            else:
+                return ""
 
-            self.logger.info("Handle incoming message finished.")
 
     def next_word_prediction(self, PredictionResponse, messageReceived):
         words_count = 10
@@ -422,7 +410,7 @@ class ACATConvAssistInterface(threading.Thread):
         self.logger.info("Parameters message answered.")
         return changed
 
-    def initialize_or_configure_convassists(self):
+    def initialize_or_configure_convassists(self) -> bool:
         convassists = [
             self.conv_normal,
             self.conv_shorthand,
@@ -439,8 +427,7 @@ class ACATConvAssistInterface(threading.Thread):
                         self.logger.info(f"convassist {convassist.name} initialized.")
 
                 except Exception as e:
-                    self.ready = False
-                    raise e
+                    return False
 
             convassist.recreate_database()
             convassist.update_params(str(self.testgensentencepred), str(self.retrieveaac))
@@ -450,7 +437,7 @@ class ACATConvAssistInterface(threading.Thread):
 
         #TODO - Check if all convassists are initialized
         # I"m assuming that if I've made it here, they are all initialized
-        self.ready = True
+        return True
 
     def startMainEventLoop(self):
         self.logger.info("Starting main event loop.")
@@ -459,39 +446,12 @@ class ACATConvAssistInterface(threading.Thread):
 
         config = {
             "type": "WebSocket", 
-            "port": "8765",
+            "port": 8765,
             "message_processor": self.process_incoming_message
         }
 
         self.messageHandler = MessageHandler.getMessageHandler(config)
         self.messageHandler.startMessageHandler()
-
-    # def ConnectToACAT(self, connection_type=None) -> bool:
-    #     retries = 0
-    #     self.logger.info("Trying to connect to ACAT server.")
-    #     try:
-    #         while not self.clientConnected and not self.app_quit_event.is_set() and retries < self.retries:
-    #             self.clientConnected, msg = self.messageHandler.connect()
-
-    #             # Log the connection status the first 10 times
-    #             # then only every 10 times after that.
-    #             if retries < 10 or retries % 10 == 0:
-    #                 self.logger.info(f"Connection Status: {msg}")
-
-    #             if not self.clientConnected:
-    #                 retries += 1
-    #                 time.sleep(5)
-
-    #     except Exception as e:
-    #         self.logger.error(f"Error connecting to named pipe: {e}")
-
-    #     finally:
-    #         return self.clientConnected
-
-    # def DisconnectFromACAT(self):
-    #     if self.clientConnected:
-    #         self.messageHandler.disconnect()
-    #         self.clientConnected = False
 
     def run(self):
         """
@@ -500,14 +460,17 @@ class ACATConvAssistInterface(threading.Thread):
         self.logger.info("Starting ACATConvAssistInterface.")
 
         starttime = time.time()
-        try:
-            self.initialize_or_configure_convassists()
-        except Exception:
+        self.read = self.initialize_or_configure_convassists()
+        if not self.ready:
             self.logger.warning(f"ConvAssist not ready.  Will wait for configuration.")
             
         self.logger.debug(f"ACATConvAssistInterface initialized in {time.time() - starttime} seconds.")
 
         self.startMainEventLoop()
+
+        if self.app_quit_event.wait():
+            self.logger.info("App quit event received.")
+            self.messageHandler.stopMessageHandler()
 
         self.logger.info("Shutting down.")
         self.logger.info("ACATConvAssistInterface finished.")
