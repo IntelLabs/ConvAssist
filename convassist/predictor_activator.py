@@ -71,10 +71,11 @@ class PredictorActivator:
             []
         )  # Store the combined next letter probabilities from the word predictor(s)
         word_result = []  # Store the combined results from the word predictor(s)
-
+        keyword_result = []
+        keyword_response_result = []
         if not self.registry:
             self.logger.warning("No predictors registered.")
-            return (word_nextLetterProbs, word_result, sentence_nextLetterProbs, sentence_result)
+            return (word_nextLetterProbs, word_result, keyword_result, sentence_nextLetterProbs, sentence_result, keyword_response_result)
 
         if self.context_tracker:
             context = self.context_tracker.get_last_token()
@@ -150,4 +151,6 @@ class PredictorActivator:
 
     def learn_text(self, text):  # pragma: no cover
         for predictor in self.registry:
-            predictor.learn(text)
+            predictor.learn(text) 
+    
+

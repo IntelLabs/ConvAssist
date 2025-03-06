@@ -43,6 +43,13 @@ ca_sentence_id = "SENTENCEPREDICTOR"
 ca_cannedphrases_ini = "cannedPhrasesMode.ini"
 ca_cannedphrases_id = "CANNEDPREDICTOR"
 
+ca_keyword_ini = "keywordMode.ini"
+ca_keyword_id = "KEYWORDPREDICTOR"
+
+ca_keywordresponse_ini = "keywordResponse.ini"
+ca_keywordresponse_id = "KEYWORDRESPONSEPREDICTOR"
+
+
 log_level = logging.DEBUG
 
 
@@ -117,6 +124,22 @@ class ACATConvAssistInterface(threading.Thread):
         self.convAssists.update(
             {ConvAssistPredictionTypes.CANNEDPHRASESMODE: self.conv_canned_phrases}
         )
+
+        self.conv_keyword: ConvAssist = ConvAssist(
+            ca_keyword_id, ca_keyword_ini, log_file=True, log_level=self.loglevel
+        )
+        self.convAssists.update(
+            {ConvAssistPredictionTypes.NORMAL: self.conv_keyword}
+        )
+
+        self.conv_keywordResponse: ConvAssist = ConvAssist(
+            ca_keywordresponse_id, ca_keywordresponse_ini, log_file=True, log_level=self.loglevel
+        )
+        self.convAssists.update(
+            {ConvAssistPredictionTypes.SENTENCES: self.conv_keywordResponse}
+        )
+
+
 
     @property
     def pathlog(self):
@@ -297,6 +320,12 @@ class ACATConvAssistInterface(threading.Thread):
                         send_response = False
                         self.app_quit_event.set()
 
+                    case ConvAssistMessageTypes.KEYWORDPREDICTIONREQUEST:
+                        self.keyword_prediction(PredictionResponse, messageReceived)
+
+                    case ConvAssistMessageTypes.KEYWORDRESPONSEREQUEST: 
+                        self.keyword_response_prediction(PredictionResponse, messageReceived)
+
                     case _:
                         send_response = False
 
@@ -319,7 +348,7 @@ class ACATConvAssistInterface(threading.Thread):
         next_sentence_letter_count = 6
 
         PredictionResponse.MessageType = ConvAssistMessageTypes.NEXTWORDPREDICTIONRESPONSE
-
+        context = messageReceived.Data
         self.make_prediction(
             messageReceived,
             PredictionResponse,
@@ -327,6 +356,7 @@ class ACATConvAssistInterface(threading.Thread):
             next_word_letter_count,
             sentences_count,
             next_sentence_letter_count,
+            context,
         )
 
     def next_sentence_prediction(self, PredictionResponse, messageReceived):
@@ -339,6 +369,27 @@ class ACATConvAssistInterface(threading.Thread):
 
         # TODO: Due to a bug in ACAT, the prediction type is not being set correctly.  This is a workaround.
         messageReceived.PredictionType = ConvAssistPredictionTypes.SENTENCES
+        context = messageReceived.Data
+        self.make_prediction(
+            messageReceived,
+            PredictionResponse,
+            words_count,
+            next_word_letter_count,
+            sentences_count,
+            next_sentence_letter_count,
+            context,
+        )
+
+    def keyword_prediction(self, PredictionResponse, messageReceived):
+        words_count = 0
+        next_word_letter_count = 0
+        sentences_count = 6
+        next_sentence_letter_count = 6
+
+        PredictionResponse.MessageType = ConvAssistMessageTypes.KEYWORDPREDICTIONREQUEST
+        context = messageReceived.Data
+        # TODO: Due to a bug in ACAT, the prediction type is not being set correctly.  This is a workaround.
+        messageReceived.PredictionType = ConvAssistPredictionTypes.NORMAL
 
         self.make_prediction(
             messageReceived,
@@ -347,7 +398,33 @@ class ACATConvAssistInterface(threading.Thread):
             next_word_letter_count,
             sentences_count,
             next_sentence_letter_count,
+            context,
         )
+
+    def keyword_response_prediction(self, PredictionResponse, messageReceived):
+        words_count = 0
+        next_word_letter_count = 0
+        sentences_count = 6
+        next_sentence_letter_count = 6
+        CRG_Active = messageReceived.CRG
+        history = messageReceived.Data
+        keyword = messageReceived.Keyword
+        history+=  "<keyword>" +keyword
+        PredictionResponse.MessageType = ConvAssistMessageTypes.KEYWORDRESPONSEREQUEST 
+        context=history
+        # TODO: Due to a bug in ACAT, the prediction type is not being set correctly.  This is a workaround.
+        messageReceived.PredictionType = ConvAssistPredictionTypes.SENTENCES
+
+        self.make_prediction(
+            messageReceived,
+            PredictionResponse,
+            words_count,
+            next_word_letter_count,
+            sentences_count,
+            next_sentence_letter_count,
+            context,
+        )
+
 
     def make_prediction(
         self,
@@ -357,11 +434,14 @@ class ACATConvAssistInterface(threading.Thread):
         next_word_letter_count,
         sentences_count,
         next_sentence_letter_count,
+        context,
     ):
         word_prediction = []
         next_Letter_Probs = []
+        keyword_prediction = []
         sentence_nextLetterProbs = []
         sentence_predictions = []
+        keyword_response_prediction = []
 
         prediction_type = messageReceived.PredictionType
         convAssistInstance: ConvAssist = self.convAssists.get(messageReceived.PredictionType, None)
@@ -371,8 +451,8 @@ class ACATConvAssistInterface(threading.Thread):
             and convAssistInstance.initialized
             and convAssistInstance.context_tracker
         ):
-            convAssistInstance.context_tracker.context = messageReceived.Data
-
+            convAssistInstance.context_tracker.context = context
+            CRG_Active = messageReceived.CRG
             # Don't send any sentence predictions from NORMAL mode
             if messageReceived.PredictionType == ConvAssistPredictionTypes.NORMAL:
                 sentences_count = 0
@@ -381,9 +461,11 @@ class ACATConvAssistInterface(threading.Thread):
             (
                 next_Letter_Probs,
                 word_prediction,
+                keyword_prediction,
                 sentence_nextLetterProbs,
                 sentence_predictions,
-            ) = convAssistInstance.predict()
+                keyword_response_prediction,
+            ) = convAssistInstance.predict(CRG_Active)
 
         else:
             self.logger.warning(
@@ -403,14 +485,19 @@ class ACATConvAssistInterface(threading.Thread):
 
         result_Letters = str(next_Letter_Probs)
         result_Words = str(word_prediction)
+        result_Keywords = str(keyword_prediction)
         result_Letters_Sentence = str(sentence_nextLetterProbs)
         result_Sentences = str(sentence_predictions)
+        result_KeywordResponses = str(keyword_response_prediction)
 
         PredictionResponse.PredictionType = prediction_type
         PredictionResponse.PredictedWords = result_Words
         PredictionResponse.NextCharacters = result_Letters
+        PredictionResponse.Keywords = result_Keywords
         PredictionResponse.NextCharactersSentence = result_Letters_Sentence
         PredictionResponse.PredictedSentence = result_Sentences
+        PredictionResponse.PredictedKeywordResponse = result_KeywordResponses
+
 
     def handle_learn(self, conv_assist: ConvAssist, messageReceived: ConvAssistMessage, mode: str):
         self.logger.debug(f"Calling Learn for {conv_assist.name} with mode {mode}.")
@@ -445,6 +532,8 @@ class ACATConvAssistInterface(threading.Thread):
             self.conv_shorthand,
             self.conv_sentence,
             self.conv_canned_phrases,
+            self.conv_keyword,
+            self.conv_keywordResponse,
         ]
 
         for convassist in convassists:

@@ -21,6 +21,8 @@ class ConvAssistMessageTypes(IntEnum):
     LEARNSENTENCES = 9
     FORCEQUITAPP = 10
     READYFORPREDICTIONS = 11
+    KEYWORDPREDICTIONREQUEST = 12
+    KEYWORDRESPONSEREQUEST = 13
 
 
 class ConvAssistPredictionTypes(IntEnum):
@@ -43,18 +45,38 @@ class ParameterType(IntEnum):
     ENABLELOGS = 8
 
 
-@dataclass
+
+### "Other: "how are you" \n User:"i am fine" \n
+### Need to add keyword ------- DONE
+### ConvAssist - Separate sentnece modes. (also modify return format) - TODOOO: Need to return 2 sets of sentences. 
+### Number of utterances/window of dialog to be sent from ACAT
+### if CRG is off : 
+### Parameters to be added for #responses, #sentence completions , # words, #keywords
+### Change WordAndCharacterPredictionResponse to PredictionResponse
+### if user has typed partial string, and new ASR comes in ... 
+
+### if last is other:
+##### Check for the previous user turn. If it is partial, then do not update word prediction... 
+##### ignore 
+
+###  ===> CRG responses (keywords n responses - NO WORD prediction)
+
 class ConvAssistMessage:
     MessageType: int
     PredictionType: int
     Data: str
+    CRG: bool
+    Keyword: str
 
     @staticmethod
-    def jsonDeserialize(obj: Any) -> "ConvAssistMessage":
+    def jsonDeserialize(obj: Any) -> 'ConvAssistMessage':
         _MessageType = int(obj.get("MessageType"))
         _PredictionType = int(obj.get("PredictionType"))
-        _Data = str(obj.get("Data"))
-        return ConvAssistMessage(_MessageType, _PredictionType, _Data)
+        _Data = str(obj.get("Data")) 
+        _CRG  = bool(obj.get("CRG"))
+        _Keyword  = str(obj.get("Keyword"))
+        return ConvAssistMessage(_MessageType, _PredictionType, _Data, _CRG, _Keyword)
+
 
     def jsonSerialize(self) -> str:
         return json.dumps(dataclasses.asdict(self))
@@ -64,7 +86,9 @@ class ConvAssistMessage:
         return (
             f"MessageType: {ConvAssistMessageTypes(self.MessageType).name}, "
             f"PredictionType: {ConvAssistPredictionTypes(self.PredictionType).name}, "
-            f"Data: {self.Data}"
+            f"Data: {self.Data},"
+            f"CRG: {self.CRG},"
+            f"Keyword: {self.Keyword}"
         )
 
 
@@ -108,8 +132,10 @@ class WordAndCharacterPredictionResponse:
     PredictionType: int = ConvAssistPredictionTypes.NONE
     PredictedWords: str = ""
     NextCharacters: str = ""
+    PredictedKeywords: str = ""
     NextCharactersSentence: str = ""
     PredictedSentence: str = ""
+    PredictedKeywordResponse: str = ""
 
     @staticmethod
     def jsonDeserialize(json_str: str) -> "WordAndCharacterPredictionResponse":
@@ -125,6 +151,8 @@ class WordAndCharacterPredictionResponse:
             f"PredictionType: {ConvAssistPredictionTypes(self.PredictionType).name}, "
             f"PredictedWords: {self.PredictedWords}, "
             f"NextCharacters: {self.NextCharacters}, "
+            f"PredictedKeywords: {self.PredictedKeywords},"
             f"NextCharactersSentence: {self.NextCharactersSentence}, "
-            f"PredictedSentence: {self.PredictedSentence}"
+            f"PredictedSentence: {self.PredictedSentence},"
+            f"PredictedKeywordResponse: {self.PredictedKeywordResponse}"
         )
