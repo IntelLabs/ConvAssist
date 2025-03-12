@@ -1,5 +1,5 @@
-from .predictor import Predictor
-from .utilities.prediction import Prediction
+from ..predictor import Predictor
+from ..utilities.prediction import Prediction
 import transformers
 import torch
 from transformers import AutoTokenizer
@@ -19,7 +19,7 @@ class OneLLMPredictor(Predictor):
         self._load_model()
 
     def _load_model(self):
-        if not OneLLMPredictor.llmLoaded:
+        if not self.llmLoaded:
             self.load_oneLLM()
 
     def load_oneLLM(self):

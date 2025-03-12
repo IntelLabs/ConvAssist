@@ -27,8 +27,8 @@ predictors = {
     "SpellCorrectPredictor": SpellCorrectPredictor,
     "SentenceCompletionPredictor": SentenceCompletionPredictor,
     "CannedPhrasesPredictor": CannedPhrasesPredictor,
-    "KeywordPredictor": KeywordGeneratorPredictor,
-    "KeywordResponsePredictor": KeywordResponseGeneratorPredictor,
+    "KeywordGeneratorPredictor": KeywordGeneratorPredictor,
+    "KeywordResponseGeneratorPredictor": KeywordResponseGeneratorPredictor,
 }
 
 
@@ -61,6 +61,7 @@ class PredictorRegistry(list):
             predictors = config.get("PredictorRegistry", "predictors", fallback="").split()
 
         for predictor in predictors:
+            print("predictor", predictor)
             self._add_predictor(predictor, config, context_tracker, logger)
 
     def _add_predictor(
@@ -73,7 +74,7 @@ class PredictorRegistry(list):
         predictor: Any = None
 
         predictor_class = self.get_predictor_class(predictor_name, config)
-
+        print("predictor_class", predictor_class)
         if predictor_class in predictors:
             try:
                 if predictor_class in predictors:

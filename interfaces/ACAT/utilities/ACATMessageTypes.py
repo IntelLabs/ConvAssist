@@ -72,7 +72,7 @@ class ConvAssistMessage:
     def jsonDeserialize(obj: Any) -> 'ConvAssistMessage':
         _MessageType = int(obj.get("MessageType"))
         _PredictionType = int(obj.get("PredictionType"))
-        _Data = str(obj.get("Data")) 
+        _Data = str(obj.get("Data")) #### TODO: Could be json that includes CRG flag and Keyword
         _CRG  = bool(obj.get("CRG"))
         _Keyword  = str(obj.get("Keyword"))
         return ConvAssistMessage(_MessageType, _PredictionType, _Data, _CRG, _Keyword)

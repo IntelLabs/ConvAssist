@@ -1,28 +1,31 @@
 from .onellm_predictor import OneLLMPredictor
-from .utilities.prediction import Prediction
-from .utilities.suggestion import Suggestion
-import nltk
+from ..utilities.prediction import Prediction
+from ..utilities.suggestion import Suggestion
 
-class KeywordGeneratorPredictor(OneLLMPredictor):
+class KeywordResponseGeneratorPredictor(OneLLMPredictor):
     def __init__(self, config, context_tracker, predictor_name, logger=None):
+        print("Inside keywordResponseGeneratorPredictor init")
         super().__init__(config, context_tracker, predictor_name, logger)
-
+        
 
     def predict(self, max_partial_prediction_size=None, filter=None) -> Prediction:
         self.logger.info(f"Generating sentence with {self.predictor_name} predictor")
         context = self.context_tracker.context.lstrip()
-        prompt = """You are provided with a dialog between a user and a visitor. The user now needs to respond and could respond in many ways. Generate different possible keywords that the user could use to respond to the visitor's utterance.\n
-        Dialog: \n
-        {context}\n\n
-        Keywords:
-        """
+        dialog = context.split("<keyword>")[0]
+        keyword = context.split("<keyword>")[1]
+        ### TODO: Add prompts to config 
+        prompt = """You are provided with a dialog between a user and a visitor after the 'Dialog:' tag. The user has chosen a keyword to respond that is provided after the 'Keyword:' tag. 
+        Use the keyword to respond to the dialog. Generate multiple diverse responses. \n\n
+        Dialog: {dialog}\n\n
+        Keyword: {keyword}\n\n
+        Response: \n"""
         sentences = self._generate_sentence(prompt, context)
         onellm_sentence_prediction = Prediction()
         for sentence in sentences:
             sentence = sentence.strip()
             onellm_sentence_prediction.add_suggestion(Suggestion(sentence, 1.0/len(sentences), self.name))
             print("Sentence output from SentencePEdictor_onellm = ", sentence)
-        return  onellm_sentence_prediction
+        return onellm_sentence_prediction
 
     def _generate_sentence(self,prompt, context: str) -> list[str]:
         inputs = self.tokenizer.encode(context, return_tensors="pt").to(self.device)

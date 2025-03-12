@@ -1,10 +1,12 @@
 from .onellm_predictor import OneLLMPredictor
-from .utilities.prediction import Prediction
-from .utilities.suggestion import Suggestion
+from ..utilities.prediction import Prediction
+from ..utilities.suggestion import Suggestion
 
 class SentencePredictorOneLLM(OneLLMPredictor):
     def __init__(self, config, context_tracker, predictor_name, logger=None):
+        print("Inside SentencePredictorOneLLM init")
         super().__init__(config, context_tracker, predictor_name, logger)
+        
 
     def predict(self, max_partial_prediction_size=None, filter=None) -> Prediction:
         self.logger.info(f"Generating sentence with {self.predictor_name} predictor")
