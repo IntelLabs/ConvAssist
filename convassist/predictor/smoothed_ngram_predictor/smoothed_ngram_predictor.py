@@ -2,11 +2,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import string
-from abc import ABC
 from typing import List
 
 from convassist.predictor.predictor import Predictor
-from convassist.predictor.utilities.prediction import Prediction, Suggestion
+from convassist.predictor.utilities import Predictions, Suggestion, PredictorResponses
 from convassist.utilities.ngram.ngramutil import NGramUtil
 
 
@@ -27,10 +26,10 @@ class SmoothedNgramPredictor(Predictor):
     def extract_svo(self, sent):
         return sent
 
-    def predict(self, max_partial_prediction_size: int, filter):
-
-        sentence_prediction = Prediction()
-        word_prediction = Prediction()
+    def predict(self, max_partial_prediction_size: int, filter) -> PredictorResponses:
+        responses = PredictorResponses()
+        sentence_prediction = responses.sentence_predictions
+        word_prediction = responses.word_predictions
 
         self.logger.debug("Starting Ngram prediction")
 
@@ -107,7 +106,7 @@ class SmoothedNgramPredictor(Predictor):
             f"End prediction. got {len(word_prediction)} word suggestions and {len(sentence_prediction)} sentence suggestions"
         )
 
-        return sentence_prediction, word_prediction
+        return responses
 
     def learn(self, phrase):
         # build up ngram map for all cardinalities

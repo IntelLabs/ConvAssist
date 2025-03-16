@@ -17,8 +17,9 @@ from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
 
 from convassist.predictor.predictor import Predictor
+from convassist.predictor.utilities import Predictions, Suggestion, PredictorResponses
+
 from convassist.predictor.utilities.nlp import NLP
-from convassist.predictor.utilities.prediction import Prediction, Suggestion
 from convassist.utilities.databaseutils.sqllite_dbconnector import (
     SQLiteDatabaseConnector,
 )
@@ -72,6 +73,7 @@ class SentenceCompletionPredictor(Predictor):
 
         os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+        #TODO: Refactor to common code
         if torch.cuda.is_available():
             self.device = "cuda"
             self.n_gpu = torch.cuda.device_count()
@@ -303,8 +305,7 @@ class SentenceCompletionPredictor(Predictor):
         )
         return hits[0]["score"]
 
-    def _retrieve_fromDataset(self, context):
-        pred = Prediction()
+    def _retrieve_fromDataset(self, context, pred:Predictions) -> Predictions:
         probs = {}
 
         lines = open(self.retrieve_database).readlines()
@@ -380,7 +381,7 @@ class SentenceCompletionPredictor(Predictor):
             return True
         return False
 
-    def _generate(self, context: str, num_gen: int, predictions:Prediction) -> Prediction:
+    def _generate(self, context: str, num_gen: int, predictions:Predictions) -> Predictions:
         """
         _generate: generates completions for the given context
         Args:
@@ -542,9 +543,9 @@ class SentenceCompletionPredictor(Predictor):
     def model_loaded(self):
         return self._model_loaded
 
-    def predict(self, max_partial_prediction_size: int, filter: Optional[str] = None):
-        sentence_predictions = Prediction()
-        word_predictions = Prediction()  # not used in this predictor
+    def predict(self, max_partial_prediction_size: int, filter: Optional[str] = None) -> PredictorResponses:
+        responses:PredictorResponses = PredictorResponses()
+        sentence_predictions:Predictions = responses.sentence_predictions
 
         context = self.context_tracker.context.lstrip()
         self.logger.debug(f"context inside predictor predict = {context}")
@@ -553,7 +554,7 @@ class SentenceCompletionPredictor(Predictor):
             # TODO: Fix this
             self.logger.debug(f"context is empty, loading top sentences from {self._startsents}")
 
-            sentence_predictions = self.load_n_start_sentences(max_partial_prediction_size)
+            sentence_predictions = self.load_n_start_sentences(sentence_predictions, max_partial_prediction_size)
 
             if not sentence_predictions:
                 self.logger.warning("No start sentences found.  File may be missing or corrupted.")
@@ -567,7 +568,7 @@ class SentenceCompletionPredictor(Predictor):
                 )
 
             else:
-                sentence_predictions = self._retrieve_fromDataset(context)
+                sentence_predictions = self._retrieve_fromDataset(context, sentence_predictions)
                 self.logger.debug(
                     f"retrieved {len(sentence_predictions)} sentences in {str(sentence_predictions)}"
                 )
@@ -589,10 +590,9 @@ class SentenceCompletionPredictor(Predictor):
                         sentence_predictions
                     )
 
-        return sentence_predictions, word_predictions
+        return responses
 
-    def load_n_start_sentences(self, max_partial_prediction_size=-1):
-        predictions = Prediction()
+    def load_n_start_sentences(self, predictions:Predictions, max_partial_prediction_size=-1):
 
         with open(self.startsents) as f:
             data = f.readlines()

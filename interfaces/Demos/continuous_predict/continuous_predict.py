@@ -52,6 +52,19 @@ conv_assist_modes = {
             "ShortHandPredictor",
         ],
     },
+    "crgkeyword": {
+        "description": "Generate keywords using CRG with conversation context.",
+        "predictors": [
+            "CRGKeywordGenerator",
+        ],
+    },
+    "crgwordandsentence": {
+        "description": "Generate keywords using CRG with conversation context.",
+        "predictors": [
+            "CRGSentenceResponseGenerator",
+            "CRGWordResponseGenerator",
+        ],
+    }
 }
 
 
@@ -112,6 +125,7 @@ class ContinuousPredict:
             "word": self.handle_word,
             "sentence": self.handle_sentence,
             "loglevel": self.set_log_level,
+            "crg": self.handle_crg,
             "context": self.show_context,
             "speak": self.speak_context,
             "learn": self.learn_phrase,
@@ -151,6 +165,7 @@ class ContinuousPredict:
             ":loglevel <level> - Set the log level. \n"
             "\t'level' can be one of the following: \n"
             "\tDEBUG, INFO, WARNING, ERROR, CRITICAL \n"
+            ":crg <dialog> - Predict keywords using CRG with <dialog> context. \n"
             ":mode <mode> - Set the mode. (leave blank to list available modes).\n"
             ":quit - Quit. \n"
             ":help - Display this help message."
@@ -171,6 +186,19 @@ class ContinuousPredict:
 
         else:
             self.update_context(int(command[1]), self.sentence_predictions)
+
+    def handle_crg(self, _):
+        # assert self.convAssistMode.mode == conv_assist_modes["crg"]
+
+        print ("GOING INTO CRG MODE")
+        print ("Predicting with hardcoded conversation context:")
+        print ("visitor: have you taken your meds?")
+        print ("user:")
+
+        self.ct.context = "visitor: have you taken your meds?\nuser:"
+        self.word_predictions, self.sentence_predictions = self.predict()
+        print(f"New context: {self.ct}")
+
 
     def update_context(self, index: int, predictions: list):
 

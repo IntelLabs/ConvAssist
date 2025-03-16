@@ -15,8 +15,7 @@ from sentence_transformers import SentenceTransformer
 
 from convassist.predictor.predictor import Predictor
 from convassist.predictor.utilities.canned_data import cannedData
-from convassist.predictor.utilities.prediction import Prediction
-from convassist.predictor.utilities.suggestion import Suggestion
+from convassist.predictor.utilities import Predictions, Suggestion, PredictorResponses
 
 
 class CannedPhrasesPredictor(Predictor):
@@ -121,7 +120,7 @@ class CannedPhrasesPredictor(Predictor):
         return self._model_loaded
 
     # Uses the semantic search index to find the top_k_hits
-    def _find_semantic_matches(self, context, sent_prediction: Prediction) -> Prediction:
+    def _find_semantic_matches(self, context, sent_prediction: Predictions) -> Predictions:
         self.logger.debug("Finding semantic matches")
         try:
             direct_matchedSentences = [s.word for s in sent_prediction]
@@ -150,7 +149,7 @@ class CannedPhrasesPredictor(Predictor):
         self.logger.debug(f"Found {len(sent_prediction)} semantic matches")
         return sent_prediction
 
-    def _find_direct_matches(self, context, sent_prediction: Prediction) -> Prediction:
+    def _find_direct_matches(self, context, sent_prediction: Predictions) -> Predictions:
         self.logger.debug("Finding direct matches")
         try:
             canned_phrases = self.cannedData.all_phrases_as_dict()
@@ -190,7 +189,7 @@ class CannedPhrasesPredictor(Predictor):
         self.logger.debug(f"Found {len(sent_prediction)} direct matches")
         return sent_prediction
 
-    def _getTopInitialPhrases(self, sent_prediction: Prediction, count=5) -> Prediction:
+    def _getTopInitialPhrases(self, sent_prediction: Predictions, count=5) -> Predictions:
         canned_data = self.cannedData.all_phrases_as_dict()
 
         total_sent = sum(canned_data.values())
@@ -206,10 +205,9 @@ class CannedPhrasesPredictor(Predictor):
         return sent_prediction
 
     # base class method
-    def predict(self, max_partial_prediction_size, filter=None):
-
-        sent_prediction = Prediction()
-        word_prediction = Prediction()  # Not used in this predictor
+    def predict(self, max_partial_prediction_size, filter=None) -> PredictorResponses:
+        responses = PredictorResponses()
+        sent_prediction = responses.sentence_predictions
 
         try:
             context = self.context_tracker.context
@@ -219,7 +217,7 @@ class CannedPhrasesPredictor(Predictor):
                 sent_prediction = self._getTopInitialPhrases(
                     sent_prediction, max_partial_prediction_size
                 )
-                return sent_prediction, word_prediction
+                return responses
 
             # get matching sentences
             # First get direct matches based on both databases:
@@ -236,7 +234,7 @@ class CannedPhrasesPredictor(Predictor):
             self.logger.error("No canned phrases found")
 
         self.logger.info(f"Got {len(sent_prediction)} sentence suggestions.")
-        return sent_prediction[:max_partial_prediction_size], word_prediction
+        return responses
 
     def learn(self, phrase: str):
         # For the cannedPhrase predictor, learning adds the sentence to the PSMCannedPhrases

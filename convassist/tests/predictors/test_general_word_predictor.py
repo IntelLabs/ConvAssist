@@ -12,6 +12,7 @@ from convassist.context_tracker import ContextTracker
 from convassist.predictor.smoothed_ngram_predictor.general_word_predictor import (
     GeneralWordPredictor,
 )
+from convassist.predictor.utilities import PredictorResponses
 from convassist.utilities.ngram.ngramutil import NGramUtil
 
 from convassist.tests import setup_utils
@@ -71,14 +72,14 @@ class TestGeneralWordPredictor(TestPredictors):
     def test_predict(self, name, context, max, expected_word):
         max_partial_prediction_size = max
         self.predictor.context_tracker.context = context
-        sentence_predictions, word_predictions = self.predictor.predict(
+        responses:PredictorResponses = self.predictor.predict(
             max_partial_prediction_size, None
         )
-        self.assertIsNotNone(sentence_predictions)
-        self.assertEqual(len(sentence_predictions), 0)
-        self.assertIsNotNone(word_predictions)
-        # self.assertEqual(len(word_predictions), max_partial_prediction_size)
-        self.assertEqual(word_predictions[0].word, expected_word)
+        self.assertIsNotNone(responses.sentence_predictions)
+        self.assertEqual(len(responses.sentence_predictions), 0)
+        self.assertIsNotNone(responses.word_predictions)
+        # self.assertEqual(len(responses.word_predictions), max_partial_prediction_size)
+        self.assertEqual(responses.word_predictions[0].word, expected_word)
 
 
 if __name__ == "__main__":

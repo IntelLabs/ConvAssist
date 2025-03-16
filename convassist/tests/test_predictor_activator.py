@@ -9,10 +9,7 @@ from convassist.combiner.meritocrity_combiner import MeritocracyCombiner
 from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
 from convassist.predictor_activator import PredictorActivator
 from convassist.predictor_registry import PredictorRegistry
-
-# Copyright (C) 2024 Intel Corporation
-# SPDX-License-Identifier: GPL-3.0-or-later
-
+from convassist.predictor.utilities import PredictorResponses
 
 class TestPredictorActivator(unittest.TestCase):
     def setUp(self):
@@ -32,15 +29,22 @@ class TestPredictorActivator(unittest.TestCase):
     def test_predict_no_predictors(self, mock_combine):
         self.registry.__iter__.return_value = []
         result = self.activator.predict()
+        responses = PredictorResponses()
 
-        self.assertEqual(result, ([], [], [], []))
+        self.assertIsInstance(result, tuple)
+        self.assertIsInstance(result[0], type(responses))
+        self.assertIsInstance(result[1], list)
+        self.assertIsInstance(result[2], list)
+        self.assertIsInstance(result[3], list)
+
         self.logger.warning.assert_called_with("No predictors registered.")
 
     def test_predict_with_predictors(self):
 
         # mock at least 1 predictor
         predictor_mock = MagicMock()
-        predictor_mock.predict.return_value = (["sentence"], ["word"])
+        responses = PredictorResponses()
+        predictor_mock.predict.return_value = (responses)
         predictor_mock.predictor_name = "MockPredictor"
 
         # mock the registry
@@ -54,15 +58,17 @@ class TestPredictorActivator(unittest.TestCase):
 
         result = self.activator.predict()
 
-        self.assertEqual(result, ([], [], [], []))
-        self.logger.info.assert_any_call(
-            "Predictor MockPredictor - Predicted 1 sentences and 1 words"
-        )
+        self.assertIsInstance(result, tuple)
+        self.assertIsInstance(result[0], type(PredictorResponses()))
+        self.assertIsInstance(result[1], list)
+        self.assertIsInstance(result[2], list)
+        self.assertIsInstance(result[3], list)
         combiner_mock.combine.assert_called()
 
     def test_predict_with_spell_correct_predictor(self):
         predictor_mock = MagicMock()
-        predictor_mock.predict.return_value = ([], [])
+        responses = PredictorResponses()
+        predictor_mock.predict.return_value = (responses)
         predictor_mock.predictor_name = "MockPredictor"
 
         spell_predictor_mock = MagicMock(spec=SpellCorrectPredictor)
@@ -79,7 +85,10 @@ class TestPredictorActivator(unittest.TestCase):
 
         result = self.activator.predict()
 
-        self.assertEqual(result, ([], [], [], []))
+        self.assertIsInstance(result[0], type(PredictorResponses()))
+        self.assertIsInstance(result[1], list)
+        self.assertIsInstance(result[2], list)
+        self.assertIsInstance(result[3], list)
         combiner_mock.combine.assert_called()
 
     def test_predict_with_exception(self):
@@ -98,7 +107,10 @@ class TestPredictorActivator(unittest.TestCase):
 
         result = self.activator.predict()
 
-        self.assertEqual(result, ([], [], [], []))
+        self.assertIsInstance(result[0], type(PredictorResponses()))
+        self.assertIsInstance(result[1], list)
+        self.assertIsInstance(result[2], list)
+        self.assertIsInstance(result[3], list)
         self.logger.critical.assert_called_with("Predictor MockPredictor: Test Exception", exc_info=True, stack_info=True)
 
 

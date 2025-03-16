@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from convassist.context_tracker import ContextTracker
 from convassist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
+from convassist.predictor.utilities import PredictorResponses
 from convassist.tests import setup_utils
 from convassist.tests.predictors import TestPredictors
 
@@ -84,38 +85,38 @@ class TestCannedPhrasesPredictor(TestPredictors):
         max_partial_prediction_size = 1
         self.predictor.load_model()
         self.predictor.context_tracker.context = ""
-        sentence_predictions, word_predictions = self.predictor.predict(
+        responses:PredictorResponses = self.predictor.predict(
             max_partial_prediction_size
         )
-        self.assertIsNotNone(sentence_predictions)
-        self.assertEqual(len(sentence_predictions), max_partial_prediction_size)
-        self.assertIsNotNone(word_predictions)
-        self.assertEqual(len(word_predictions), 0)
+        self.assertIsNotNone(responses.sentence_predictions)
+        self.assertEqual(len(responses.sentence_predictions), max_partial_prediction_size)
+        self.assertIsNotNone(responses.word_predictions)
+        self.assertEqual(len(responses.word_predictions), 0)
 
     def test_predict_context(self):
-        max_partial_prediction_size = 1
+        max_partial_prediction_size = 15
         self.predictor.load_model()
         self.predictor.context_tracker.context = "Here's to the "
 
-        sentence_predictions, word_predictions = self.predictor.predict(
+        responses:PredictorResponses= self.predictor.predict(
             max_partial_prediction_size
         )
 
-        self.assertIsNotNone(sentence_predictions)
-        self.assertEqual(len(sentence_predictions), max_partial_prediction_size)
-        self.assertIsNotNone(word_predictions)
-        self.assertEqual(len(word_predictions), 0)
+        self.assertIsNotNone(responses.sentence_predictions)
+        self.assertEqual(len(responses.sentence_predictions), max_partial_prediction_size)
+        self.assertIsNotNone(responses.word_predictions)
+        self.assertEqual(len(responses.word_predictions), 0)
 
-        self.assertEqual(sentence_predictions[0].word, "Here's to the crazy ones")
+        self.assertEqual(responses.sentence_predictions[0].word, "Here's to the crazy ones")
 
     def test_learn_new_sentence(self):
         change_tokens = "This is a new sentence to learn."
         self.predictor.learn(change_tokens)
 
         self.predictor.context_tracker.context = "This is a new "
-        sentences, _ = self.predictor.predict(1)
-        self.assertEqual(len(sentences), 1)
-        self.assertEqual(sentences[0].word, "This is a new sentence to learn.")
+        responses:PredictorResponses = self.predictor.predict(11)
+        self.assertEqual(len(responses.sentence_predictions), 11)
+        self.assertEqual(responses.sentence_predictions[0].word, "This is a new sentence to learn.")
 
     def test_learn_existing_sentence(self):
         change_tokens = "This is a new sentence to learn."
@@ -123,9 +124,9 @@ class TestCannedPhrasesPredictor(TestPredictors):
         self.predictor.learn(change_tokens)
 
         self.predictor.context_tracker.context = "This is a new "
-        sentences, _ = self.predictor.predict(1)
-        self.assertEqual(len(sentences), 1)
-        self.assertEqual(sentences[0].word, "This is a new sentence to learn.")
+        responses:PredictorResponses = self.predictor.predict(11)
+        self.assertEqual(len(responses.sentence_predictions), 11)
+        self.assertEqual(responses.sentence_predictions[0].word, "This is a new sentence to learn.")
 
 
 if __name__ == "__main__":

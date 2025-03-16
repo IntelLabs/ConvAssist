@@ -4,7 +4,6 @@
 MIN_PROBABILITY = 0.0
 MAX_PROBABILITY = 1.0
 
-
 class SuggestionException(Exception):
     pass
 

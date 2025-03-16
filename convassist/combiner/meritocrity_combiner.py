@@ -3,7 +3,7 @@
 
 from typing import Dict
 
-from convassist.predictor.utilities.prediction import Prediction
+from convassist.predictor.utilities import Predictions
 from convassist.combiner.combiner import Combiner
 
 class MeritocracyCombiner(Combiner):
@@ -11,7 +11,7 @@ class MeritocracyCombiner(Combiner):
     Computes probabilities for the next letter - for BCI
     """
 
-    def computeLetterProbs(self, result: Prediction, context: str) -> list[tuple[str, float]]:
+    def computeLetterProbs(self, result: Predictions, context: str) -> list[tuple[str, float]]:
 
         # TODO - Check if total words should include empty words
         # Filter out any empty word_predictions from result
@@ -56,11 +56,11 @@ class MeritocracyCombiner(Combiner):
 
         return nextLetterProbsList
 
-    def combine(self, predictions, context):
-        result = Prediction()
-        for prediction in predictions:
-            for suggestion in prediction:
-                result.add_suggestion(suggestion)
+    def combine(self, predictions:Predictions, context):
+        result = Predictions(predictions.name)
+        # for prediction in predictions:
+        for suggestion in predictions:
+            result.add_suggestion(suggestion)
 
         nextLetterProb = self.computeLetterProbs(result, context)
         return (nextLetterProb, self.filter(result))

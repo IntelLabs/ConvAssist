@@ -5,7 +5,7 @@
 from spellchecker import SpellChecker
 
 from convassist.predictor.predictor import Predictor
-from convassist.predictor.utilities.prediction import Prediction, Suggestion
+from convassist.predictor.utilities import Predictions, Suggestion, PredictorResponses
 
 
 class SpellCorrectPredictor(Predictor):
@@ -35,10 +35,10 @@ class SpellCorrectPredictor(Predictor):
     def configure(self):
         pass
 
-    def predict(self, max_partial_prediction_size=None, filter=None):
+    def predict(self, max_partial_prediction_size=None, filter=None) -> PredictorResponses:
         token = self.context_tracker.get_last_token()
-        setence_predictions = Prediction()
-        word_predictions = Prediction()
+        responses = PredictorResponses()
+        word_predictions = responses.word_predictions
 
         if token:
             spell = SpellChecker()
@@ -50,7 +50,7 @@ class SpellCorrectPredictor(Predictor):
                         Suggestion(suggestion, prob, self.predictor_name)
                     )
 
-        return setence_predictions, word_predictions[:max_partial_prediction_size]
+        return responses
 
     def learn_text(self, text):  # pragma: no cover
         self.logger.warning("SpellCorrectPredictor does not support learning.")

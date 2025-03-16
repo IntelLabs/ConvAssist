@@ -3,7 +3,7 @@
 
 import unittest
 
-from convassist.predictor.utilities.suggestion import Suggestion, SuggestionException
+from convassist.predictor.utilities.models.suggestions import Suggestion, SuggestionException
 
 
 class TestSuggestion(unittest.TestCase):

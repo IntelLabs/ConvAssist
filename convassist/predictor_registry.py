@@ -11,8 +11,9 @@ from convassist.predictor.sentence_completion_predictor import (
     SentenceCompletionPredictor,
 )
 from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
-from convassist.predictor.keyword_generator_predictor import KeywordGeneratorPredictor
-from convassist.predictor.response_generator_predictor import KeywordResponseGeneratorPredictor
+# from convassist.predictor.keyword_generator_predictor import KeywordGeneratorPredictor
+# from convassist.predictor.response_generator_predictor import KeywordResponseGeneratorPredictor
+from convassist.predictor.crg_predictor import CRGPredictor
 from convassist.predictor.smoothed_ngram_predictor.canned_word_predictor import CannedWordPredictor
 from convassist.predictor.smoothed_ngram_predictor.general_word_predictor import GeneralWordPredictor
 from convassist.predictor.smoothed_ngram_predictor.smoothed_ngram_predictor import (
@@ -27,8 +28,9 @@ predictors = {
     "SpellCorrectPredictor": SpellCorrectPredictor,
     "SentenceCompletionPredictor": SentenceCompletionPredictor,
     "CannedPhrasesPredictor": CannedPhrasesPredictor,
-    "KeywordGeneratorPredictor": KeywordGeneratorPredictor,
-    "KeywordResponseGeneratorPredictor": KeywordResponseGeneratorPredictor,
+    "CRGPredictor": CRGPredictor,
+    # "KeywordGeneratorPredictor": KeywordGeneratorPredictor,
+    # "KeywordResponseGeneratorPredictor": KeywordResponseGeneratorPredictor,
 }
 
 
