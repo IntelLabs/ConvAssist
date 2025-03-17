@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from parameterized import parameterized
 from convassist.context_tracker import ContextTracker
-from convassist.predictor.crg_predictor import CRGPredictor
+from convassist.predictor.contextaware_predictor import ContextAwarePredictor
 from transformers import pipeline, AutoTokenizer
 
 class TestCRGPredictor(unittest.TestCase):
@@ -45,7 +45,7 @@ class TestCRGPredictor(unittest.TestCase):
 
         self.context_tracker = ContextTracker(self.config)
 
-        self.predictor = CRGPredictor(self.config, self.context_tracker, "test_predictor")
+        self.predictor = ContextAwarePredictor(self.config, self.context_tracker, "test_predictor")
 
     def test_init(self):
         self.assertNotEqual(self.predictor.prompt, "")
@@ -68,7 +68,7 @@ class TestCRGPredictor(unittest.TestCase):
             ("keywords", "test prompt")
         ]
     )
-    @patch.object(CRGPredictor, '_generate')
+    @patch.object(ContextAwarePredictor, '_generate')
     def test_predict(self, predictiontype, prompt, mock_generate):
         self.predictor.llmLoaded = True
         self.predictor.predictiontype = predictiontype
