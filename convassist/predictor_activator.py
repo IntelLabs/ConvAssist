@@ -9,7 +9,6 @@ from convassist.predictor_registry import PredictorRegistry
 from convassist.combiner.meritocrity_combiner import MeritocracyCombiner
 from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
 from convassist.predictor.utilities import PredictorResponses
-# from convassist.predictor.utilities.models.predictions import UnknownCombinerException
 from convassist.utilities.logging_utility import LoggingUtility
 
 
