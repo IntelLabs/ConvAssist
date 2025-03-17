@@ -3,7 +3,7 @@ from .utilities import Predictions, Suggestion, PredictorResponses
 import transformers
 from transformers import AutoTokenizer
 
-class CRGPredictor(Predictor):
+class ContextAwarePredictor(Predictor):
     @property
     def modelname(self):
         return self._modelname
@@ -100,7 +100,7 @@ class CRGPredictor(Predictor):
         return responses
     
     def _generate(self, prompt, context: str, predictions: Predictions) -> Predictions:
-        prompt = self.prompt.replace("{context}", context).replace("{keywords}", "Yes, No, Maybe")
+        prompt = self.prompt.replace("{context}", context)
 
         self.logger.debug(f"Prompt: {prompt}")
         self.logger.debug(f"Context: {context}")
@@ -124,6 +124,8 @@ class CRGPredictor(Predictor):
             return []
                 
         for index, generated_text in enumerate(outputs):
+            #TODO: Figure out how best to put the generated text into the response
+            
             sentence_text = generated_text['generated_text']
             predictions.add_suggestion(Suggestion(sentence_text, 1/len(outputs), self.predictor_name))
 
