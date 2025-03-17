@@ -3,7 +3,7 @@ from .utilities import Predictions, Suggestion, PredictorResponses
 import transformers
 from transformers import AutoTokenizer
 
-class CRGPredictor(Predictor):    
+class CRGPredictor(Predictor):
     @property
     def modelname(self):
         return self._modelname
@@ -11,22 +11,6 @@ class CRGPredictor(Predictor):
     @modelname.setter
     def modelname(self, value):
         self._modelname = value
-
-    @property
-    def device(self):
-        return self._device
-    
-    @device.setter
-    def device(self, value):
-        self._device = value
-
-    @property
-    def n_gpu(self):
-        return self._n_gpu
-    
-    @n_gpu.setter
-    def n_gpu(self, value):
-        self._n_gpu = value
 
     @property
     def generatorPipeline(self):
@@ -96,11 +80,11 @@ class CRGPredictor(Predictor):
         responses:PredictorResponses = PredictorResponses()
 
         match self.predictiontype:
-            case "sentence":
+            case "sentences":
                 predictions = responses.sentence_predictions
-            case "word":
+            case "words":
                 predictions = responses.word_predictions
-            case "keyword":
+            case "keywords":
                 predictions = responses.keyword_predictions
             case _:
                 raise ValueError(f"Invalid prediction type: {self.predictiontype}")
