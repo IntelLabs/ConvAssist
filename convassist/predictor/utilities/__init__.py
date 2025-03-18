@@ -1,3 +1,2 @@
-from .predictor_response import PredictorResponses
-from .models.predictions import Predictions
-from .models.suggestions import Suggestion
+from .predictor_response import PredictorResponse
+from .canned_data import cannedData
