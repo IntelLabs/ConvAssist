@@ -3,6 +3,7 @@
 
 from nltk import RegexpTokenizer
 
+#TODO: Investigate using the SpellChecker to improve the context tracker
 
 class ContextTracker:
     """

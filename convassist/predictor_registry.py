@@ -10,9 +10,8 @@ from convassist.predictor.canned_phrases_predictor import CannedPhrasesPredictor
 from convassist.predictor.sentence_completion_predictor import (
     SentenceCompletionPredictor,
 )
+from convassist.predictor.azureopenai_predictor import AzureOpenAIPredictor
 from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
-# from convassist.predictor.keyword_generator_predictor import KeywordGeneratorPredictor
-# from convassist.predictor.response_generator_predictor import KeywordResponseGeneratorPredictor
 from convassist.predictor.contextaware_predictor import ContextAwarePredictor
 from convassist.predictor.smoothed_ngram_predictor.canned_word_predictor import CannedWordPredictor
 from convassist.predictor.smoothed_ngram_predictor.general_word_predictor import GeneralWordPredictor
@@ -29,6 +28,8 @@ predictors = {
     "SentenceCompletionPredictor": SentenceCompletionPredictor,
     "CannedPhrasesPredictor": CannedPhrasesPredictor,
     "CRGPredictor": ContextAwarePredictor,
+    "ContextAwarePredictor": ContextAwarePredictor,
+    "AzureOpenAIPredictor": AzureOpenAIPredictor,
     # "KeywordGeneratorPredictor": KeywordGeneratorPredictor,
     # "KeywordResponseGeneratorPredictor": KeywordResponseGeneratorPredictor,
 }

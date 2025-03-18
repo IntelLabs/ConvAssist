@@ -9,7 +9,7 @@ from convassist.context_tracker import ContextTracker
 from convassist.ConvAssist import ConvAssist
 from convassist.predictor_activator import PredictorActivator
 from convassist.predictor_registry import PredictorRegistry
-
+from convassist.predictor.utilities import PredictorResponse
 
 class TestConvAssist(unittest.TestCase):
     def setUp(self):
@@ -31,14 +31,11 @@ class TestConvAssist(unittest.TestCase):
         conv_assist = ConvAssist(self.id_str, self.ini_file, config=self.config)
 
         # Mock the predict method of predictor_activator
-        conv_assist.predictor_activator.predict = MagicMock(return_value=(1.0, [], 0.5, []))
+        conv_assist.predictor_activator.predict = MagicMock(return_value=PredictorResponse())
 
-        wordprob, word, sentprob, sent = conv_assist.predict()
+        response = conv_assist.predict()
+        self.assertIsInstance(response, PredictorResponse)
 
-        self.assertEqual(wordprob, 1.0)
-        self.assertEqual(word, [])
-        self.assertEqual(sentprob, 0.5)
-        self.assertEqual(sent, [])
 
     def test_update_params(self):
         conv_assist = ConvAssist(self.id_str, self.ini_file, config=self.config)

@@ -4,7 +4,7 @@
 import unittest
 
 from convassist.combiner.meritocrity_combiner import MeritocracyCombiner
-from convassist.predictor.utilities import Predictions, Suggestion
+from convassist.predictor.utilities.models import Predictions, Suggestion
 
 
 class TestMeritocracyCombiner(unittest.TestCase):

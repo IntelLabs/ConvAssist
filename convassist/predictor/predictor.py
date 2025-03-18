@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from configparser import ConfigParser
 
 from convassist.context_tracker import ContextTracker
-from convassist.predictor.utilities import PredictorResponses
+from convassist.predictor.utilities import PredictorResponse
 from convassist.utilities.logging_utility import LoggingUtility
 
 
@@ -189,7 +189,7 @@ class Predictor(ABC):
     @abstractmethod  # pragma: no cover
     def predict(
         self, max_partial_prediction_size=None, filter=None
-    ) -> PredictorResponses:
+    ) -> PredictorResponse:
         """
         Predicts the next word and sentence based on the context
         args:

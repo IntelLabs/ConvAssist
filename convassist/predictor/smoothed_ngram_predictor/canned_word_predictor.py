@@ -7,7 +7,8 @@ import os
 from tqdm import tqdm
 
 from convassist.predictor.utilities.nlp import NLP
-from convassist.predictor.utilities import Predictions, Suggestion, PredictorResponses
+from convassist.predictor.utilities import PredictorResponse
+from convassist.predictor.utilities.models import Suggestion
 from convassist.utilities.ngram.ngram_map import NgramMap
 from convassist.utilities.ngram.ngramutil import NGramUtil
 
@@ -127,12 +128,12 @@ class CannedWordPredictor(SmoothedNgramPredictor):
         return os.path.join(self._personalized_resources_path, self._startwords)
 
     # TODO: Refactor this class and general_word since this is the same code.
-    def predict(self, max_partial_prediction_size: int, filter) -> PredictorResponses:
+    def predict(self, max_partial_prediction_size: int, filter) -> PredictorResponse:
         """
         Predicts the next word based on the context tracker and the n-gram model.
         """
-        responses = PredictorResponses()
-        word_predictions = responses.word_predictions
+        responses = PredictorResponse()
+        wordPredictions = responses.wordPredictions
 
         actual_tokens, _ = self.context_tracker.get_tokens(self.cardinality)
 
@@ -145,9 +146,9 @@ class CannedWordPredictor(SmoothedNgramPredictor):
                 self.precomputed_StartWords = json.load(f)
 
             for w, prob in list(self.precomputed_StartWords.items())[:max_partial_prediction_size]:
-                word_predictions.add_suggestion(Suggestion(w, prob, self.predictor_name))
+                wordPredictions.add_suggestion(Suggestion(w, prob, self.predictor_name))
 
-            if len(word_predictions) == 0:
+            if len(wordPredictions) == 0:
                 self.logger.error("Error getting most frequent start words.")
 
             return responses

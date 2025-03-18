@@ -17,7 +17,8 @@ from nltk.stem.porter import PorterStemmer
 from sentence_transformers import SentenceTransformer
 
 from convassist.predictor.predictor import Predictor
-from convassist.predictor.utilities import Predictions, Suggestion, PredictorResponses
+from convassist.predictor.utilities import PredictorResponse
+from convassist.predictor.utilities.models import Suggestion, Predictions
 
 from convassist.predictor.utilities.nlp import NLP
 from convassist.utilities.databaseutils.sqllite_dbconnector import (
@@ -543,9 +544,9 @@ class SentenceCompletionPredictor(Predictor):
     def model_loaded(self):
         return self._model_loaded
 
-    def predict(self, max_partial_prediction_size: int, filter: Optional[str] = None) -> PredictorResponses:
-        responses:PredictorResponses = PredictorResponses()
-        sentence_predictions:Predictions = responses.sentence_predictions
+    def predict(self, max_partial_prediction_size: int, filter: Optional[str] = None) -> PredictorResponse:
+        responses:PredictorResponse = PredictorResponse()
+        sentencePredictions:Predictions = responses.sentencePredictions
 
         context = self.context_tracker.context.lstrip()
         self.logger.debug(f"context inside predictor predict = {context}")
@@ -554,26 +555,26 @@ class SentenceCompletionPredictor(Predictor):
             # TODO: Fix this
             self.logger.debug(f"context is empty, loading top sentences from {self._startsents}")
 
-            sentence_predictions = self.load_n_start_sentences(sentence_predictions, max_partial_prediction_size)
+            sentencePredictions = self.load_n_start_sentences(sentencePredictions, max_partial_prediction_size)
 
-            if not sentence_predictions:
+            if not sentencePredictions:
                 self.logger.warning("No start sentences found.  File may be missing or corrupted.")
 
         else:
             # If we are testing generation models
             if self.test_generalsentenceprediction:
                 self.logger.warning("Testing general sentence prediction")
-                sentence_predictions = self._generate(
-                    "<bos> " + context.strip(), max_partial_prediction_size, sentence_predictions
+                sentencePredictions = self._generate(
+                    "<bos> " + context.strip(), max_partial_prediction_size, sentencePredictions
                 )
 
             else:
-                sentence_predictions = self._retrieve_fromDataset(context, sentence_predictions)
+                sentencePredictions = self._retrieve_fromDataset(context, sentencePredictions)
                 self.logger.debug(
-                    f"retrieved {len(sentence_predictions)} sentences in {str(sentence_predictions)}"
+                    f"retrieved {len(sentencePredictions)} sentences in {str(sentencePredictions)}"
                 )
                 remaining_predicitions_needed = max_partial_prediction_size - len(
-                    sentence_predictions
+                    sentencePredictions
                 )
                 self.logger.debug(
                     f"remaining_predicitions_needed = {remaining_predicitions_needed}"
@@ -584,10 +585,10 @@ class SentenceCompletionPredictor(Predictor):
                     self.logger.debug(
                         f"generating {remaining_predicitions_needed} more predictions"
                     )
-                    sentence_predictions = self._generate(
+                    sentencePredictions = self._generate(
                         context.strip(), 
                         remaining_predicitions_needed,
-                        sentence_predictions
+                        sentencePredictions
                     )
 
         return responses

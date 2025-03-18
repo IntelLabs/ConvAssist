@@ -5,7 +5,8 @@
 from spellchecker import SpellChecker
 
 from convassist.predictor.predictor import Predictor
-from convassist.predictor.utilities import Predictions, Suggestion, PredictorResponses
+from convassist.predictor.utilities import  PredictorResponse
+from convassist.predictor.utilities.models import Suggestion
 
 
 class SpellCorrectPredictor(Predictor):
@@ -22,9 +23,9 @@ class SpellCorrectPredictor(Predictor):
                 max_partial_prediction_size (int, optional): Maximum number of suggestions to return.
                 filter (optional): Not used in this implementation.
             Returns:
-                tuple: A tuple containing setence_predictions and word_predictions.
+                tuple: A tuple containing setence_predictions and wordPredictions.
                        setence_predictions is currently an empty Prediction object.
-                       word_predictions is a Prediction object containing suggestions
+                       wordPredictions is a Prediction object containing suggestions
                        for the last token, limited by max_partial_prediction_size.
         learn_text(text):
             Logs a warning that SpellCorrectPredictor does not support learning.
@@ -35,10 +36,10 @@ class SpellCorrectPredictor(Predictor):
     def configure(self):
         pass
 
-    def predict(self, max_partial_prediction_size=None, filter=None) -> PredictorResponses:
+    def predict(self, max_partial_prediction_size=None, filter=None) -> PredictorResponse:
         token = self.context_tracker.get_last_token()
-        responses = PredictorResponses()
-        word_predictions = responses.word_predictions
+        responses = PredictorResponse()
+        wordPredictions = responses.wordPredictions
 
         if token:
             spell = SpellChecker()
@@ -46,7 +47,7 @@ class SpellCorrectPredictor(Predictor):
             if suggestions:
                 for suggestion in suggestions:
                     prob = spell.word_usage_frequency(suggestion)
-                    word_predictions.add_suggestion(
+                    wordPredictions.add_suggestion(
                         Suggestion(suggestion, prob, self.predictor_name)
                     )
 

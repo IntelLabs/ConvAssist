@@ -13,7 +13,7 @@ from convassist.predictor.sentence_completion_predictor import (
 )
 from convassist.tests import setup_utils
 from convassist.tests.predictors import TestPredictors
-from convassist.predictor.utilities import PredictorResponses
+from convassist.predictor.utilities import PredictorResponse
 
 
 class TestSentenceCompletionPredictor(TestPredictors):
@@ -92,23 +92,23 @@ class TestSentenceCompletionPredictor(TestPredictors):
     def test_predict(self, name, context, max):
         max_partial_prediction_size = max
         self.predictor.context_tracker.context = context
-        responses:PredictorResponses = self.predictor.predict(
+        responses:PredictorResponse = self.predictor.predict(
             max_partial_prediction_size
         )
-        self.assertIsNotNone(responses.sentence_predictions)
-        self.assertLessEqual(len(responses.sentence_predictions), max_partial_prediction_size)
-        self.assertIsNotNone(responses.word_predictions)
-        self.assertLessEqual(len(responses.sentence_predictions), max_partial_prediction_size)
+        self.assertIsNotNone(responses.sentencePredictions)
+        self.assertLessEqual(len(responses.sentencePredictions), max_partial_prediction_size)
+        self.assertIsNotNone(responses.wordPredictions)
+        self.assertLessEqual(len(responses.sentencePredictions), max_partial_prediction_size)
 
     def test_learn_new_sentence(self):
         change_tokens = "This is a new sentence to learn"
         self.predictor.learn(change_tokens)
 
         self.predictor.context_tracker.context = "This is a new sentence"
-        responses:PredictorResponses = self.predictor.predict(5)
-        self.assertIsNotNone(responses.sentence_predictions)
-        self.assertLessEqual(len(responses.sentence_predictions), 5)
-        self.assertEqual(responses.sentence_predictions[0].word, " to learn") 
+        responses:PredictorResponse = self.predictor.predict(5)
+        self.assertIsNotNone(responses.sentencePredictions)
+        self.assertLessEqual(len(responses.sentencePredictions), 5)
+        self.assertEqual(responses.sentencePredictions[0].word, " to learn") 
 
 
 if __name__ == "__main__":

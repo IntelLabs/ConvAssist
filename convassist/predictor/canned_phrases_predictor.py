@@ -14,8 +14,9 @@ from nltk.stem import PorterStemmer
 from sentence_transformers import SentenceTransformer
 
 from convassist.predictor.predictor import Predictor
-from convassist.predictor.utilities.canned_data import cannedData
-from convassist.predictor.utilities import Predictions, Suggestion, PredictorResponses
+from convassist.predictor.utilities import cannedData
+from convassist.predictor.utilities import PredictorResponse
+from convassist.predictor.utilities.models import Predictions, Suggestion
 
 
 class CannedPhrasesPredictor(Predictor):
@@ -205,9 +206,9 @@ class CannedPhrasesPredictor(Predictor):
         return sent_prediction
 
     # base class method
-    def predict(self, max_partial_prediction_size, filter=None) -> PredictorResponses:
-        responses = PredictorResponses()
-        sent_prediction = responses.sentence_predictions
+    def predict(self, max_partial_prediction_size, filter=None) -> PredictorResponse:
+        responses = PredictorResponse()
+        sent_prediction = responses.sentencePredictions
 
         try:
             context = self.context_tracker.context

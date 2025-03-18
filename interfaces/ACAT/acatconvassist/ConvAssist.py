@@ -13,12 +13,40 @@ working_dir = os.path.dirname(os.path.realpath(__file__))
 
 LOG_LEVEL = logging.DEBUG
 
-if not sys.platform == "win32":
+if sys.platform == "linux":
 
     def main():
-        raise RuntimeError("This script is only supported on Windows.")
+        raise RuntimeError("This script is only supported on Windows and MacOS.")
 
-else:
+elif sys.platform == "darwin":
+    from pystray import Icon, MenuItem, Menu
+    from PIL import Image, ImageDraw
+    import sys
+
+    def create_icon():
+        """Creates a simple tray icon image."""
+        size = (64, 64)
+        image = Image.new('RGB', size, (255, 255, 255))
+        draw = ImageDraw.Draw(image)
+        draw.ellipse((10, 10, 54, 54), fill=(0, 122, 204))  # Blue circle
+        return image
+
+
+    def on_quit(icon, item):
+        """Exit the application."""
+        icon.stop()
+
+    # Define the menu
+    menu = Menu(MenuItem("Quit", on_quit))
+
+    # Create the tray icon
+    icon = Icon("test_tray", create_icon(), menu=menu)
+
+    # Run the tray icon
+    if __name__ == "__main__":
+        icon.run()
+
+elif sys.platform == "win32":
     import glob
     import queue
     import shutil
@@ -30,9 +58,11 @@ else:
     from tkinter.scrolledtext import ScrolledText
 
     import pystray
-    import sv_ttk
     from PIL import Image
     from pystray import MenuItem
+
+    if sys.platform == "win32":
+        import sv_ttk
 
     from interfaces.ACAT.acatconvassist.preferences import Preferences
     from convassist.utilities.logging_utility import LoggingUtility
@@ -94,6 +124,7 @@ else:
                 log_file=True,
                 queue_handler=True
             )
+            print(self.logger.handlers)
             self.logger.info("Application started")
 
             # Set up the GUI components
@@ -128,10 +159,10 @@ else:
             start_time = time.time()
 
             # Start ACATConvAssistInterface
-            from interfaces.ACAT.acatconvassist.acatconvassist import ACATConvAssistInterface
-            self.thread = ACATConvAssistInterface(self.app_quit_event, queue_handler=True, log_level = LOG_LEVEL)
-            self.logger.debug("ACATConvAssistInterface loaded in %s seconds", time.time() - start_time)
-            self.thread.start()
+            # from interfaces.ACAT.acatconvassist.acatconvassist import ACATConvAssistInterface
+            # self.thread = ACATConvAssistInterface(self.app_quit_event, queue_handler=True, log_level = LOG_LEVEL)
+            # self.logger.debug("ACATConvAssistInterface loaded in %s seconds", time.time() - start_time)
+            # self.thread.start()
 
             return super().mainloop(n)
 
@@ -143,7 +174,8 @@ else:
 
             self.create_buttons()
 
-            sv_ttk.set_theme("light")
+            if sys.platform == "win32":
+                sv_ttk.set_theme("light")
 
         def create_buttons(self):
             button_frame = ttk.Frame(self, height=50)
@@ -274,12 +306,12 @@ else:
         tk_window.mainloop()
 
 
-if __name__ == "__main__":
-    lock = FileLock(LOCK_FILE)
+    if __name__ == "__main__":
+        lock = FileLock(LOCK_FILE)
 
-    try:
-        with lock.acquire(timeout=1):
-            main()
-    except Timeout:
-        print("Another instance of ConvAssist is already running.")
-        sys.exit()
+        try:
+            with lock.acquire(timeout=1):
+                main()
+        except Timeout:
+            print("Another instance of ConvAssist is already running.")
+            sys.exit()

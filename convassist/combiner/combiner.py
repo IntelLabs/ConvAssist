@@ -9,7 +9,7 @@ Combiner classes to merge results from several predictors.
 import abc
 from typing import Set
 
-from convassist.predictor.utilities.models.predictions import Predictions
+from convassist.predictor.utilities.models import Predictions
 from convassist.predictor.utilities.models.suggestions import MAX_PROBABILITY
 
 

@@ -59,7 +59,7 @@ class TestCRGPredictor(unittest.TestCase):
         self.predictor.llmLoaded = False
         responses = self.predictor.predict()
         # self.predictor.logger.error.assert_called_with("Model not loaded")
-        self.assertEqual(responses.sentence_predictions, [])
+        self.assertEqual(responses.sentencePredictions, [])
 
     @parameterized.expand(
         [
@@ -76,7 +76,7 @@ class TestCRGPredictor(unittest.TestCase):
         mock_generate.return_value = []
 
         responses = self.predictor.predict()
-        self.assertEqual(responses.sentence_predictions, [])
+        self.assertEqual(responses.sentencePredictions, [])
         mock_generate.assert_called_once()
 
 if __name__ == "__main__":

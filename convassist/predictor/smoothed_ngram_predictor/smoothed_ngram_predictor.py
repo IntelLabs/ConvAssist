@@ -5,7 +5,8 @@ import string
 from typing import List
 
 from convassist.predictor.predictor import Predictor
-from convassist.predictor.utilities import Predictions, Suggestion, PredictorResponses
+from convassist.predictor.utilities import PredictorResponse
+from convassist.predictor.utilities.models import Suggestion
 from convassist.utilities.ngram.ngramutil import NGramUtil
 
 
@@ -26,10 +27,10 @@ class SmoothedNgramPredictor(Predictor):
     def extract_svo(self, sent):
         return sent
 
-    def predict(self, max_partial_prediction_size: int, filter) -> PredictorResponses:
-        responses = PredictorResponses()
-        sentence_prediction = responses.sentence_predictions
-        word_prediction = responses.word_predictions
+    def predict(self, max_partial_prediction_size: int, filter) -> PredictorResponse:
+        responses = PredictorResponse()
+        sentence_prediction = responses.sentencePredictions
+        word_prediction = responses.wordPredictions
 
         self.logger.debug("Starting Ngram prediction")
 

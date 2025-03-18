@@ -11,7 +11,7 @@ from convassist.context_tracker import ContextTracker
 from convassist.predictor.smoothed_ngram_predictor.canned_word_predictor import (
     CannedWordPredictor,
 )
-from convassist.predictor.utilities import PredictorResponses
+from convassist.predictor.utilities import PredictorResponse
 from convassist.tests import setup_utils
 from convassist.tests.predictors import TestPredictors
 
@@ -69,14 +69,14 @@ class TestCannedWordPredictor(TestPredictors):
     def test_predict(self, name, context, max, expected_word):
         max_partial_prediction_size = max
         self.predictor.context_tracker.context = context
-        responses:PredictorResponses = self.predictor.predict(
+        responses:PredictorResponse = self.predictor.predict(
             max_partial_prediction_size, None
         )
-        self.assertIsNotNone(responses.sentence_predictions)
-        self.assertEqual(len(responses.sentence_predictions), 0)
-        self.assertIsNotNone(responses.word_predictions)
-        self.assertEqual(len(responses.word_predictions), max_partial_prediction_size)
-        self.assertEqual(responses.word_predictions[0].word, expected_word)
+        self.assertIsNotNone(responses.sentencePredictions)
+        self.assertEqual(len(responses.sentencePredictions), 0)
+        self.assertIsNotNone(responses.wordPredictions)
+        self.assertEqual(len(responses.wordPredictions), max_partial_prediction_size)
+        self.assertEqual(responses.wordPredictions[0].word, expected_word)
 
     def test_learn_new_sentence(self):
         change_tokens = "This is a new sentence to learn."
@@ -84,9 +84,9 @@ class TestCannedWordPredictor(TestPredictors):
 
         self.predictor.context_tracker.context = self.predictor.extract_svo("This is a new ")
         self.predictor.context_tracker.context = self.predictor.context_tracker.context + " "
-        responses:PredictorResponses = self.predictor.predict(1, None)
-        self.assertEqual(len(responses.word_predictions), 1)
-        self.assertEqual(responses.word_predictions[0].word, "sentence")
+        responses:PredictorResponse = self.predictor.predict(1, None)
+        self.assertEqual(len(responses.wordPredictions), 1)
+        self.assertEqual(responses.wordPredictions[0].word, "sentence")
 
     def test_learn_existing_sentence(self):
         change_tokens = "This is a new sentence to learn."
@@ -95,9 +95,9 @@ class TestCannedWordPredictor(TestPredictors):
 
         self.predictor.context_tracker.context = self.predictor.extract_svo("This is a new ")
         self.predictor.context_tracker.context = self.predictor.context_tracker.context + " "
-        responses:PredictorResponses = self.predictor.predict(1, None)
-        self.assertEqual(len(responses.word_predictions), 1)
-        self.assertEqual(responses.word_predictions[0].word, "sentence")
+        responses:PredictorResponse = self.predictor.predict(1, None)
+        self.assertEqual(len(responses.wordPredictions), 1)
+        self.assertEqual(responses.wordPredictions[0].word, "sentence")
 
     # TODO: Implement this test
     # def test_remove_canned_words(self):

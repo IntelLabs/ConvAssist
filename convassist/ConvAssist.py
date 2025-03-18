@@ -7,6 +7,7 @@ from configparser import ConfigParser
 import nltk
 
 from convassist.context_tracker import ContextTracker
+from convassist.predictor.utilities.predictor_response import PredictorResponse
 from convassist.predictor_activator import PredictorActivator
 from convassist.predictor_registry import PredictorRegistry
 from convassist.utilities.logging_utility import LoggingUtility
@@ -52,6 +53,7 @@ class ConvAssist:
         )
 
         # Verify that the nltk files are downloaded
+        #TODO: MOVE TO Appropriate Predictor
         self._verify_nltk_files()
 
         lowercase_mode = self.config.getboolean("ContextTracker", "lowercase_mode", fallback=False)
@@ -78,36 +80,28 @@ class ConvAssist:
             nltk.download(["punkt", "punkt_tab"])
             self.logger.debug("Punkt Tokenizer Models downloaded successfully.")
 
-    def predict(self) -> tuple:
+    def predict(self) -> PredictorResponse:
         if not self.initialized:
             raise AttributeError(f"ConvAssist {self.name} not initialized.")
 
-        word_nextLetterProbs = []
-        word_nextWords = []
-        keywords = []
-        sentence_nextLetterProbs = []
-        sentence_nextSentences = []
-        keyword_responses = []
-
         multiplier = 1
-        (
-            word_nextLetterProbs,
-            word_nextWords,
-            sentence_nextLetterProbs,
-            sentence_nextSentences,
-        ) = self.predictor_activator.predict(multiplier)
-        if word_nextWords != []:
-            # normalize word probabilities over 10 words.
-            prob_sum_over10 = 0.0
-            for w in enumerate(word_nextWords[0:10]):
-                prob_sum_over10 += w[1].probability
+        combined_responses: PredictorResponse = self.predictor_activator.predict(multiplier)
+        return combined_responses
+    
+        # if combined_responses.wordPredictions != []:
+        #     # normalize word probabilities over 10 words.
+        #     prob_sum_over10 = 0.0
+        #     for w in enumerate(combined_responses.wordPredictions[0:10]):
+        #         prob_sum_over10 += w[1].probability
 
-        return (
-            word_nextLetterProbs,
-            [(p.word, p.probability / prob_sum_over10) for p in word_nextWords],
-            sentence_nextLetterProbs,
-            [(p.word, p.probability) for p in sentence_nextSentences],
-        )
+        # return (
+            # #TODO - FIX ME TO RETURN EVERYTHING!!!
+            # word_nextLetterProbs,
+            # [(p.word, p.probability / prob_sum_over10) for p in combined_responses.wordPredictions],
+            
+            # sentence_nextLetterProbs,
+            # [(p.word, p.probability) for p in combined_responses.sentencePredictions],
+        # )
 
     def update_params(self, test_gen_sentence_pred, retrieve_from_AAC):
         self.predictor_activator.update_params(test_gen_sentence_pred, retrieve_from_AAC)

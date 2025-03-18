@@ -1,5 +1,6 @@
 from .predictor import Predictor
-from .utilities import Predictions, Suggestion, PredictorResponses
+from .utilities import PredictorResponse
+from .utilities.models import Predictions, Suggestion
 import transformers
 from transformers import AutoTokenizer
 
@@ -76,16 +77,16 @@ class ContextAwarePredictor(Predictor):
         except Exception as e:
             self.logger.error(f"Error loading model {self.modelname}: {e}")
 
-    def predict(self, max_partial_prediction_size=None, filter=None) -> PredictorResponses:
-        responses:PredictorResponses = PredictorResponses()
+    def predict(self, max_partial_prediction_size=None, filter=None) -> PredictorResponse:
+        responses:PredictorResponse = PredictorResponse()
 
         match self.predictiontype:
             case "sentences":
-                predictions = responses.sentence_predictions
+                predictions = responses.sentencePredictions
             case "words":
-                predictions = responses.word_predictions
+                predictions = responses.wordPredictions
             case "keywords":
-                predictions = responses.keyword_predictions
+                predictions = responses.keywordPredictions
             case _:
                 raise ValueError(f"Invalid prediction type: {self.predictiontype}")
 

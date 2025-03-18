@@ -15,8 +15,13 @@ class Predictions(list):
 
     def add_suggestion(self, suggestion: Suggestion):
         """Add a suggestion to the list of suggestions and sort the list."""
-        if isinstance(suggestion, Suggestion):
-            self.append(suggestion)
-            self.sort(key=lambda x: x.probability, reverse=True)
-        else:
-            raise TypeError("Only suggestions can be added to predictions.")
+        self.append(suggestion)
+        self.sort(key=lambda x: x.probability, reverse=True)
+
+#TODO: FIXME
+
+        # if isinstance(suggestion, Suggestion):
+        #     self.append(suggestion)
+        #     self.sort(key=lambda x: x.probability, reverse=True)
+        # else:
+        #     raise TypeError("Only suggestions can be added to predictions.")

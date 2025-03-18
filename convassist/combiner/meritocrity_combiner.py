@@ -2,19 +2,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from typing import Dict
-
-from convassist.predictor.utilities import Predictions
 from convassist.combiner.combiner import Combiner
 
 class MeritocracyCombiner(Combiner):
     """
     Computes probabilities for the next letter - for BCI
     """
+    from convassist.predictor.utilities.models import Predictions
 
     def computeLetterProbs(self, result: Predictions, context: str) -> list[tuple[str, float]]:
 
         # TODO - Check if total words should include empty words
-        # Filter out any empty word_predictions from result
+        # Filter out any empty wordPredictions from result
         filtered_result = [item for item in result if item.word.lower().strip()]
         totalWords = len(result)
         nextLetterProbs: Dict[str, float] = {}
@@ -57,10 +56,5 @@ class MeritocracyCombiner(Combiner):
         return nextLetterProbsList
 
     def combine(self, predictions:Predictions, context):
-        result = Predictions(predictions.name)
-        # for prediction in predictions:
-        for suggestion in predictions:
-            result.add_suggestion(suggestion)
-
-        nextLetterProb = self.computeLetterProbs(result, context)
-        return (nextLetterProb, self.filter(result))
+        nextLetterProb = self.computeLetterProbs(predictions, context)
+        return (nextLetterProb, self.filter(predictions))

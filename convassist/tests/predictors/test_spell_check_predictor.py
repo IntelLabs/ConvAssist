@@ -8,7 +8,7 @@ from parameterized import parameterized
 
 from convassist.context_tracker import ContextTracker
 from convassist.predictor.spell_correct_predictor import SpellCorrectPredictor
-from convassist.predictor.utilities import PredictorResponses
+from convassist.predictor.utilities import PredictorResponse
 
 from convassist.tests import setup_utils
 from convassist.tests.predictors import TestPredictors
@@ -57,16 +57,16 @@ class TestSpellCorrectPredictor(TestPredictors):
     def test_predict(self, name, context, max, expected_word):
         max_partial_prediction_size = max
         self.predictor.context_tracker.context = context
-        responses:PredictorResponses = self.predictor.predict(
+        responses:PredictorResponse = self.predictor.predict(
             max_partial_prediction_size, None
         )
-        self.assertIsNotNone(responses.sentence_predictions)
-        self.assertEqual(len(responses.sentence_predictions), 0)
-        self.assertIsNotNone(responses.word_predictions)
-        self.assertEqual(len(responses.word_predictions), max_partial_prediction_size)
+        self.assertIsNotNone(responses.sentencePredictions)
+        self.assertEqual(len(responses.sentencePredictions), 0)
+        self.assertIsNotNone(responses.wordPredictions)
+        self.assertEqual(len(responses.wordPredictions), max_partial_prediction_size)
 
         if expected_word:
-            self.assertEqual(responses.word_predictions[0].word, expected_word)
+            self.assertEqual(responses.wordPredictions[0].word, expected_word)
 
 
 if __name__ == "__main__":
