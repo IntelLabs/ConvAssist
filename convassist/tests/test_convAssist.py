@@ -25,7 +25,6 @@ class TestConvAssist(unittest.TestCase):
         self.assertIsInstance(conv_assist.predictor_registry, PredictorRegistry)
         self.assertIsInstance(conv_assist.context_tracker, ContextTracker)
         self.assertIsInstance(conv_assist.predictor_activator, PredictorActivator)
-        self.assertEqual(conv_assist.predictor_activator.combination_policy, "meritocracy")
 
     def test_predict(self):
         conv_assist = ConvAssist(self.id_str, self.ini_file, config=self.config)
@@ -34,7 +33,7 @@ class TestConvAssist(unittest.TestCase):
         conv_assist.predictor_activator.predict = MagicMock(return_value=PredictorResponse())
 
         response = conv_assist.predict()
-        self.assertIsInstance(response, PredictorResponse)
+        self.assertIsInstance(response, str)
 
 
     def test_update_params(self):

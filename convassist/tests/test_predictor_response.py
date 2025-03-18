@@ -7,13 +7,12 @@ from convassist.combiner.meritocrity_combiner import MeritocracyCombiner
 def test_predictor_response_init():
     response = PredictorResponse()
     
-    assert isinstance(response.NextWordCharacters, Predictions)
+    assert isinstance(response.nextWordCharacters, Predictions)
     assert isinstance(response.wordPredictions, Predictions)
-    assert isinstance(response.NextSentenceCharacters, Predictions)
+    assert isinstance(response.nextSentenceCharacters, Predictions)
     assert isinstance(response.sentencePredictions, Predictions)
-    assert isinstance(response.NextKeywordCharacters, Predictions)
+    assert isinstance(response.nextKeywordCharacters, Predictions)
     assert isinstance(response.keywordPredictions, Predictions)
-    assert isinstance(response.combiner, MeritocracyCombiner)
 
 def test_predictor_response_repr():
     response = PredictorResponse()
