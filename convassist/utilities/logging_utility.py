@@ -79,7 +79,7 @@ class LoggingUtility:
         self.file_handler.setFormatter(self.formatter)
 
 
-    def get_logger(self, name, log_level, log_file=True, queue_handler=False):
+    def get_logger(self, name, log_level, log_file=False, queue_handler=False):
 
         logger = logging.getLogger(name)
         logger.setLevel(log_level)

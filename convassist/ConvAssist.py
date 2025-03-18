@@ -61,7 +61,7 @@ class ConvAssist:
         self.set_predictors()
 
         self.predictor_activator = PredictorActivator(
-            self.config, self.predictor_registry, self.context_tracker, self.logger
+            self.name, self.config, self.predictor_registry, self.context_tracker #, self.logger
         )
         self.predictor_activator.combination_policy = "meritocracy"
 
