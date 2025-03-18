@@ -21,7 +21,7 @@ from interfaces.ACAT.utilities.ACATMessageTypes import (
     ConvAssistPredictionTypes,
     ConvAssistSetParam,
     ParameterType,
-    WordAndCharacterPredictorResponse,
+    ConvAssistPredictorResponse,
 )
 from interfaces.ACAT.utilities.message_handler.MessageHandler import MessageHandler
 
@@ -235,7 +235,7 @@ class ACATConvAssistInterface(threading.Thread):
             send_response = True
 
             try:
-                PredictorResponse = WordAndCharacterPredictorResponse()
+                PredictorResponse = ConvAssistPredictorResponse()
 
                 try:
                     message_json = self.messageHandler.receive_message()
@@ -296,6 +296,12 @@ class ACATConvAssistInterface(threading.Thread):
                     case ConvAssistMessageTypes.NEXTSENTENCEPREDICTION:
                         self.next_sentence_prediction(PredictorResponse, messageReceived)
 
+                    case ConvAssistMessageTypes.KEYWORDPREDICTION:
+                        self.keyword_prediction(PredictorResponse, messageReceived)
+
+                    case ConvAssistMessageTypes.NEXTKEYWORDSPREDICTION: 
+                        self.keyword_response_prediction(PredictorResponse, messageReceived)
+
                     case ConvAssistMessageTypes.LEARNWORDS:
                         self.handle_learn(self.conv_normal, messageReceived, "WORDS")
                         PredictorResponse.MessageType = ConvAssistMessageTypes.LEARNWORDS
@@ -319,12 +325,6 @@ class ACATConvAssistInterface(threading.Thread):
                         self.messageHandler.disconnect()
                         send_response = False
                         self.app_quit_event.set()
-
-                    case ConvAssistMessageTypes.KEYWORDPREDICTIONREQUEST:
-                        self.keyword_prediction(PredictorResponse, messageReceived)
-
-                    case ConvAssistMessageTypes.KEYWORDRESPONSEREQUEST: 
-                        self.keyword_response_prediction(PredictorResponse, messageReceived)
 
                     case _:
                         send_response = False
@@ -452,20 +452,12 @@ class ACATConvAssistInterface(threading.Thread):
             and convAssistInstance.context_tracker
         ):
             convAssistInstance.context_tracker.context = context
-            CRG_Active = messageReceived.CRG
             # Don't send any sentence predictions from NORMAL mode
             if messageReceived.PredictionType == ConvAssistPredictionTypes.NORMAL:
                 sentences_count = 0
                 next_sentence_letter_count = 0
 
-            (
-                next_Letter_Probs,
-                word_prediction,
-                keyword_prediction,
-                sentence_nextLetterProbs,
-                sentencePredictions,
-                keyword_response_prediction,
-            ) = convAssistInstance.predict(CRG_Active)
+            response:str = convAssistInstance.predict()
 
         else:
             self.logger.warning(

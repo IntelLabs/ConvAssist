@@ -1,14 +1,26 @@
 from __future__ import annotations
+import dataclasses
+import json
+from dataclasses import dataclass
 from ..utilities.models.predictions import Predictions
 from convassist.combiner.meritocrity_combiner import MeritocracyCombiner
 
+@dataclass
 class PredictorResponse:
+    nextWordCharacters: Predictions
+    wordPredictions: Predictions
+    nextSentenceCharacters: Predictions
+    sentencePredictions: Predictions
+    nextKeywordCharacters: Predictions
+    keywordPredictions: Predictions
+
+
     def __init__(self):
-        self.NextWordCharacters = Predictions("next_word_chars")
+        self.nextWordCharacters = Predictions("next_word_chars")
         self.wordPredictions = Predictions("wordPredictions")
-        self.NextSentenceCharacters = Predictions("next_sentence_chars")
+        self.nextSentenceCharacters = Predictions("next_sentence_chars")
         self.sentencePredictions = Predictions("sentencePredictions")
-        self.NextKeywordCharacters = Predictions("next_keyword_chars")
+        self.nextKeywordCharacters = Predictions("next_keyword_chars")
         self.keywordPredictions = Predictions("keywordPredictions")
 
         self.combiner = MeritocracyCombiner()
@@ -46,3 +58,6 @@ class PredictorResponse:
         # )
 
         return self
+    
+    def jsonSerialize(self):
+        return json.dumps(dataclasses.asdict(self))

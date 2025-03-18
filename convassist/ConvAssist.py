@@ -80,29 +80,13 @@ class ConvAssist:
             nltk.download(["punkt", "punkt_tab"])
             self.logger.debug("Punkt Tokenizer Models downloaded successfully.")
 
-    def predict(self) -> PredictorResponse:
+    def predict(self) -> str:
         if not self.initialized:
             raise AttributeError(f"ConvAssist {self.name} not initialized.")
 
-        multiplier = 1
-        combined_responses: PredictorResponse = self.predictor_activator.predict(multiplier)
-        return combined_responses
+        combined_responses: PredictorResponse = self.predictor_activator.predict()
+        return combined_responses.jsonSerialize()
     
-        # if combined_responses.wordPredictions != []:
-        #     # normalize word probabilities over 10 words.
-        #     prob_sum_over10 = 0.0
-        #     for w in enumerate(combined_responses.wordPredictions[0:10]):
-        #         prob_sum_over10 += w[1].probability
-
-        # return (
-            # #TODO - FIX ME TO RETURN EVERYTHING!!!
-            # word_nextLetterProbs,
-            # [(p.word, p.probability / prob_sum_over10) for p in combined_responses.wordPredictions],
-            
-            # sentence_nextLetterProbs,
-            # [(p.word, p.probability) for p in combined_responses.sentencePredictions],
-        # )
-
     def update_params(self, test_gen_sentence_pred, retrieve_from_AAC):
         self.predictor_activator.update_params(test_gen_sentence_pred, retrieve_from_AAC)
 
