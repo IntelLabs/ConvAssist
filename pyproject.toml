@@ -13,7 +13,7 @@ websockets = "^13.0.1"
 nltk = "^3.9.1"
 hnswlib = "^0.8.0"
 sentence-transformers = "^3.1.1"
-spacy = "^3.8.2"
+spacy = "^3.8.5"
 sv-ttk = {version = "^2.6.0", optional = true, markers = "sys_platform == 'win32'"}
 pywin32 = {version = "^306", optional = true, markers = "sys_platform == 'win32'"}
 pystray = {version = "^0.19.5", optional = true, markers = "sys_platform == 'win32'"}
