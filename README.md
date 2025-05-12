@@ -4,7 +4,7 @@
 [![pytorch](https://img.shields.io/badge/PyTorch-v2.4.1-green?logo=pytorch)](https://pytorch.org/get-started/locally/)
 ![GitHub License](https://img.shields.io/github/license/IntelLabs/ConvAssist)
 ![python-support](https://img.shields.io/badge/Python-3.12-3?logo=python)
-
+[![Documentation - Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/IntelLabs/ConvAssist)
 
 ConvAssist is a library intended to enable and empower users with disabilities to communicate using the latest language modeling technologies, via Intel's Assistive Context Aware Toolkit, ACAT. ConvAssist can quickly suggest utterances/sentences that the user can use to have a social conversation or communicate with their caregiver in near real time. 
 
