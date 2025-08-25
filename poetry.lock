@@ -5504,15 +5504,15 @@ six = ">=1.5"
 
 [[package]]
 name = "pyttsx3"
-version = "2.98"
+version = "2.99"
 description = "Text to Speech (TTS) library for Python 3. Works without internet connection or delay. Supports multiple TTS engines, including Sapi5, nsss, and espeak."
 optional = true
 python-versions = "*"
 groups = ["main"]
 markers = "extra == \"demos\""
 files = [
-    {file = "pyttsx3-2.98-py3-none-any.whl", hash = "sha256:b3fb4ca4d5ae4f8e6836d6b37bf5fee0fd51d157ffa27fb9064be6e7be3da37a"},
-    {file = "pyttsx3-2.98.tar.gz", hash = "sha256:cc609466151d8c4a69c1c765a945f893c00c1fd2569c2db55e17dc22121e9162"},
+    {file = "pyttsx3-2.99-py3-none-any.whl", hash = "sha256:ff3e4ff756c24d72b9f3f2f304e0edaafd0f58adb0e6f4b90d930440cda8b207"},
+    {file = "pyttsx3-2.99.tar.gz", hash = "sha256:a18a5601530a570c43491b4112887fc34c47e118fc937287db8d21905da1f74e"},
 ]
 
 [package.dependencies]
@@ -6890,4 +6890,4 @@ demos = ["pyttsx3"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "b8cac99acb987e82fa1b732e828afc9bd542a366b3d47d035674df99459b53b2"
+content-hash = "d30b146e26447136ece0397681f6bd77a5a217dbe75a6b837cf86d550dc3364d"
