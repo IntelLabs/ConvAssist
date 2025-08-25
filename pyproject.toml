@@ -17,7 +17,7 @@ spacy = "^3.8.2"
 sv-ttk = {version = "^2.6.0", optional = true, markers = "sys_platform == 'win32'"}
 pywin32 = {version = "^306", optional = true, markers = "sys_platform == 'win32'"}
 pystray = {version = "^0.19.5", optional = true, markers = "sys_platform == 'win32'"}
-pyinstaller = {version = "^6.10.0", optional = true, markers = "sys_platform == 'win32'"}
+pyinstaller = {version = "^6.15.0", optional = true, markers = "sys_platform == 'win32'"}
 pydebugstring = {version = "^1.0.0.2", markers = "sys_platform == 'win32'"}
 pyttsx3 = {version = "^2.99", optional = true }
 pefile = {version = "<2024.8.26", optional = true, markers = "sys_platform == 'win32'"} # pinned to avoid breaking changes in newer versions
