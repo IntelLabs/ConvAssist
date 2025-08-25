@@ -1,4 +1,5 @@
 import argparse
+import os
 from typing import List
 
 from tqdm import tqdm
@@ -51,7 +52,6 @@ def configure():
     #flag to clean the database
 
     parser.add_argument(
-        "-c",
         "--clean",
         action="store_true",
         help="Whether to clean the database"
@@ -89,6 +89,9 @@ def main(argv=None):
         if response.lower() != 'y':
             print("Exiting...")
             return
+        else:
+            print("Cleaning database...")
+            os.remove(args.database)
     
     phrases = []
 
@@ -96,7 +99,10 @@ def main(argv=None):
         for line in f:
             phrases.append(line.strip())
 
+
     with NGramUtil(args.database, args.cardinality, args.lowercase, args.normalize) as ngramutil:
+        ngramutil.create_update_ngram_tables()
+        
         threads = []
         for i in range(args.cardinality):
             p = Thread(target=insertngrambycardinality, args=(ngramutil, phrases, i + 1))

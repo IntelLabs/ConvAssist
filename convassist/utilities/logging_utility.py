@@ -79,7 +79,7 @@ class LoggingUtility:
         self.file_handler.setFormatter(self.formatter)
 
 
-    def get_logger(self, name, log_level, log_file=True, queue_handler=False):
+    def get_logger(self, name, log_level, log_file=False, queue_handler=False):
 
         logger = logging.getLogger(name)
         logger.setLevel(log_level)
@@ -91,9 +91,10 @@ class LoggingUtility:
         # always add a stream handler
         self.add_stream_handler(logger, sys.stdout)
 
-        # # optionally add a file handler
-        if log_file:
-            self.add_file_handler(logger)
+        # # # optionally add a file handler
+        #TODO FIXME
+        # if log_file:
+        #     self.add_file_handler(logger)
 
         # optionally add a queue handler
         if queue_handler:

@@ -72,7 +72,7 @@ class ACATConvAssistInterface(threading.Thread):
             {"type": "win32", "pipe_name": self.pipeName}
         )
 
-        # Preferences
+        # # Preferences
         self.prefs = preferences.Preferences("ACATConvAssist")
 
         # Parameters that ACAT will send to ConvAssist

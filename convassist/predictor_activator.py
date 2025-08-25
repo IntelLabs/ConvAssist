@@ -24,7 +24,8 @@ class PredictorActivator:
 
     """
 
-    def __init__(self, config, registry: PredictorRegistry, context_tracker=None, logger=None):
+    def __init__(self, name, config, registry: PredictorRegistry, context_tracker=None, logger=None):
+        self.name = name
         self.config: ConfigParser = config
         self.registry = registry
         self.context_tracker = context_tracker
@@ -38,8 +39,9 @@ class PredictorActivator:
         if logger:
             self.logger = logger
         else:
+            logger_name = f"{self.name}-PredictorActivator"
             self.logger = LoggingUtility().get_logger(
-                "predictor_activator", log_level=logging.DEBUG, queue_handler=True
+                logger_name, log_level=logging.DEBUG, log_file=True, queue_handler=True
             )
 
     @property
@@ -101,6 +103,7 @@ class PredictorActivator:
 
                 # Append the words to the word_predictions list
                 if words:
+                    self.logger.debug(f"predictions: {words}")
                     word_predictions.append(words)
 
                 self.logger.info(
@@ -129,7 +132,9 @@ class PredictorActivator:
         )
 
         # Combine the word predictions and get the next word letter probabilities
+        self.logger.debug(f"Combining {len(word_predictions)} word predictions")
         word_nextLetterProbs, word_result = self.combiner.combine(word_predictions, context)
+        self.logger.debug(f"Got {len(word_result)} words back.")
 
         self.logger.info(
             f"Predictions completed. Returning {len(word_result)} words and {len(sentence_result)} sentences."
