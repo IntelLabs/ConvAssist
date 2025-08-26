@@ -23,7 +23,7 @@ pyttsx3 = {version = "^2.99", optional = true }
 pefile = {version = "<2024.8.26", optional = true, markers = "sys_platform == 'win32'"} # pinned to avoid breaking changes in newer versions
 colorlog = "^6.9.0"
 kagglehub = "^0.3.5"
-pandas = "^2.3.1"
+pandas = "^2.3.2"
 psutil = "^6.1.1"
 concurrent-log-handler = "^0.9.25"
 pyspellchecker = "^0.8.2"
