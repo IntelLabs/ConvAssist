@@ -33,14 +33,14 @@ VSVersionInfo(
         [StringStruct('Comments', 'Assistive Context-Aware Toolkit (ACAT)'),
         StringStruct('CompanyName', 'https://www.intel.com/content/www/us/en/developer/tools/open/acat/overview.html'),
         StringStruct('FileDescription', 'ConvAssist Word Predictor Utility'),
-        StringStruct('FileVersion', '3.12'),
+        StringStruct('FileVersion', '4.0.0'),
         StringStruct('InternalName', 'ConvAssist.exe'),
         StringStruct('LegalCopyright', 'Copyright 2025 by Intel Corporation'),
         StringStruct('LegalTrademarks', ''),
         StringStruct('OriginalFilename', 'ConvAssist.exe'),
         StringStruct('ProductName', 'ConvAssist'),
-        StringStruct('ProductVersion', '3.12'),
-        StringStruct('Assembly Version', '3.12.1.2725')])
+        StringStruct('ProductVersion', '4.0.0'),
+        StringStruct('Assembly Version', '4.0.8.2625')])
       ])
   ]
 )

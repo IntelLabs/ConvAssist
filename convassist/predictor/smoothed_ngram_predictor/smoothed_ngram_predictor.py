@@ -33,7 +33,7 @@ class SmoothedNgramPredictor(Predictor):
     def extract_svo(self, sent):
         return sent
     
-    def get_frequent_start_words(self, max_count = 10) -> Prediction:
+    def get_frequent_start_words(self, max_count=10) -> Prediction:
         word_predictions = Prediction()
 
         try:
