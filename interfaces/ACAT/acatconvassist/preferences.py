@@ -23,7 +23,9 @@ class Preferences:
     def get_config_dir(self) -> Path:
         """Get the appropriate config directory."""
         if sys.platform == "win32":  # Windows
-            return Path(os.getenv("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / self.app_name
+            path = Path(os.getenv("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / self.app_name
+            print(f"Config dir (Windows): {path}")
+            return path
         else:  # macOS/Linux
             return Path.home() / ".config" / self.app_name
 

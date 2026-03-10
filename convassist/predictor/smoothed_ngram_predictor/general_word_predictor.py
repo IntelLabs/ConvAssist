@@ -4,18 +4,20 @@
 import collections
 import json
 import os
+from convassist.utilities.utils import smart_readlines
 
 from convassist.predictor.smoothed_ngram_predictor.smoothed_ngram_predictor import SmoothedNgramPredictor
 
 
 class GeneralWordPredictor(SmoothedNgramPredictor):
+
     def configure(self):
         super().configure()
 
         # Store the set of most frequent starting words based on an AAC dataset
         # These will be displayed during empty context
         if not os.path.isfile(self.startwords):
-            aac_lines = open(self.aac_dataset).readlines()
+            aac_lines = smart_readlines(self.aac_dataset)
             startwords = []
             for line in aac_lines:
                 w = line.lower().split()[0]

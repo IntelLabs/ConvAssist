@@ -8,9 +8,10 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__name__))
 
 additionaldata = []
 additionaldata = [('assets', 'assets')]
-additionaldata += copy_metadata('convassist')
+additionaldata += copy_metadata('ConvAssist')
 additionaldata += collect_data_files("sv_ttk")
 additionaldata += collect_data_files("en_core_web_sm")
+additionaldata += collect_data_files("en_core_web_sm-3.8.0.dist-info")
 additionaldata += collect_data_files("spellchecker")
 
 print(f'script dir: {SCRIPT_DIR}')

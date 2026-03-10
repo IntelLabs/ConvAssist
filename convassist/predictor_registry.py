@@ -90,7 +90,7 @@ class PredictorRegistry(list):
 
     def get_predictor_class(self, predictor_name, config):
 
-        #TODO: Fix this hack. 
+        # TODO: Fix this hack.
         # This is a hack to get the predictor class from the config file.
         # The config file should have a mapping of predictor_name to predictor_class
         # but two predictor classes were renamed and the config file was not updated.
@@ -100,7 +100,7 @@ class PredictorRegistry(list):
             return "CannedWordPredictor"
         elif predictor_name == "DefaultSmoothedNgramPredictor":
             return "GeneralWordPredictor"
-        else: 
+        else:
             return config.get(predictor_name, "predictor_class")
 
     def model_status(self) -> bool:
