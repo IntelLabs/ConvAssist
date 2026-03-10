@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import sys
+import struct
 from typing import Any
 
 if sys.platform == "win32":
@@ -60,42 +61,50 @@ else:
         def _get_incoming_message(self) -> Any:
 
             assert self.pipe_handle is not None
-            buffer_size = 1024  # 1KB at a time
-            data = ""
-
             try:
-                while True:
-                    result, tmp = win32file.ReadFile(self.pipe_handle.handle, buffer_size)
-                    if tmp:
-                        data += tmp.decode("utf-8")  # type: ignore
+                # 1. Read 4-byte little-endian length prefix
+                result, raw_len = win32file.ReadFile(self.pipe_handle.handle, 4)
+                if result != 0:
+                    raise BrokenPipeError("Failed to read message length")
 
-                    if result is not winerror.ERROR_MORE_DATA:
-                        break
+                msg_len = struct.unpack("<I", raw_len)[0]
+
+                # 2. Read exactly msg_len bytes
+                chunks = b""
+                while len(chunks) < msg_len:
+                    to_read = msg_len - len(chunks)
+                    result, tmp = win32file.ReadFile(self.pipe_handle.handle, to_read)
+                    chunks += tmp
+                    if result != 0 and result != winerror.ERROR_MORE_DATA:
+                        raise BrokenPipeError("Failed to read full message")
+                
+                # 2.1  Log the raw chunks for debugging
+                print(f"Received raw chunks: {chunks}")
+                
+                # 3. Decode and parse JSON
+                message = json.loads(chunks.decode("utf-8"))
+                return message
 
             except pywintypes.error as e:
                 raise BrokenPipeError(f"{e.strerror}") from e
-
-            finally:
-                # Load the data as json and return
-                if data:
-                    try:
-                        data = json.loads(data)
-                    except json.JSONDecodeError as e:
-                        #TODO handle this properly, but for now just continue
-                        pass
-
-            return data
+            
+            except Exception as e:
+                raise Exception(f"Error receiving message from named pipe: {e}") from e
 
         def _send_message(self, message: Any) -> None:
             """
-            Send the message to the pipe
-
-            :param Pipehandle: Handle of the pipe
-            :param message: message to send
-            :return: void
+            Send a JSON message over the named pipe with a length prefix.
             """
             try:
-                win32file.WriteFile(self.pipe_handle, message.encode("utf-8"))  # type: ignore
+                # 1. Convert to JSON and encode
+                msg_bytes = message.encode("utf-8")
+
+                # 2. Add 4-byte little-endian length prefix
+                prefix = struct.pack("<I", len(msg_bytes))
+
+                # 3. Write prefix + message
+                win32file.WriteFile(self.pipe_handle, prefix + msg_bytes)
+
             except pywintypes.error as e:
                 raise BrokenPipeError(f"Error sending message to named pipe: {e}") from e
 
