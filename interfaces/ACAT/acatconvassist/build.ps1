@@ -4,7 +4,7 @@ $scriptPath = "ConvAssist.spec"
 # Measure the time taken to run the PyInstaller build
 $timeTaken = Measure-Command {
     Write-Host "Building ConvAssist.exe using PyInstaller"
-    & pyinstaller --noconfirm $scriptPath
+    & poetry run python -m PyInstaller --noconfirm $scriptPath
 }
 
 # Output the time taken

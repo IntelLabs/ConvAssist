@@ -21,6 +21,7 @@ class ConvAssistMessageTypes(IntEnum):
     LEARNSENTENCES = 9
     FORCEQUITAPP = 10
     READYFORPREDICTIONS = 11
+    STATUSCHECK = 12
 
 
 class ConvAssistPredictionTypes(IntEnum):
@@ -57,7 +58,7 @@ class ConvAssistMessage:
         return ConvAssistMessage(_MessageType, _PredictionType, _Data)
 
     def jsonSerialize(self) -> str:
-        return json.dumps(dataclasses.asdict(self))
+        return json.dumps(dataclasses.asdict(self), ensure_ascii=False)
         # Example output: '{"MessageType": 1, "PredictionType": 1, "Data": "test"}'
 
     def __repr__(self) -> str:
@@ -96,7 +97,7 @@ class ConvAssistSetParam:
         return ConvAssistSetParam(_Parameter, _Value)
 
     def jsonSerialize(self) -> str:
-        return json.dumps(dataclasses.asdict(self))
+        return json.dumps(dataclasses.asdict(self), ensure_ascii=False)
 
     def __repr__(self) -> str:
         return f"Parameter: {ParameterType(self.Parameter).name}, Value: {self.Value}"
@@ -117,7 +118,15 @@ class WordAndCharacterPredictionResponse:
         return WordAndCharacterPredictionResponse(**data)
 
     def jsonSerialize(self) -> str:
-        return json.dumps(dataclasses.asdict(self))
+        d = dataclasses.asdict(self)
+
+        for field in ["PredictedWords", "NextCharacters", "NextCharactersSentence", "PredictedSentence"]:
+            val = d.get(field)
+
+            if isinstance(val, (list, tuple)):
+                d[field] = json.dumps(val, ensure_ascii=False)
+
+        return json.dumps(d, ensure_ascii=False)
 
     def __repr__(self) -> str:
         return (

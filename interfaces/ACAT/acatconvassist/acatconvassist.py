@@ -223,13 +223,13 @@ class ACATConvAssistInterface(threading.Thread):
                 except AttributeError as e:
                     self.logger.error(f"Attribute error: {e}.")
                     continue
-                
-                except TimeoutError as e:
+
+                except TimeoutError:
                     self.logger.info("Timeout Error waiting for named pipe.  Try again.")
                     continue
 
                 except BrokenPipeError as e:
-                    if False:
+                    if True:
                         # If the pipe is broken, exit the loop
                         self.logger.critical(f"Broken Pipe Error. Bailing. {e}.")
                         send_response = False
@@ -244,7 +244,17 @@ class ACATConvAssistInterface(threading.Thread):
                 except Exception as e:
                     self.logger.critical(f"Catastrophic Error.  Bailing. {e}.", stack_info=True, exc_info=True)
                     send_response = False
-                    self.app_quit_event.set()
+                    # self.app_quit_event.set()
+                    continue
+
+                if messageReceived.MessageType == ConvAssistMessageTypes.STATUSCHECK:
+                    if self.ready:
+                        self.logger.info("Already ready for predictions.")
+                        PredictionResponse.MessageType = ConvAssistMessageTypes.READYFORPREDICTIONS
+                    else:
+                        self.logger.info("Not ready for predictions.")
+                        PredictionResponse.MessageType = ConvAssistMessageTypes.NOTREADY
+                    self.messageHandler.send_message(PredictionResponse.jsonSerialize())
                     continue
 
                 # TODO - Handle more gracefully
@@ -433,6 +443,12 @@ class ACATConvAssistInterface(threading.Thread):
                 setattr(self, attr_name, param.Value)
                 self.prefs.save(attr_name, param.Value)
 
+            # Special handling for path.  We need something to trigger
+            # re-initialization of the ConvAssist instances.  Even if the
+            # path hasn't changed, we still need to re-initialize.
+            if attr_name == "path":
+                changed = True
+
         except Exception as e:
             self.logger.error(f"handle_parameters exception: {e}.")
 
@@ -465,10 +481,10 @@ class ACATConvAssistInterface(threading.Thread):
 
             self.logger.info(f"convassist {convassist.name} updated.")
 
-        #TODO - Check if all convassists are initialized
-        # I"m assuming that if I've made it here, they are all initialized
+        # TODO - Check if all convassists are initialized
+        # I'm assuming that if I've made it here, they are all initialized
         self.ready = True
-        
+
     def ConnectToACAT(self, connection_type=None) -> bool:
         retries = 0
         self.logger.info("Trying to connect to ACAT server.")
@@ -506,8 +522,8 @@ class ACATConvAssistInterface(threading.Thread):
         try:
             self.initialize_or_configure_convassists()
         except Exception:
-            self.logger.warning(f"ConvAssist not ready.  Will wait for configuration.")
-            
+            self.logger.warning("ConvAssist not ready.  Will wait for configuration.")
+
         self.logger.debug(f"ACATConvAssistInterface initialized in {time.time() - starttime} seconds.")
 
         if not self.ConnectToACAT():
