@@ -23,6 +23,7 @@ from convassist.utilities.databaseutils.sqllite_dbconnector import (
     SQLiteDatabaseConnector,
 )
 from convassist.predictor.utilities.svo_util import SVOUtil
+from convassist.utilities.utils import smart_readlines
 
 
 class SentenceCompletionPredictor(Predictor):
@@ -68,15 +69,13 @@ class SentenceCompletionPredictor(Predictor):
         # We will normalize our vectors to unit length, then is Inner Product equal to cosine similarity
         self.index = hnswlib.Index(space="cosine", dim=self.embedding_size)
 
-        with open(self.retrieve_database) as f:
-            self.corpus_sentences = [s.strip() for s in f.readlines()]
+        self.corpus_sentences = smart_readlines(self.retrieve_database)
 
-        with open(self.blacklist_file) as f:
-            self.blacklist_words = [s.strip() for s in f.readlines()]
+        self.blacklist_words = smart_readlines(self.blacklist_file)
 
         self.personalized_allowed_toxicwords = self._read_personalized_toxic_words()
 
-        self.svo_util = SVOUtil(self.stopwordsFile)
+        self.svo_util = SVOUtil(self.stopwordsFile, nlp_path=self._personalized_resources_path)
 
         if not Path.is_file(Path(self.embedding_cache_path)):
             self.corpus_embeddings = self.embedder.encode(
@@ -174,8 +173,9 @@ class SentenceCompletionPredictor(Predictor):
             with open(self.personalized_allowed_toxicwords_file, "w") as f:
                 pass
 
-        with open(self.personalized_allowed_toxicwords_file) as f:
-            self.personalized_allowed_toxicwords = f.readlines()
+        # with open(self.personalized_allowed_toxicwords_file) as f:
+        #     self.personalized_allowed_toxicwords = f.readlines()
+        self.personalized_allowed_toxicwords = smart_readlines(self.personalized_allowed_toxicwords_file)
 
         self.personalized_allowed_toxicwords = [
             s.strip() for s in self.personalized_allowed_toxicwords
@@ -222,7 +222,7 @@ class SentenceCompletionPredictor(Predictor):
         pred = Prediction()
         probs = {}
 
-        lines = open(self.retrieve_database).readlines()
+        lines = smart_readlines(self.retrieve_database)
         retrieved = []
         totalsent = len(lines)
         for each in lines:
@@ -509,12 +509,11 @@ class SentenceCompletionPredictor(Predictor):
     def load_n_start_sentences(self, max_partial_prediction_size=-1):
         predictions = Prediction()
 
-        with open(self.startsents) as f:
-            data = f.readlines()
-            for sentence in data[0:max_partial_prediction_size]:
-                predictions.add_suggestion(
-                    Suggestion(sentence.strip(), float(1 / len(data)), self.predictor_name)
-                )
+        data = smart_readlines(self.startsents)
+        for sentence in data[0:max_partial_prediction_size]:
+            predictions.add_suggestion(
+                Suggestion(sentence.strip(), float(1 / len(data)), self.predictor_name)
+            )
         return predictions
 
     # Base class method

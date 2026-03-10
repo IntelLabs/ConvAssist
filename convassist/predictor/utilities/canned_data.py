@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from convassist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
+from convassist.utilities.utils import smart_readlines
 
 
 class cannedData:
@@ -99,8 +100,7 @@ class cannedData:
     def _read_personalized_corpus(self, corpus_path):
         corpus = []
 
-        with open(corpus_path) as f:
-            corpus = f.readlines()
-            corpus = [s.strip() for s in corpus]
+        corpus = smart_readlines(corpus_path)
+        corpus = [s.strip() for s in corpus]
 
         return corpus
