@@ -1,30 +1,29 @@
 
 from convassist.predictor.utilities.nlp import NLP
 
+
 class SVOUtil:
-        
     OBJECT_DEPS = {
-            "dobj",
-            "pobj",
-            "dative",
-            "attr",
-            "oprd",
-            "npadvmod",
-            "amod",
-            "acomp",
-            "advmod",
+        "dobj",
+        "pobj",
+        "dative",
+        "attr",
+        "oprd",
+        "npadvmod",
+        "amod",
+        "acomp",
+        "advmod",
     }
-    
+
     SUBJECT_DEPS = {"nsubj", "nsubjpass", "csubj", "agent", "expl"}
 
-    def __init__(self, stopwordsFile):
-        self.nlp = NLP().get_nlp()
-        
+    def __init__(self, stopwordsFile, nlp_path=""):
+        self.nlp = NLP(nlp_path).get_nlp()
+
         self.stopwords = []
         with open(stopwordsFile) as f:
             self.stopwords = f.read().splitlines()
             self.stopwords = [word.strip() for word in self.stopwords]
-
 
     def extract_svo(self, sent) -> list[str]:
         doc = self.nlp(sent)

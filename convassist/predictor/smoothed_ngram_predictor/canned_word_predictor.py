@@ -5,7 +5,6 @@ import os
 
 from tqdm import tqdm
 
-from convassist.predictor.utilities.nlp import NLP
 from convassist.utilities.ngram.ngram_map import NgramMap
 from convassist.utilities.ngram.ngramutil import NGramUtil
 
@@ -22,7 +21,6 @@ class CannedWordPredictor(SmoothedNgramPredictor):
 
     def extract_svo(self, sent) -> str:
         return " ".join(self.svo_utils.extract_svo(sent))
-
 
     def recreate_database(self):
         """
@@ -55,5 +53,3 @@ class CannedWordPredictor(SmoothedNgramPredictor):
     @property
     def startwords(self):
         return os.path.join(self._personalized_resources_path, self._startwords)
-
-
