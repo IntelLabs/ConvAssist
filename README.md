@@ -60,34 +60,6 @@ ConvAssist works with Python 3.12.x or greater. Create a virtual environment and
 
     This command activates the virtual environment created by Poetry.
 
-## Installation and use
-ConvAssist works with Python 3.12.x or greater. Create a virtual environment and install the required packages.  We provide a pyproject.toml file to assist, and use Poetry for package management.
-
-#### Create a Virtual Environment with Poetry
-
-1. **Clone the Repository**:
-    ```sh
-    git clone https://github.com/IntelLabs/ConvAssist.git
-    cd ConvAssist
-    ```
-
-2. **Install Poetry**:
-    If you don't have Poetry installed, you can install it by following the instructions on the [Poetry website](https://python-poetry.org/docs/#installation).
-
-3. **Install Dependencies and Create Virtual Environment**:
-    ```sh
-    poetry install
-    ```
-
-    This command will create a virtual environment, install the dependencies specified in the `pyproject.toml` file, and set up the environment for you.
-
-4. **Activate the Virtual Environment**:
-    ```sh
-    poetry shell
-    ```
-
-    This command activates the virtual environment created by Poetry.
-
 ### Run
 We provide several demonstration apps to showcase how to use ConvAssist
 
