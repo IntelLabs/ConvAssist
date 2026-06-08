@@ -33,9 +33,9 @@ ConvAssist contains language models based on specific Assistive and Augmentative
 ```GeneralWordPredictor``` is a class that extends SmoothedNgramPredictor to provide word predictions based on a precomputed set of most frequent starting words from an AAC dataset.
 
 ## Installation and use
-ConvAssist works with Python 3.12.x or greater. Create a virtual environment and install the required packages.  We provide a pyproject.toml file to assist, and use Poetry for package management.
+ConvAssist works with Python 3.10–3.12. Create a virtual environment and install the required packages. We provide a `pyproject.toml` file to assist, and use [uv](https://docs.astral.sh/uv/) for package management.
 
-#### Create a Virtual Environment with Poetry
+#### Create a Virtual Environment with uv
 
 1. **Clone the Repository**:
     ```sh
@@ -43,22 +43,23 @@ ConvAssist works with Python 3.12.x or greater. Create a virtual environment and
     cd ConvAssist
     ```
 
-2. **Install Poetry**:
-    If you don't have Poetry installed, you can install it by following the instructions on the [Poetry website](https://python-poetry.org/docs/#installation).
+2. **Install uv**:
+    If you don't have uv installed, you can install it by following the instructions on the [uv website](https://docs.astral.sh/uv/getting-started/installation/).
 
 3. **Install Dependencies and Create Virtual Environment**:
     ```sh
-    poetry install
+    uv sync
     ```
 
-    This command will create a virtual environment, install the dependencies specified in the `pyproject.toml` file, and set up the environment for you.
+    This command will create a virtual environment (`.venv/`), install the dependencies specified in the `pyproject.toml` file, and set up the environment for you.
 
 4. **Activate the Virtual Environment**:
     ```sh
-    poetry shell
+    source .venv/bin/activate   # macOS/Linux
+    .venv\Scripts\activate      # Windows
     ```
 
-    This command activates the virtual environment created by Poetry.
+    Alternatively, prefix any command with `uv run` to execute it inside the managed environment without activating it manually.
 
 ### Run
 We provide several demonstration apps to showcase how to use ConvAssist
