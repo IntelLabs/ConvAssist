@@ -9,9 +9,9 @@ license = {text = "GPL-3.0-or-later"}
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [
-    "torch>=2.9.0",
+    "torch>=2.13.0",
     "websockets>=13.0.1",
-    "nltk>=3.10.0",
+    "nltk>=3.10.2",
     "hnswlib>=0.8.0",
     "sentence-transformers>=3.1.1",
     "spacy>=3.8.2",
