@@ -7,11 +7,11 @@ authors = [
 ]
 license = {text = "GPL-3.0-or-later"}
 readme = "README.md"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.12,<3.13"
 dependencies = [
     "torch>=2.9.0",
     "websockets>=13.0.1",
-    "nltk>=3.10.0",
+    "nltk>=3.9.3",
     "hnswlib>=0.8.0",
     "sentence-transformers>=3.1.1",
     "spacy>=3.8.2",
@@ -31,7 +31,7 @@ acat_interface = [
     "sv-ttk>=2.6.0; sys_platform == 'win32'",
     "pystray>=0.19.5; sys_platform == 'win32'",
     "pyinstaller>=6.15.0; sys_platform == 'win32'",
-    "pefile<2024.8.27; sys_platform == 'win32'", # pinned to avoid breaking changes in newer versions
+    "pefile<2024.8.26; sys_platform == 'win32'", # pinned to avoid breaking changes in newer versions
 ]
 demos = [
     "pyttsx3>=2.99",

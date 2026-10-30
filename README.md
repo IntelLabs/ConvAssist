@@ -1,7 +1,7 @@
 # ConvAssist
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/IntelLabs/ConvAssist/badge)](https://scorecard.dev/viewer/?uri=github.com/IntelLabs/ConvAssist)
 [![Unit Tests](https://github.com/IntelLabs/ConvAssist/actions/workflows/run_unittests.yaml/badge.svg?branch=covassist-cleanup)](https://github.com/IntelLabs/ConvAssist/actions/workflows/run_unittests.yaml)
-[![pytorch](https://img.shields.io/badge/PyTorch-v2.4.1-green?logo=pytorch)](https://pytorch.org/get-started/locally/)
+[![pytorch](https://img.shields.io/badge/PyTorch-v2.9.0%2B-green?logo=pytorch)](https://pytorch.org/get-started/locally/)
 ![GitHub License](https://img.shields.io/github/license/IntelLabs/ConvAssist)
 ![python-support](https://img.shields.io/badge/Python-3.12-3?logo=python)
 [![Documentation - Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/IntelLabs/ConvAssist)
@@ -33,7 +33,7 @@ ConvAssist contains language models based on specific Assistive and Augmentative
 ```GeneralWordPredictor``` is a class that extends SmoothedNgramPredictor to provide word predictions based on a precomputed set of most frequent starting words from an AAC dataset.
 
 ## Installation and use
-ConvAssist works with Python 3.10–3.12. Create a virtual environment and install the required packages. We provide a `pyproject.toml` file to assist, and use [uv](https://docs.astral.sh/uv/) for package management.
+ConvAssist requires Python 3.12. Create a virtual environment and install the required packages. We provide a `pyproject.toml` file to assist, and use [uv](https://docs.astral.sh/uv/) for package management.
 
 #### Create a Virtual Environment with uv
 
@@ -68,10 +68,10 @@ We provide several demonstration apps to showcase how to use ConvAssist
 
 ``` sh
 cd interfaces/Demos/continuous_predict
-python pyprompter.py
+uv run python continuous_predict.py
 ```
 
-The `continuous_prediction.ini` file defines which predictors are enable.  See documentation for continuous_predict for details on how to use the configuration file.
+The `continuous_prediction.ini` file defines which predictors are enabled.  See documentation for continuous_predict for details on how to use the configuration file.
 
 ## License
 ConvAssist source code is distributed under the GPL-3.0 or later license.
