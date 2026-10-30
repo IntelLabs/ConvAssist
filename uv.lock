@@ -1074,7 +1074,7 @@ wheels = [
 
 [[package]]
 name = "pydantic-core"
-nversion = "2.50.2"
+version = "2.50.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "typing-extensions" },
