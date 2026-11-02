@@ -48,6 +48,7 @@ class CannedPhrasesPredictor(Predictor):
     def configure(self):
         self.corpus_phrases = []
         self.corpus_embeddings = []
+        self._phrase_stems = {}
 
         self._model_loaded = False
         self.stemmer = PorterStemmer()
@@ -65,6 +66,7 @@ class CannedPhrasesPredictor(Predictor):
         )
 
         self.cannedData = cannedData(self.sentences_db_path, self.personalized_cannedphrases)
+        self._sync_phrase_stems(self.cannedData.all_phrases_as_dict())
 
         if self.cannedData.length > 0:
             if not os.path.isfile(self.embedding_cache_path):
@@ -150,10 +152,21 @@ class CannedPhrasesPredictor(Predictor):
         self.logger.debug(f"Found {len(sent_prediction)} semantic matches")
         return sent_prediction
 
+    def _sync_phrase_stems(self, canned_phrases):
+        """Cache membership only; counts and iteration order stay in the live snapshot."""
+        for phrase in self._phrase_stems.keys() - canned_phrases.keys():
+            del self._phrase_stems[phrase]
+        for phrase in canned_phrases:
+            if phrase not in self._phrase_stems:
+                self._phrase_stems[phrase] = {
+                    self.stemmer.stem(word) for word in word_tokenize(phrase)
+                }
+
     def _find_direct_matches(self, context, sent_prediction: Prediction) -> Prediction:
         self.logger.debug("Finding direct matches")
         try:
             canned_phrases = self.cannedData.all_phrases_as_dict()
+            self._sync_phrase_stems(canned_phrases)
 
             total_sent = sum(canned_phrases.values())
             context_StemmedWords = [self.stemmer.stem(w) for w in word_tokenize(context)]
@@ -161,7 +174,7 @@ class CannedPhrasesPredictor(Predictor):
             rows = []
             for k, _ in canned_phrases.items():
                 matchfound = 0
-                sentence_StemmedWords = [self.stemmer.stem(w) for w in word_tokenize(k)]
+                sentence_StemmedWords = self._phrase_stems[k]
                 for c in context_StemmedWords:
                     if c in sentence_StemmedWords:
                         matchfound = matchfound + 1
