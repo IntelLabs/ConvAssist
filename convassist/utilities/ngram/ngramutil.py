@@ -330,12 +330,12 @@ class NGramUtil:
             for ngram, count in ngram_map.items():
                 self._insert_ngram(card, ngram, count, True)
 
-    def fetch_like(self, ngram: list, limit=-1):
+    def fetch_like(self, ngram: list, limit=-1, cardinality=None):
         assert self._connection is not None
 
         try:
             query: str = ""
-            table_name = f"_{self._cardinality}_gram"
+            table_name = f"_{self._cardinality if cardinality is None else cardinality}_gram"
             conditions = []
             params = []
 

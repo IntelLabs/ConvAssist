@@ -81,6 +81,22 @@ class TestNGramUtil(unittest.TestCase):
 
             assert ngramutil.fetch_like(["test"], 2) == [("test", 3)]
 
+    def test_fetch_like_explicit_cardinality_preserves_default_and_like_semantics(self):
+        with NGramUtil(":memory:", 3) as ngramutil:
+            ngramutil.create_update_ngram_tables()
+            ngramutil.learn("i like tea")
+            ngramutil.learn("you like toast")
+            connection = ngramutil.connection.conn
+
+            assert ngramutil.fetch_like(["i", "like", "T"], cardinality=3) == [("tea", 1)]
+            assert ngramutil.fetch_like(["like", "t_a"], cardinality=2) == [("tea", 1), ("toast", 1)]
+            assert ngramutil.fetch_like(["t%"], 1, cardinality=1) == [("tea", 1)]
+            # A shorter prefix still queries the bound table by default, not len(prefix).
+            assert ngramutil.fetch_like(["tea"]) == [("tea", 1)]
+            assert ngramutil.fetch_like(["i", "like", "tea"], 1) == [("tea", 1)]
+            assert ngramutil._cardinality == 3
+            assert ngramutil.connection.conn is connection
+
     @parameterized.expand(
         [
             ("all your bases are mine", "bases are ", "mine", 3),

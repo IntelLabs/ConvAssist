@@ -5,6 +5,7 @@ import json
 import os
 import string
 from abc import ABC
+from contextlib import ExitStack
 from typing import List
 
 from convassist.predictor.predictor import Predictor
@@ -89,11 +90,14 @@ class SmoothedNgramPredictor(Predictor):
                         count_cache[key] = ngramutil.count(tokens, offset, ngram_size)
                     return count_cache[key]
 
-                for ngram_len in range(actual_tokens, 0, -1):
-                    if len(prefix_completion_candidates) >= max_partial_prediction_size:
-                        break
+                with ExitStack() as stack:
+                    ngramutil = None
+                    for ngram_len in range(actual_tokens, 0, -1):
+                        if len(prefix_completion_candidates) >= max_partial_prediction_size:
+                            break
 
-                    with NGramUtil(self.database, ngram_len) as ngramutil:
+                        if ngramutil is None:
+                            ngramutil = stack.enter_context(NGramUtil(self.database, actual_tokens))
 
                         if ngram_len:
                             prefix_ngram = tokens[-(ngram_len):]
@@ -106,6 +110,7 @@ class SmoothedNgramPredictor(Predictor):
                                 partial = ngramutil.fetch_like(
                                     prefix_ngram,
                                     max_partial_prediction_size - len(prefix_completion_candidates),
+                                    cardinality=ngram_len,
                                 )
                             except Exception as e:
                                 self.logger.error(f"Error fetching ngrams for {prefix_ngram}: {e}")

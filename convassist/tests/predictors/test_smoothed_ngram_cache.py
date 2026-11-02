@@ -13,6 +13,7 @@ import pytest
 
 from convassist.context_tracker import ContextTracker
 from convassist.predictor.smoothed_ngram_predictor import smoothed_ngram_predictor as module
+from convassist.utilities.databaseutils.sqllite_dbconnector import SQLiteDatabaseConnector
 from convassist.utilities.ngram.ngramutil import NGramUtil
 
 
@@ -96,6 +97,10 @@ def spy(monkeypatch):
     instances = []
 
     class TrackedNGramUtil(NGramUtil):
+        def fetch_like(self, ngram, limit=-1, cardinality=None):
+            self.query_cardinality = self._cardinality if cardinality is None else cardinality
+            return super().fetch_like(ngram, limit, cardinality=cardinality)
+
         def __enter__(self):
             result = super().__enter__()
             instances.append(self)
@@ -110,7 +115,7 @@ def spy(monkeypatch):
         def count(self, tokens, offset, ngram_size):
             key = tuple(tokens[len(tokens) - ngram_size + offset:len(tokens) + offset])
             value = super().count(tokens, offset, ngram_size)
-            queries.append((key, self._cardinality, offset, ngram_size, value))
+            queries.append((key, self.query_cardinality, offset, ngram_size, value))
             return value
 
         def unigram_counts_sum(self):
@@ -153,9 +158,8 @@ def test_actual_query_keys_reused_across_candidates_offsets_and_cardinalities(pr
     assert all(count == 1 for count in counts.values())
     assert not any(q[3] == 0 for q in queries)  # shares the cached SUM, not count(..., 0)
     assert sums == [3]
-    assert events == [item for size in (3, 2, 1)
-                      for item in (("enter", size), ("exit", size, None))]
-    assert len(instances) == 3
+    assert events == [("enter", 3), ("exit", 3, None)]
+    assert len(instances) == 1
 
 
 def test_zero_counts_are_memoized_without_skipping_higher_order_scores(predictor, spy):
@@ -248,18 +252,17 @@ def test_fetch_failure_continues_and_preserves_context_lifecycle(predictor, spy,
     tracked, events, _, sums, _ = spy
     original = tracked.fetch_like
 
-    def fail_trigram(self, *args):
-        if self._cardinality == 3:
+    def fail_trigram(self, ngram, limit=-1, cardinality=None):
+        if cardinality == 3:
             raise RuntimeError("fetch failure")
-        return original(self, *args)
+        return original(self, ngram, limit, cardinality=cardinality)
 
     monkeypatch.setattr(tracked, "fetch_like", fail_trigram)
     predictor.context_tracker.context = "i like "
     words = predictor.predict(20, None)[1]
     assert words
-    assert events == [item for size in (3, 2, 1)
-                      for item in (("enter", size), ("exit", size, None))]
-    assert sums == [2]
+    assert events == [("enter", 3), ("exit", 3, None)]
+    assert sums == [3]
     assert "Error fetching ngrams" in predictor.logger.error.call_args.args[0]
 
 
@@ -268,7 +271,7 @@ def test_all_fetch_failures_do_not_query_sum(predictor, spy, monkeypatch):
     monkeypatch.setattr(tracked, "fetch_like", Mock(side_effect=RuntimeError("fetch failure")))
     predictor.context_tracker.context = "i like "
     assert signature(predictor.predict(20, None)) == [[], []]
-    assert len(events) == 6
+    assert events == [("enter", 3), ("exit", 3, None)]
     assert queries == sums == []
     assert predictor.logger.error.call_count == 3
 
@@ -300,7 +303,7 @@ def test_count_failure_preserves_already_accumulated_suggestions(predictor, spy,
     original = tracked.count
 
     def fail_unigram(self, *args):
-        if self._cardinality == 1:
+        if self.query_cardinality == 1:
             raise RuntimeError("later query failure")
         return original(self, *args)
 
@@ -308,7 +311,123 @@ def test_count_failure_preserves_already_accumulated_suggestions(predictor, spy,
     predictor.context_tracker.context = "i like "
     words = predictor.predict(20, None)[1]
     assert words
-    assert events == [("enter", 3), ("exit", 3, None),
-                      ("enter", 2), ("exit", 2, None),
-                      ("enter", 1), ("exit", 1, RuntimeError)]
+    assert events == [("enter", 3), ("exit", 3, RuntimeError)]
     assert "later query failure" in predictor.logger.error.call_args.args[0]
+
+
+@pytest.fixture
+def sqlite_connections(monkeypatch):
+    """Count underlying SQLite opens/closes, not idempotent connect() calls."""
+    connections = []
+    connect = sqlite3.connect
+
+    class TrackedConnection(sqlite3.Connection):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.closes = 0
+            self.statements = []
+            self.set_trace_callback(self.statements.append)
+
+        def close(self):
+            self.closes += 1
+            super().close()
+
+    def tracked_connect(*args, **kwargs):
+        connection = connect(*args, factory=TrackedConnection, **kwargs)
+        connections.append(connection)
+        return connection
+
+    monkeypatch.setattr(sqlite3, "connect", tracked_connect)
+    return connections
+
+
+def assert_closed_once(connection):
+    assert connection.closes == 1
+    with pytest.raises(sqlite3.ProgrammingError, match="closed database"):
+        connection.execute("SELECT 1")
+
+
+def test_one_sqlite_connection_serves_all_backoff_orders(predictor, sqlite_connections):
+    predictor.context_tracker.context = "i like "
+    assert predictor.predict(20, None)[1]
+    assert len(sqlite_connections) == 1
+    connection = sqlite_connections[0]
+    assert_closed_once(connection)
+    lookups = [sql for sql in connection.statements if sql.startswith("SELECT word, count")]
+    assert [sql.split(" WHERE ")[0] for sql in lookups] == [
+        "SELECT word, count from _3_gram",
+        "SELECT word, count from _2_gram",
+        "SELECT word, count from _1_gram",
+    ]
+    predictor.logger.error.assert_not_called()
+
+
+@pytest.mark.parametrize("failure", ["fetch", "all_fetches", "count", "sum", "scoring"])
+def test_one_sqlite_connection_closes_on_prediction_errors(
+    predictor, sqlite_connections, monkeypatch, failure
+):
+    fetch_all = SQLiteDatabaseConnector.fetch_all
+
+    def failing_query(self, query, *args):
+        if ((failure == "fetch" and query.startswith("SELECT word, count from _3_gram"))
+                or (failure == "all_fetches" and query.startswith("SELECT word, count"))
+                or (failure == "count" and query.startswith("SELECT count FROM"))
+                or (failure == "sum" and query.startswith("SELECT SUM(count)"))):
+            raise RuntimeError("injected query failure")
+        return fetch_all(self, query, *args)
+
+    monkeypatch.setattr(SQLiteDatabaseConnector, "fetch_all", failing_query)
+    if failure == "scoring":
+        monkeypatch.setattr(module, "Suggestion", Mock(side_effect=RuntimeError("suggestion failure")))
+    predictor.context_tracker.context = "i like "
+    words = predictor.predict(20, None)[1]
+    assert bool(words) == (failure == "fetch")  # lookup failure still backs off
+    assert len(sqlite_connections) == 1
+    assert_closed_once(sqlite_connections[0])
+    assert predictor.logger.error.call_count == (3 if failure == "all_fetches" else 1)
+
+
+@pytest.mark.parametrize("context,limit", [("", 20), (" ", 0), ("i like ", 0)])
+def test_no_underlying_sqlite_open_without_lookup(predictor, sqlite_connections, context, limit):
+    predictor.context_tracker.context = context
+    predictor.predict(limit, None)
+    assert sqlite_connections == []
+
+
+@pytest.mark.parametrize("update", [None, "learn", "external"])
+def test_predictions_reopen_sqlite_and_observe_updates(
+    predictor, sqlite_connections, monkeypatch, update
+):
+    predictor.context_tracker.context = "i like "
+    before = signature(predictor.predict(20, None))
+    assert len(sqlite_connections) == 1
+    first = sqlite_connections[0]
+    assert_closed_once(first)
+    # Keep learning/external writer connections out of the prediction-open count.
+    with monkeypatch.context() as writer_patch:
+        writer_patch.setattr(sqlite3, "connect", sqlite3.Connection)
+        if update == "learn":
+            predictor.learn("i like tea")
+        elif update == "external":
+            with sqlite3.connect(predictor.database) as writer:
+                writer.execute("UPDATE _1_gram SET count = count + 50 WHERE word = 'tea'")
+            writer.close()
+        expected = uncached_reference(predictor, 20)
+    after = signature(predictor.predict(20, None))
+    assert after == expected
+    assert (after != before) == (update is not None)
+    assert len(sqlite_connections) == 2
+    assert sqlite_connections[1] is not first
+    assert_closed_once(sqlite_connections[1])
+    assert first.closes == 1
+
+
+def test_sqlite_initialization_failure_uses_existing_outer_log(predictor, monkeypatch):
+    connect = Mock(side_effect=sqlite3.OperationalError("cannot open database"))
+    monkeypatch.setattr(sqlite3, "connect", connect)
+    predictor.context_tracker.context = "i like "
+    assert signature(predictor.predict(20, None)) == [[], []]
+    connect.assert_called_once()
+    predictor.logger.error.assert_called_once_with(
+        "Exception in cache-test predict function: cannot open database"
+    )
