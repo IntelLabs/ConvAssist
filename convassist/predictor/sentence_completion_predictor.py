@@ -3,6 +3,7 @@
 
 import collections
 import re
+from bisect import bisect_left
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -70,6 +71,14 @@ class SentenceCompletionPredictor(Predictor):
         self.index = hnswlib.Index(space="cosine", dim=self.embedding_size)
 
         self.corpus_sentences = smart_readlines(self.retrieve_database)
+        # Snapshot raw retrieval lines before joblib replaces the semantic corpus.
+        # Ordinals restore the original input order for the existing set tie behavior.
+        self._retrieval_line_count = len(self.corpus_sentences)
+        self._retrieval_lines = tuple(sorted(
+            (line.lower(), ordinal, line, re.split("[.\n?!]", line)[0])
+            for ordinal, line in enumerate(self.corpus_sentences)
+        ))
+        self._retrieval_keys = tuple(row[0] for row in self._retrieval_lines)
 
         self.blacklist_words = smart_readlines(self.blacklist_file)
 
@@ -222,20 +231,25 @@ class SentenceCompletionPredictor(Predictor):
         pred = Prediction()
         probs = {}
 
-        lines = smart_readlines(self.retrieve_database)
-        retrieved = []
-        totalsent = len(lines)
-        for each in lines:
-            # if(each.lower().find(context.lower())!=-1):
-            if each.lower().startswith(context.lower()):
-                each = re.split("[.\n?!]", each)[0]
-                retrieved.append(each)
+        prefix = context.lower()
+        matches = []
+        position = bisect_left(self._retrieval_keys, prefix)
+        while position < self._retrieval_line_count:
+            key, ordinal, _, display = self._retrieval_lines[position]
+            if not key.startswith(prefix):
+                break
+            matches.append((ordinal, display))
+            position += 1
+        # Filter full raw lines first; punctuation-spanning contexts must still match.
+        retrieved = [display for _, display in sorted(matches)]
+        frequencies = collections.Counter(retrieved)
         retrieved_set = set(retrieved)
         self.logger.debug(
             f"len(retrieved_set = {len(retrieved_set)}) len(retrieved) = {len(retrieved)}"
         )
         for s in retrieved_set:
-            probs[s] = float(retrieved.count(s)) / totalsent
+            probs[s] = float(frequencies[s]) / self._retrieval_line_count
+        dbconn = None
         try:
             pers_results: dict[str, float] = {}
             totalsentences = 0
@@ -248,7 +262,7 @@ class SentenceCompletionPredictor(Predictor):
                 for r in res:
                     sent = r[0]
                     totalsentences = totalsentences + r[1]
-                    if sent.lower().startswith(context.lower()):
+                    if sent.lower().startswith(prefix):
                         sent = re.split("[.\n?!]", sent)[0]
                         if sent in pers_results:
                             pers_results[sent] = pers_results[sent] + r[1]
@@ -272,6 +286,9 @@ class SentenceCompletionPredictor(Predictor):
                     count = count + 1
         except Exception as e:
             self.logger.error(f"Exception in {self.predictor_name}, {__name__} function {e}")
+        finally:
+            if dbconn is not None:
+                dbconn.close()
 
         return pred
 
