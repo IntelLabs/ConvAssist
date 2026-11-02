@@ -71,6 +71,24 @@ class SmoothedNgramPredictor(Predictor):
                 partial = None
                 prefix_ngram = None
 
+                # Counts are assumed stable within this request, not across predictions.
+                count_cache = {}
+                unigram_counts_sum_cache = None
+
+                def cached_unigram_counts_sum(ngramutil):
+                    nonlocal unigram_counts_sum_cache
+                    if unigram_counts_sum_cache is None:
+                        unigram_counts_sum_cache = ngramutil.unigram_counts_sum()
+                    return unigram_counts_sum_cache
+
+                def cached_count(ngramutil, tokens, offset, ngram_size):
+                    if ngram_size <= 0:
+                        return cached_unigram_counts_sum(ngramutil)
+                    key = tuple(tokens[len(tokens) - ngram_size + offset : len(tokens) + offset])
+                    if key not in count_cache:
+                        count_cache[key] = ngramutil.count(tokens, offset, ngram_size)
+                    return count_cache[key]
+
                 for ngram_len in range(actual_tokens, 0, -1):
                     if len(prefix_completion_candidates) >= max_partial_prediction_size:
                         break
@@ -96,7 +114,7 @@ class SmoothedNgramPredictor(Predictor):
                             prefix_completion_candidates.append(p[-2])
 
                         # smoothing
-                        unigram_counts_sum = ngramutil.unigram_counts_sum()
+                        unigram_counts_sum = cached_unigram_counts_sum(ngramutil)
 
                         candidate_tokens = prefix_ngram.copy()
 
@@ -104,11 +122,11 @@ class SmoothedNgramPredictor(Predictor):
                             candidate_tokens[-1] = candidate
                             probability = 0.0
                             for k in range(len(candidate_tokens)):
-                                numerator = ngramutil.count(candidate_tokens, 0, k + 1)
+                                numerator = cached_count(ngramutil, candidate_tokens, 0, k + 1)
 
                                 denominator = unigram_counts_sum
                                 if numerator > 0:
-                                    denominator = ngramutil.count(candidate_tokens, -1, k)
+                                    denominator = cached_count(ngramutil, candidate_tokens, -1, k)
                                 frequency = 0
                                 if denominator > 0:
                                     frequency = float(numerator) / denominator
