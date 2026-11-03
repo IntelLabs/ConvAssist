@@ -2,6 +2,7 @@
 
 import argparse
 import cProfile
+import hashlib
 import io
 import json
 import logging
@@ -35,6 +36,99 @@ CONTEXTS = [
     "how are you doing this morning my friend",
 ]
 
+# Synthetic fixtures, not a representative conversational corpus. Identifiers ensure
+# exact-text uniqueness, but can change tokenization and semantic match quality.
+FIXTURES = [
+    "could you bring some water",
+    "please help me open the window",
+    "i would like to visit the garden",
+    "can we listen to music together",
+    "thank you for staying with me",
+]
+SEPARATE_WARMUP = [f"unrelated warmup query number {i}" for i in range(5)]
+
+
+def positive_int(value):
+    result = int(value)
+    if result <= 0:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return result
+
+
+def workload_groups(workload, iters, phase="timed"):
+    """Return (row label, sessions) pairs; each session is an ordered text stream.
+
+    repeated: iters calls per original fixed context (legacy order).
+    unseen: iters unique queries per fixture group, disjoint from warmup/profile.
+    typing: iters independent phrases per group, every character then five
+    backspaces and five retyped characters. A unique FIRST token isolates each
+    session's exact keys without clearing caches or timing cache-reset work.
+    """
+    if workload == "repeated":
+        return [(ctx, [[ctx] * iters]) for ctx in CONTEXTS]
+    groups = []
+    for group, phrase in enumerate(FIXTURES):
+        if workload == "unseen":
+            sessions = [[f"{phase} unseen {group} {i} {phrase}" for i in range(iters)]]
+        else:
+            sessions = []
+            for i in range(iters):
+                # Start with a complete identifier so even short prefixes cannot
+                # reuse keys from a previous session. No blank/identifier typing.
+                prefix = f"{phase}-session-{group}-{i} "
+                text = prefix + phrase
+                forward = [text[:n] for n in range(len(prefix) + 1, len(text) + 1)]
+                back = [text[:-n] for n in range(1, 6)]
+                retype = [text[:n] for n in range(len(text) - 4, len(text) + 1)]
+                sessions.append(forward + back + retype)
+        groups.append((f"{workload} fixture {group + 1}", sessions))
+    return groups
+
+
+def context_details(sessions):
+    texts = [text for session in sessions for text in session]
+    return {
+        "sample_count": len(texts),
+        "unique_context_count": len(set(texts)),
+        "session_count": len(sessions),
+        "first_context": texts[0],
+        "last_context": texts[-1],
+        "sequence_sha256": hashlib.sha256(json.dumps(texts).encode("utf-8")).hexdigest(),
+    }
+
+
+def workload_metadata(workload, groups, warmup):
+    details = context_details([session for _, sessions in groups for session in sessions])
+    return {
+        "name": workload,
+        "protocol_version": 1,
+        "iters_unit": {
+            "repeated": "calls per fixed context per mode",
+            "unseen": "unique calls per fixture group per mode",
+            "typing": "sessions per fixture group per mode",
+        }[workload],
+        "scope": "per mode; each mode receives the same deterministic stream",
+        "cache_warming": {
+            "repeated": "timed contexts pre-warmed; cache-hit oriented",
+            "unseen": "warmup disjoint; no timed exact-text reuse",
+            "typing": "warmup disjoint; unique first-token session identifiers; cold exact keys at session start, revisits within session",
+        }[workload],
+        "warmup_contexts": warmup,
+        "warmup_disjoint": not set(warmup).intersection(
+            text for _, sessions in groups for session in sessions for text in session),
+        "row_context_kind": "fixed text" if workload == "repeated" else "varying-context fixture group",
+        "timed_per_mode": details,
+        "limitation": (
+            "Five pre-warmed fixed contexts; not unseen-text latency."
+            if workload == "repeated" else
+            "Synthetic phrases and sequence identifiers affect tokenization/semantics; not a natural conversation distribution. "
+            "Typing begins after an inserted identifier, includes backspaces/revisits; unrelated model/runtime state remains warm, no cache resets."
+            if workload == "typing" else
+            "Synthetic multi-token phrases plus sequence identifiers ensure unique text, not semantic diversity or a natural conversation distribution. Model/runtime state remains warm."
+        ),
+        "cprofile_policy": "separate pass; new phase identifiers for unseen/typing, repeated remains warm",
+    }
+
 
 def load_config(ini_dir, ini_name, static_path, personal_path, log_location):
     cfg = ConfigParser()
@@ -59,7 +153,10 @@ def main():
     p.add_argument("--static", help="static_resources_path value (prefs: pathstatic)")
     p.add_argument("--personal", help="personalized_resources_path value (prefs: pathpersonalized)")
     p.add_argument("--log-dir", help="Log directory (prefs: pathlog)")
-    p.add_argument("--iters", type=int, default=20, help="Predict calls per context per mode")
+    p.add_argument("--iters", type=positive_int, default=20,
+                   help="Positive count per mode: repeated calls per fixed context; unseen queries per fixture group; typing sessions per fixture group (many calls/session). Report gives actual sample counts.")
+    p.add_argument("--workload", choices=("repeated", "unseen", "typing"), default="repeated",
+                   help="repeated: legacy pre-warmed cache-hit oriented; unseen: unique synthetic multi-token queries; typing: isolated unique-phrase character streams with backspaces/revisits")
     p.add_argument("--profile", action="store_true", help="Run cProfile over steady state")
     p.add_argument(
         "--output",
@@ -68,6 +165,8 @@ def main():
     )
     p.add_argument("--label", default="", help="Tag for this run, e.g. 'baseline' or 'sqlite-cache'")
     args = p.parse_args()
+    groups = workload_groups(args.workload, args.iters)
+    warmup = CONTEXTS if args.workload == "repeated" else SEPARATE_WARMUP
 
     # Explicit command-line values take precedence over the preferences file.
     if args.prefs:
@@ -106,6 +205,7 @@ def main():
         "paths": {"ini_dir": args.ini_dir, "static": args.static, "personal": args.personal},
         "startup_seconds": {**startup, "total": sum(startup.values())},
         "latency_ms": [],
+        "workload": workload_metadata(args.workload, groups, warmup),
     }
 
     print("\n== Startup (initialize) seconds ==")
@@ -116,34 +216,41 @@ def main():
     # 2. Steady-state per-keystroke latency, mirroring make_prediction()
     # Warm up once so one-time lazy costs (model first-forward, caches) don't skew results.
     for mode, ca in instances.items():
-        for ctx in CONTEXTS:
+        for ctx in warmup:
             ca.context_tracker.context = ctx
             ca.predict()
 
+    print(f"\nWorkload: {args.workload} — {report['workload']['cache_warming']}")
+    print(f"  {report['workload']['limitation']}")
+    print(f"  per mode: {report['workload']['timed_per_mode']['sample_count']} calls, "
+          f"{report['workload']['timed_per_mode']['unique_context_count']} unique texts; "
+          f"rows: {report['workload']['row_context_kind']}")
     print("\n== Steady-state predict() latency (ms) ==")
     print(f"  {'mode':14s} {'context':40s} {'p50':>8s} {'p95':>8s} {'max':>8s}")
     all_samples = []
     for mode, ca in instances.items():
-        for ctx in CONTEXTS:
+        for label, sessions in groups:
             samples = []
-            for _ in range(args.iters):
-                t0 = time.perf_counter()
-                ca.context_tracker.context = ctx
-                ca.predict()
-                samples.append((time.perf_counter() - t0) * 1000)
+            for session in sessions:
+                for ctx in session:
+                    t0 = time.perf_counter()
+                    ca.context_tracker.context = ctx
+                    ca.predict()
+                    samples.append((time.perf_counter() - t0) * 1000)
             samples.sort()
             p50 = statistics.median(samples)
             p95 = samples[int(0.95 * (len(samples) - 1))]
-            print(f"  {mode:14s} {ctx[:40]:40s} {p50:8.2f} {p95:8.2f} {samples[-1]:8.2f}")
+            print(f"  {mode:14s} {label[:40]:40s} {p50:8.2f} {p95:8.2f} {samples[-1]:8.2f}")
             report["latency_ms"].append({
                 "mode": mode,
-                "context": ctx,
+                "context": label,
                 "p50": p50,
                 "p95": p95,
                 "min": samples[0],
                 "max": samples[-1],
                 "mean": statistics.fmean(samples),
                 "n": len(samples),
+                "context_details": context_details(sessions),
             })
             all_samples.extend(samples)
 
@@ -160,13 +267,17 @@ def main():
 
     # 3. Optional cProfile over steady state to find hot functions
     if args.profile:
+        profile_groups = workload_groups(args.workload, args.iters, phase="profile")
+        report["workload"]["cprofile_per_mode"] = context_details(
+            [session for _, sessions in profile_groups for session in sessions])
         prof = cProfile.Profile()
         prof.enable()
         for ca in instances.values():
-            for ctx in CONTEXTS:
-                for _ in range(args.iters):
-                    ca.context_tracker.context = ctx
-                    ca.predict()
+            for _, sessions in profile_groups:
+                for session in sessions:
+                    for ctx in session:
+                        ca.context_tracker.context = ctx
+                        ca.predict()
         prof.disable()
         buf = io.StringIO()
         stats = pstats.Stats(prof, stream=buf).sort_stats("cumulative")

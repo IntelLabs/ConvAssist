@@ -46,6 +46,7 @@ class CannedPhrasesPredictor(Predictor):
         super().__init__(config, context_tracker, predictor_name, logger)
 
     def configure(self):
+        self._query_embedding_cache = collections.OrderedDict()
         self.corpus_phrases = []
         self.corpus_embeddings = []
         self._phrase_stems = {}
@@ -127,9 +128,17 @@ class CannedPhrasesPredictor(Predictor):
         self.logger.debug("Finding semantic matches")
         try:
             direct_matchedSentences = [s.word for s in sent_prediction]
-            question_embedding = self.embedder.encode(context)
+            # Exact raw text, per encoder instance; learning changes only the index.
+            if context in self._query_embedding_cache:
+                question_embedding = self._query_embedding_cache[context]
+                self._query_embedding_cache.move_to_end(context)
+            else:
+                question_embedding = self.embedder.encode(context)
+                self._query_embedding_cache[context] = question_embedding
+                if len(self._query_embedding_cache) > 128:
+                    self._query_embedding_cache.popitem(last=False)
 
-            # We use hnswlib knn_query method to find the top_k_hits
+            # knn_query reads the array; always search the current index, never cache neighbors.
             corpus_ids, distances = self.index.knn_query(question_embedding, k=10)
 
             # We extract corpus ids and scores for the first query
